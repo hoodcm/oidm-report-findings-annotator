@@ -326,7 +326,8 @@
     "name": "Thickening of interstitium",
     "category": "lung",
     "synonyms": [
-      "Interstitial thickening"
+      "Interstitial thickening",
+      "Interstitial prominence"
     ],
     "actionability": "conditional"
   },
@@ -1458,7 +1459,9 @@
     "id": "FID2270",
     "name": "Soft tissue calcification",
     "category": "soft_tissue",
-    "synonyms": [],
+    "synonyms": [
+      "Calcified soft tissue density"
+    ],
     "actionability": "incidental"
   },
   {
@@ -1762,9 +1765,11 @@
   },
   {
     "id": "FID2730",
-    "name": "Clamshell sternotomy wires",
+    "name": "Clamshell sternotomy",
     "category": "devices",
-    "synonyms": [],
+    "synonyms": [
+      "Clamshell sternotomy wires"
+    ],
     "actionability": "incidental"
   },
   {
@@ -2091,7 +2096,9 @@
     "id": "FID3130",
     "name": "Rib fixation",
     "category": "devices",
-    "synonyms": [],
+    "synonyms": [
+      "Chest wall fixation"
+    ],
     "actionability": "incidental"
   },
   {
@@ -2571,6 +2578,55 @@
     "id": "FID3840",
     "name": "Upright projection",
     "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3850",
+    "name": "Obscuration of hemidiaphragm",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3860",
+    "name": "Calcification of hilar lymph node",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3870",
+    "name": "Resection of clavicle",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3880",
+    "name": "Pectus excavatum repair",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3890",
+    "name": "Sternal fixation",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3900",
+    "name": "Tricuspid annuloplasty ring",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3910",
+    "name": "Widening of rib interspaces",
+    "category": "osseous",
     "synonyms": [],
     "actionability": "incidental"
   }
