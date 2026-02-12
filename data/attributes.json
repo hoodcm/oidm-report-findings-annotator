@@ -1,0 +1,93 @@
+{
+  "presence": {
+    "type": "enum",
+    "description": "Finding presence status",
+    "values": [
+      "present",
+      "absent",
+      "indeterminate"
+    ]
+  },
+  "laterality": {
+    "type": "enum",
+    "description": "Which side of the body",
+    "values": [
+      "left",
+      "right",
+      "bilateral"
+    ]
+  },
+  "temporal_status": {
+    "type": "enum",
+    "description": "How finding compares to prior studies",
+    "values": [
+      "unchanged",
+      "new",
+      "resolved",
+      "larger",
+      "smaller",
+      "increased_extent",
+      "decreased_extent",
+      "more_conspicuous",
+      "less_conspicuous",
+      "increased_complexity",
+      "decreased_complexity",
+      "indeterminate"
+    ]
+  },
+  "chronicity": {
+    "type": "enum",
+    "description": "Time course or disease stage",
+    "values": [
+      "acute",
+      "subacute",
+      "chronic",
+      "remote",
+      "evolving",
+      "resolving",
+      "healing",
+      "healed",
+      "indeterminate"
+    ]
+  },
+  "size": {
+    "type": "text",
+    "description": "Quantitative measurements",
+    "values": []
+  },
+  "severity": {
+    "type": "enum",
+    "description": "Degree or grade",
+    "values": [
+      "mild",
+      "moderate",
+      "severe",
+      "small",
+      "medium",
+      "large"
+    ]
+  },
+  "anatomic_site": {
+    "type": "text",
+    "description": "Compound anatomic terms",
+    "values": []
+  },
+  "tip_location": {
+    "type": "text",
+    "description": "Where device tip terminates",
+    "values": []
+  },
+  "position_status": {
+    "type": "enum",
+    "description": "Device positioning assessment",
+    "values": [
+      "satisfactory",
+      "malpositioned"
+    ]
+  },
+  "features": {
+    "type": "array",
+    "description": "Finding-specific descriptive properties that cannot exist independently",
+    "values": []
+  }
+}

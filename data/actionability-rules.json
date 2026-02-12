@@ -1,0 +1,1971 @@
+{
+  "FID2770": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2780": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2880": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2900": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2610": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2630": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2660": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2690": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2700": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2710": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2750": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2760": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2790": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2800": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2810": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2820": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2840": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2850": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2860": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2870": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2890": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2910": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2920": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2930": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2960": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2990": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3030": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3040": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3050": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3060": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3070": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3080": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3090": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3170": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3220": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3230": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3260": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3270": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3290": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3300": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3310": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3320": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3330": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3340": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3380": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3400": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3410": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3430": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3440": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3450": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID3460": [
+    {
+      "when": {
+        "position_status": [
+          "malpositioned"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0020": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0030": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0070": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0130": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0190": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0210": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0220": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0390": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0650": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0490": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID0520": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID0290": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID0040": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0090": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0260": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0280": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID0460": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0470": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0480": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0620": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0680": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0750": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0305": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID0780": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1030": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1040": [
+    {
+      "when": {
+        "severity": [
+          "large",
+          "severe"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1100": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1110": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1120": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1130": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1140": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1200": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1240": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1250": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1260": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1270": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1160": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1180": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1190": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1280": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1300": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1330": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1400": [
+    {
+      "when": {
+        "severity": [
+          "large",
+          "severe"
+        ]
+      },
+      "tier": "critical"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1440": [
+    {
+      "when": {
+        "severity": [
+          "severe",
+          "large"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1450": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID1470": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1500": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1585": [
+    {
+      "when": {
+        "chronicity": [
+          "chronic",
+          "remote",
+          "healed",
+          "healing"
+        ]
+      },
+      "tier": "incidental"
+    },
+    {
+      "default": "significant"
+    }
+  ],
+  "FID1600": [
+    {
+      "when": {
+        "chronicity": [
+          "chronic",
+          "remote",
+          "healed",
+          "healing"
+        ]
+      },
+      "tier": "incidental"
+    },
+    {
+      "default": "significant"
+    }
+  ],
+  "FID1605": [
+    {
+      "when": {
+        "chronicity": [
+          "chronic",
+          "remote",
+          "healed",
+          "healing"
+        ]
+      },
+      "tier": "incidental"
+    },
+    {
+      "default": "significant"
+    }
+  ],
+  "FID2040": [
+    {
+      "when": {
+        "chronicity": [
+          "chronic",
+          "remote",
+          "healed",
+          "healing"
+        ]
+      },
+      "tier": "incidental"
+    },
+    {
+      "default": "significant"
+    }
+  ],
+  "FID2050": [
+    {
+      "when": {
+        "chronicity": [
+          "chronic",
+          "remote",
+          "healed",
+          "healing"
+        ]
+      },
+      "tier": "incidental"
+    },
+    {
+      "default": "significant"
+    }
+  ],
+  "FID0465": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID1540": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID2140": [
+    {
+      "default": "significant"
+    }
+  ],
+  "FID1660": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1690": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1780": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1790": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1800": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID1920": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2080": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2250": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2260": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2300": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "when": {
+        "chronicity": [
+          "acute",
+          "subacute"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2330": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2335": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2530": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ],
+  "FID2600": [
+    {
+      "when": {
+        "temporal_status": [
+          "new",
+          "larger",
+          "increased_extent",
+          "more_conspicuous"
+        ]
+      },
+      "tier": "significant"
+    },
+    {
+      "default": "incidental"
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+/* Custom styles for Report Annotator (client-side) */
+
+/* Focus states for accessibility */
+button:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Sentence selection highlight animation */
+[data-sentence-idx]:hover {
+  transform: translateX(2px);
+  transition: transform 150ms ease-out;
+}
+
+/* Keyboard shortcut hints */
+kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+}
+
+/* Details/summary styling */
+details summary {
+  list-style: none;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}
+
+details summary::before {
+  content: '+';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  font-size: 1rem;
+  font-weight: 300;
+  transition: transform 200ms ease-out;
+}
+
+details[open] summary::before {
+  transform: rotate(45deg);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Disable animation when reduced motion is preferred */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Autocomplete dropdown */
+.autocomplete-results {
+  transition: opacity 150ms ease-out;
+}
+
+.autocomplete-results.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.autocomplete-results:not(.hidden) {
+  opacity: 1;
+}
+
+/* Autocomplete option hover state */
+.finding-option {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.finding-option:last-child {
+  border-bottom: none;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 150ms ease-out;
+}
+
+/* Drop zone active state */
+.drop-zone-active {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+}

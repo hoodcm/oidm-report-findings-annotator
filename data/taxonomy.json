@@ -1,0 +1,2577 @@
+[
+  {
+    "id": "FID0010",
+    "name": "Air bronchograms",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0020",
+    "name": "Airspace opacity",
+    "category": "lung",
+    "synonyms": [
+      "Air space opacity",
+      "Patchy opacity",
+      "Infiltrate",
+      "Hazy opacity",
+      "Lobar opacity"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0030",
+    "name": "Airspace opacities",
+    "category": "lung",
+    "synonyms": [
+      "Airspace disease",
+      "Infiltrates"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0040",
+    "name": "Airway abnormality",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0060",
+    "name": "Pulmonary scarring",
+    "category": "lung",
+    "synonyms": [
+      "Scarring"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0070",
+    "name": "Architectural distortion",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0080",
+    "name": "Aspiration",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0090",
+    "name": "Atelectasis",
+    "category": "lung",
+    "synonyms": [
+      "Linear atelectasis",
+      "Plate-like atelectasis",
+      "Discoid atelectasis",
+      "Collapse",
+      "Lung collapse"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0100",
+    "name": "Azygos fissure",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0110",
+    "name": "Azygos lobe",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0120",
+    "name": "Accessory fissure",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0130",
+    "name": "Reticular opacities",
+    "category": "lung",
+    "synonyms": [
+      "Reticular opacity",
+      "Interstitial opacities",
+      "Diffuse reticular opacities",
+      "Diffuse interstitial opacities"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0140",
+    "name": "Batwing perihilar opacities",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0150",
+    "name": "Thickening of bronchial wall",
+    "category": "lung",
+    "synonyms": [
+      "Peribronchial cuffing",
+      "Bronchial wall thickening"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0160",
+    "name": "Bronchiectasis",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0170",
+    "name": "Calcified nodule",
+    "category": "lung",
+    "synonyms": [
+      "Calcified granuloma"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0180",
+    "name": "Cavitary lesion",
+    "category": "lung",
+    "synonyms": [
+      "Cavitation",
+      "Cavitating mass",
+      "Cavitary lucency"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0190",
+    "name": "Airspace consolidation",
+    "category": "lung",
+    "synonyms": [
+      "Consolidation"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0210",
+    "name": "Diffuse hazy opacities",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0220",
+    "name": "Diffuse increased lung attenuation",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0230",
+    "name": "Diffuse increased lung lucency",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0250",
+    "name": "Diffuse nodular opacities",
+    "category": "lung",
+    "synonyms": [
+      "Miliary pattern"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0260",
+    "name": "Elevation of hemidiaphragm",
+    "category": "lung",
+    "synonyms": [
+      "Elevated hemidiaphragm"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0265",
+    "name": "Depression of hemidiaphragm",
+    "category": "lung",
+    "synonyms": [
+      "Depressed hemidiaphragm"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0270",
+    "name": "Emphysema",
+    "category": "lung",
+    "synonyms": [
+      "Emphysematous changes",
+      "Bullous emphysema",
+      "Bullous disease"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0275",
+    "name": "Bulla",
+    "category": "lung",
+    "synonyms": [
+      "Cystic space"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0280",
+    "name": "Engorgement of pulmonary vasculature",
+    "category": "lung",
+    "synonyms": [
+      "Pulmonary vascular congestion",
+      "Pulmonary venous congestion",
+      "Pulmonary venous hypertension"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0290",
+    "name": "Cephalization of pulmonary vasculature",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0300",
+    "name": "Indistinct pulmonary vasculature",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0305",
+    "name": "Pulmonary vascular abnormality",
+    "category": "lung",
+    "synonyms": [
+      "Abnormal pulmonary vasculature",
+      "Pulmonary vascular abnormality",
+      "Pulmonary vascularity abnormality",
+      "Pulmonary vasculature abnormality"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0310",
+    "name": "Eventration of hemidiaphragm",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0315",
+    "name": "Diaphragmatic abnormality",
+    "category": "lung",
+    "synonyms": [
+      "Diaphragm abnormality"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0320",
+    "name": "Thickening of fissure",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0330",
+    "name": "Flattening of hemidiaphragm",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0360",
+    "name": "Pulmonary calcification",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0370",
+    "name": "Hyperinflation of lungs",
+    "category": "lung",
+    "synonyms": [
+      "Hyperexpanded lungs",
+      "Hyperinflated lungs"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0380",
+    "name": "Interstitial pulmonary edema",
+    "category": "lung",
+    "synonyms": [
+      "Kerley A lines",
+      "Kerley B lines",
+      "Pulmonary interstitial edema"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0390",
+    "name": "Thickening of interstitium",
+    "category": "lung",
+    "synonyms": [
+      "Interstitial thickening"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0420",
+    "name": "Linear opacity",
+    "category": "lung",
+    "synonyms": [
+      "Bandlike opacity",
+      "Linear opacities"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0440",
+    "name": "Lobectomy",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0450",
+    "name": "Low lung volumes",
+    "category": "lung",
+    "synonyms": [
+      "Hypoventilation",
+      "Poor inspiratory volume",
+      "Decreased lung volumes"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0460",
+    "name": "Lung abnormality",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0465",
+    "name": "Osseous lucency",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0470",
+    "name": "Lung lucency",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0475",
+    "name": "Mass",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0480",
+    "name": "Mucoid impaction",
+    "category": "lung",
+    "synonyms": [
+      "Finger-in-glove opacity"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0485",
+    "name": "Bronchial occlusion",
+    "category": "lung",
+    "synonyms": [
+      "Cutoff",
+      "Endobronchial obstruction",
+      "Mucus plugging",
+      "Bronchial cutoff sign"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0490",
+    "name": "Pulmonary nodule",
+    "category": "lung",
+    "synonyms": [
+      "Lung nodule"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0500",
+    "name": "Lung transplant",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0520",
+    "name": "Pulmonary nodules",
+    "category": "lung",
+    "synonyms": [
+      "Lung nodules"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0530",
+    "name": "Nipple shadow",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0550",
+    "name": "Pneumonectomy",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0560",
+    "name": "Pneumonia",
+    "category": "lung",
+    "synonyms": [
+      "Pneumonitis"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0570",
+    "name": "Post-resection volume loss",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0590",
+    "name": "Pulmonary contusion",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0595",
+    "name": "Pulmonary laceration",
+    "category": "lung",
+    "synonyms": [
+      "Pneumatocele",
+      "Traumatic pneumatocele"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0600",
+    "name": "Pulmonary edema",
+    "category": "lung",
+    "synonyms": [
+      "Edema"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0605",
+    "name": "Alveolar pulmonary edema",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0610",
+    "name": "Pulmonary fibrosis",
+    "category": "lung",
+    "synonyms": [
+      "Fibrotic change",
+      "Confluent fibrosis"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0620",
+    "name": "Pulmonary oligemia",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0640",
+    "name": "Reduction of lung markings",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0650",
+    "name": "Reticulonodular opacity",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0660",
+    "name": "Surgical staple line in lung",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0670",
+    "name": "Calcification of trachea",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0680",
+    "name": "Deviation of trachea",
+    "category": "lung",
+    "synonyms": [
+      "Tracheal deviation"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0690",
+    "name": "Diverticulum of trachea",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0710",
+    "name": "Obstruction of trachea",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "critical"
+  },
+  {
+    "id": "FID0720",
+    "name": "Stenosis of trachea",
+    "category": "lung",
+    "synonyms": [
+      "Tracheal narrowing"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID0730",
+    "name": "Tracheomegaly",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0750",
+    "name": "Volume loss",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID0760",
+    "name": "Wedge resection",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0770",
+    "name": "Cystic fibrosis",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID0780",
+    "name": "Air-fluid level",
+    "category": "lung",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1000",
+    "name": "Blunting of costophrenic angle",
+    "category": "pleura",
+    "synonyms": [
+      "Blunted costophrenic angle"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1010",
+    "name": "Calcified pleural plaques",
+    "category": "pleura",
+    "synonyms": [
+      "Pleural plaque",
+      "Pleural plaques"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1030",
+    "name": "Pleural abnormality",
+    "category": "pleura",
+    "synonyms": [
+      "Pleural density"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1040",
+    "name": "Pleural effusion",
+    "category": "pleura",
+    "synonyms": [
+      "Hydrothorax",
+      "Hepatic hydrothorax",
+      "Pleural fluid",
+      "Effusions"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1060",
+    "name": "Thickening of pleura",
+    "category": "pleura",
+    "synonyms": [
+      "Pleural scarring",
+      "Pleural thickening"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1065",
+    "name": "Apical pleuroparenchymal scarring",
+    "category": "pleura",
+    "synonyms": [
+      "Biapical thickening",
+      "Biapical scarring"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1070",
+    "name": "Pneumothorax",
+    "category": "pleura",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1075",
+    "name": "Tension pneumothorax",
+    "category": "pleura",
+    "synonyms": [],
+    "actionability": "critical"
+  },
+  {
+    "id": "FID1080",
+    "name": "Pleural nodule",
+    "category": "pleura",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1085",
+    "name": "Pleural nodules",
+    "category": "pleura",
+    "synonyms": [
+      "Pleural nodularity"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1100",
+    "name": "Abnormal aortic contour",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1110",
+    "name": "Abnormal aortopulmonary window contour",
+    "category": "mediastinal",
+    "synonyms": [
+      "Loss of aortopulmonary window concavity"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1120",
+    "name": "Abnormal hilar contour",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hilar abnormality"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1130",
+    "name": "Abnormal mediastinal contour",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1140",
+    "name": "Abnormal pulmonary artery contour",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1150",
+    "name": "Calcification of aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Atherosclerotic calcification"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1160",
+    "name": "Dilation of aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Aortic dilation"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1170",
+    "name": "Aneurysm of aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Aneurysmal dilatation of the aortic arch"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1180",
+    "name": "Bulging of the aortic arch",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1190",
+    "name": "Cardiac abnormality",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1195",
+    "name": "Heart transplant",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1200",
+    "name": "Cardiomegaly",
+    "category": "mediastinal",
+    "synonyms": [
+      "Enlarged cardiac silhouette"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1210",
+    "name": "Dextrocardia",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1220",
+    "name": "Double density sign",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1230",
+    "name": "Enlargement of aortic knob",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1240",
+    "name": "Enlargement of left atrium",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1250",
+    "name": "Enlargement of left ventricle",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1260",
+    "name": "Enlargement of right atrium",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1270",
+    "name": "Enlargement of right ventricle",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1280",
+    "name": "Globular cardiac silhouette",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1290",
+    "name": "Hiatal hernia",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hiatus hernia"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1300",
+    "name": "Enlargement of hilum",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hilar fullness",
+      "Perihilar fullness"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1310",
+    "name": "Lymphadenopathy of hilum",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1330",
+    "name": "Mediastinal abnormality",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1340",
+    "name": "Mediastinal fat pad",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1360",
+    "name": "Lymphadenopathy of mediastinum",
+    "category": "mediastinal",
+    "synonyms": [
+      "Mediastinal lymphadenopathy"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1370",
+    "name": "Mediastinal shift",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1380",
+    "name": "Calcification of mitral annulus",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1390",
+    "name": "Calcification of pericardium",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1400",
+    "name": "Pericardial effusion",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1405",
+    "name": "Pericardial cyst",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1410",
+    "name": "Pericardial fat pad",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1420",
+    "name": "Pneumomediastinum",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1430",
+    "name": "Pneumopericardium",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "critical"
+  },
+  {
+    "id": "FID1440",
+    "name": "Enlargement of pulmonary artery",
+    "category": "mediastinal",
+    "synonyms": [
+      "Prominent pulmonary artery segment"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1450",
+    "name": "Splaying of carina",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1460",
+    "name": "Stable cardiac silhouette",
+    "category": "mediastinal",
+    "synonyms": [
+      "Unchanged cardiac silhouette"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1470",
+    "name": "Fullness of superior mediastinum",
+    "category": "mediastinal",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1480",
+    "name": "Tortuosity of aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Aortic tortuosity",
+      "Tortuous aorta"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1490",
+    "name": "Unfolding of aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Ectatic aorta",
+      "Unfolded aorta"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1500",
+    "name": "Widening of cardiomediastinal silhouette",
+    "category": "mediastinal",
+    "synonyms": [
+      "Widened mediastinum",
+      "Mediastinal enlargement"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1510",
+    "name": "Amelia",
+    "category": "osseous",
+    "synonyms": [
+      "Phocomelia"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1520",
+    "name": "Bifid rib",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1530",
+    "name": "Bone island",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1540",
+    "name": "Osseous lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Bone lesion"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1550",
+    "name": "Bridging rib",
+    "category": "osseous",
+    "synonyms": [
+      "Fused rib"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1560",
+    "name": "Cervical rib",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1575",
+    "name": "Costochondral calcification",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1585",
+    "name": "Fracture",
+    "category": "osseous",
+    "synonyms": [
+      "Rib fracture"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1600",
+    "name": "Compression fracture",
+    "category": "osseous",
+    "synonyms": [
+      "Vertebral compression deformity"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1605",
+    "name": "Compression fractures",
+    "category": "osseous",
+    "synonyms": [
+      "Multiple compression fractures",
+      "Multiple compression deformities",
+      "Vertebral compression deformities"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1610",
+    "name": "Costal fusion",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1615",
+    "name": "Degenerative changes",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1630",
+    "name": "DISH",
+    "category": "osseous",
+    "synonyms": [
+      "Diffuse idiopathic skeletal hyperostosis"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1640",
+    "name": "Disc space narrowing",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1650",
+    "name": "Kyphosis",
+    "category": "osseous",
+    "synonyms": [
+      "Exaggerated kyphosis",
+      "Thoracic kyphosis",
+      "Increased thoracic kyphosis"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1660",
+    "name": "Fibro-osseous lesion",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1670",
+    "name": "Osseous metastasis",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1675",
+    "name": "Osseous metastases",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1690",
+    "name": "Generalized osteosclerosis",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1710",
+    "name": "Hemivertebra",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1750",
+    "name": "Intrathoracic rib",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1770",
+    "name": "Malunion",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1780",
+    "name": "Nonunion",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1790",
+    "name": "Osseous abnormality",
+    "category": "osseous",
+    "synonyms": [
+      "Skeletal abnormality",
+      "Bony abnormality",
+      "Musculoskeletal abnormality"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1795",
+    "name": "Sclerosis",
+    "category": "osseous",
+    "synonyms": [
+      "Rib sclerosis"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1800",
+    "name": "Sclerotic osseous lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Osteoblastic lesion",
+      "Sclerotic lesion"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1810",
+    "name": "Lytic osseous lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Osteolytic lesion",
+      "Lytic rib lesion",
+      "Destructive rib lesion"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID1820",
+    "name": "Osteopenia",
+    "category": "osseous",
+    "synonyms": [
+      "Generalized osteopenia"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1830",
+    "name": "Osteophyte formation",
+    "category": "osseous",
+    "synonyms": [
+      "Spinal osteophytes"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1840",
+    "name": "Pectus carinatum",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1850",
+    "name": "Pectus excavatum",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1860",
+    "name": "Postsurgical changes of VATS",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1920",
+    "name": "Rib notching",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID1930",
+    "name": "Rib resection",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1950",
+    "name": "Rosary ribs",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1980",
+    "name": "Scoliosis",
+    "category": "osseous",
+    "synonyms": [
+      "Levoconvex curvature"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID1990",
+    "name": "Shoulder dislocation",
+    "category": "osseous",
+    "synonyms": [
+      "Humeral head dislocation"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID2010",
+    "name": "Sprengel deformity",
+    "category": "osseous",
+    "synonyms": [
+      "Elevated scapula"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2040",
+    "name": "Thoracic vertebra plana",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2050",
+    "name": "Height loss of vertebral body",
+    "category": "osseous",
+    "synonyms": [
+      "Vertebral body height loss"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2080",
+    "name": "Wedging of vertebral body",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2090",
+    "name": "Vertebral endplate irregularity",
+    "category": "osseous",
+    "synonyms": [
+      "Thoracic vertebral endplate irregularity"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2110",
+    "name": "Upper limb amputation",
+    "category": "osseous",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2120",
+    "name": "Vanishing ribs",
+    "category": "osseous",
+    "synonyms": [
+      "Rib osteolysis"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID2130",
+    "name": "Osseous deformity",
+    "category": "osseous",
+    "synonyms": [
+      "Clavicle deformity",
+      "Humeral head deformity",
+      "Rib deformity",
+      "Scapular deformity",
+      "Sternal deformity"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2140",
+    "name": "Osseous erosion",
+    "category": "osseous",
+    "synonyms": [
+      "Clavicle erosion",
+      "Humeral head erosion"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2150",
+    "name": "Osseous destruction",
+    "category": "osseous",
+    "synonyms": [
+      "Rib destruction"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID2200",
+    "name": "Breast implant",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2210",
+    "name": "Calcified axillary nodes",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2220",
+    "name": "Calcified breast implant",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2230",
+    "name": "Calcified neck nodes",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2240",
+    "name": "Mastectomy",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2250",
+    "name": "Metallic foreign body",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2260",
+    "name": "Soft tissue abnormality",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2270",
+    "name": "Soft tissue calcification",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2290",
+    "name": "Soft tissue swelling",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2300",
+    "name": "Subcutaneous emphysema",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Subcutaneous gas",
+      "Soft tissue gas"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2310",
+    "name": "Surgical clip",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2320",
+    "name": "Calcific tendinosis",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Calcific tendinitis"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2330",
+    "name": "Thyroid enlargement",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Goiter"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2335",
+    "name": "Thyroid nodule",
+    "category": "soft_tissue",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2400",
+    "name": "Abnormal anterior junction line",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2410",
+    "name": "Abnormal azygoesophageal line",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2420",
+    "name": "Abnormal left paraspinal line",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2430",
+    "name": "Abnormal left paratracheal stripe",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2440",
+    "name": "Abnormal posterior junction line",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2450",
+    "name": "Abnormal right paraspinal line",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2460",
+    "name": "Abnormal right paratracheal stripe",
+    "category": "stripes_lines",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2500",
+    "name": "Distension of bowel",
+    "category": "abdomen",
+    "synonyms": [
+      "Gas distended bowel"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2505",
+    "name": "Dilation of bowel",
+    "category": "abdomen",
+    "synonyms": [
+      "Dilated bowel"
+    ],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID2510",
+    "name": "Distension of stomach",
+    "category": "abdomen",
+    "synonyms": [
+      "Gaseous distention of the stomach"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2520",
+    "name": "Gallstones",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2530",
+    "name": "Hepatomegaly",
+    "category": "abdomen",
+    "synonyms": [
+      "Enlarged liver"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2540",
+    "name": "Kidney stone",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2550",
+    "name": "Calcification of liver",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2560",
+    "name": "Pneumatosis",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID2570",
+    "name": "Pneumobilia",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2580",
+    "name": "Pneumoperitoneum",
+    "category": "abdomen",
+    "synonyms": [
+      "Free abdominal gas",
+      "Free air",
+      "Free intraperitoneal gas"
+    ],
+    "actionability": "critical"
+  },
+  {
+    "id": "FID2590",
+    "name": "Calcification of spleen",
+    "category": "abdomen",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2600",
+    "name": "Splenomegaly",
+    "category": "abdomen",
+    "synonyms": [
+      "Enlarged spleen"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2605",
+    "name": "Abdominal clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2610",
+    "name": "Airway stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2620",
+    "name": "Anterior cervical fusion device",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2630",
+    "name": "Aortic stent",
+    "category": "devices",
+    "synonyms": [
+      "Endovascular aortic repair"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2640",
+    "name": "Axillary clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2650",
+    "name": "Biceps tenodesis anchor",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2660",
+    "name": "Biliary stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2670",
+    "name": "Breast clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2680",
+    "name": "Cardiac patch monitor",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2690",
+    "name": "Cardiac valve replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic heart valve",
+      "Prosthetic valve"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2700",
+    "name": "Central venous catheter",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2710",
+    "name": "Chest tube",
+    "category": "devices",
+    "synonyms": [
+      "Intercostal drain",
+      "Thoracostomy tube",
+      "Pigtail chest tube",
+      "Pigtail catheter",
+      "Pleural drain",
+      "Pleural tube"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2720",
+    "name": "Cholecystectomy clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2730",
+    "name": "Clamshell sternotomy wires",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2740",
+    "name": "Clavicle fixation",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2750",
+    "name": "Coronary stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2760",
+    "name": "Double balloon esophageal catheter",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2770",
+    "name": "ECMO catheter",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2780",
+    "name": "Endotracheal tube",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2790",
+    "name": "Enteric tube",
+    "category": "devices",
+    "synonyms": [
+      "Nasogastric tube",
+      "Gastric tube",
+      "NG tube"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2800",
+    "name": "Epicardial pacing wires",
+    "category": "devices",
+    "synonyms": [
+      "Epicardial pacer wires",
+      "Temporary epicardial wires"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2810",
+    "name": "Epidural catheter",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2820",
+    "name": "Esophageal tamponade tube",
+    "category": "devices",
+    "synonyms": [
+      "Sengstaken-Blakemore tube",
+      "Minnesota tube"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2830",
+    "name": "Esophagectomy with gastric pull-up",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2840",
+    "name": "Gastric band",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2850",
+    "name": "Gastrostomy tube",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2860",
+    "name": "ICD",
+    "category": "devices",
+    "synonyms": [
+      "Implantable cardioverter defibrillator",
+      "Transvenous pacemaker"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2870",
+    "name": "ICD leads",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2880",
+    "name": "Impella device",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2890",
+    "name": "Inferior vena cava filter",
+    "category": "devices",
+    "synonyms": [
+      "IVC filter"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2900",
+    "name": "Intra-aortic balloon pump",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2910",
+    "name": "Intravascular line",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2920",
+    "name": "Leadless pacemaker",
+    "category": "devices",
+    "synonyms": [
+      "Leadless cardiac pacemaker",
+      "Micra"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2930",
+    "name": "Left ventricular assist device",
+    "category": "devices",
+    "synonyms": [
+      "LVAD"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2940",
+    "name": "Loop recorder",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2950",
+    "name": "Lung sutures",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2960",
+    "name": "Mediastinal drain",
+    "category": "devices",
+    "synonyms": [
+      "Jackson-Pratt drain",
+      "JP drain",
+      "Blake tube"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID2970",
+    "name": "Mediastinal clips",
+    "category": "devices",
+    "synonyms": [
+      "Hilar clips",
+      "CABG clips"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2980",
+    "name": "Metallic markers",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID2990",
+    "name": "Mitral annuloplasty ring",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3000",
+    "name": "Monitoring leads",
+    "category": "devices",
+    "synonyms": [
+      "EKG leads",
+      "ECG leads",
+      "Telemetry leads"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3010",
+    "name": "Neck clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3020",
+    "name": "Nuss bar",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3030",
+    "name": "Pacemaker",
+    "category": "devices",
+    "synonyms": [
+      "Dual chamber pacemaker",
+      "Single chamber pacemaker",
+      "Cardiac pacemaker"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3040",
+    "name": "Pacer leads",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3050",
+    "name": "Pericardial drain",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3060",
+    "name": "Peripherally inserted central catheter",
+    "category": "devices",
+    "synonyms": [
+      "PICC"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3070",
+    "name": "PFO closure device",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3080",
+    "name": "Port catheter",
+    "category": "devices",
+    "synonyms": [
+      "Chest port",
+      "Portacath",
+      "Port-a-cath",
+      "Implanted port"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3090",
+    "name": "Pulmonary arterial catheter",
+    "category": "devices",
+    "synonyms": [
+      "Swan-Ganz catheter"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3100",
+    "name": "Retained surgical foreign body",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "significant"
+  },
+  {
+    "id": "FID3110",
+    "name": "Reverse total shoulder arthroplasty",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3120",
+    "name": "Cerclage wire",
+    "category": "devices",
+    "synonyms": [
+      "Rib cerclage wires",
+      "Cerclage wires"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3130",
+    "name": "Rib fixation",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3140",
+    "name": "Rotator cuff anchor",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3150",
+    "name": "Shoulder fixation",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3160",
+    "name": "Shoulder replacement",
+    "category": "devices",
+    "synonyms": [
+      "Total shoulder arthroplasty"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3170",
+    "name": "Spinal catheter",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3180",
+    "name": "Spinal fixation",
+    "category": "devices",
+    "synonyms": [
+      "Stabilization rods"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3190",
+    "name": "Spinal fusion",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3200",
+    "name": "Sternal sutures",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3210",
+    "name": "Sternotomy wires",
+    "category": "devices",
+    "synonyms": [
+      "Sternal wires",
+      "Median sternotomy wires"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3220",
+    "name": "Subclavian stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3230",
+    "name": "Superior vena cava stent",
+    "category": "devices",
+    "synonyms": [
+      "SVC stent"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3240",
+    "name": "Surgical clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3250",
+    "name": "Suture anchors in humeral head",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3260",
+    "name": "TAVR",
+    "category": "devices",
+    "synonyms": [
+      "Transcatheter aortic valve replacement",
+      "TAVI"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3270",
+    "name": "Temporary pacer wire",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3280",
+    "name": "Thyroid bed clips",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3290",
+    "name": "Tracheostomy tube",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3300",
+    "name": "Ventricular shunt",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3310",
+    "name": "Esophageal stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3320",
+    "name": "Aortic valve replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic aortic valve",
+      "Mechanical aortic valve",
+      "Bioprosthetic aortic valve",
+      "Aortic valve prosthesis"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3330",
+    "name": "Mitral valve replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic mitral valve",
+      "Mechanical mitral valve",
+      "Bioprosthetic mitral valve"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3340",
+    "name": "Feeding tube",
+    "category": "devices",
+    "synonyms": [
+      "Dobhoff tube",
+      "Nasoenteric tube",
+      "NJ tube",
+      "Nasojejunal tube",
+      "GJ tube",
+      "Gastrojejunostomy tube"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3350",
+    "name": "Median sternotomy",
+    "category": "devices",
+    "synonyms": [
+      "Sternotomy"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3360",
+    "name": "Thoracotomy",
+    "category": "devices",
+    "synonyms": [
+      "Lateral thoracotomy",
+      "Posterolateral thoracotomy"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3370",
+    "name": "Vertebroplasty",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3375",
+    "name": "Vertebroplasties",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3380",
+    "name": "Mitral valve clip",
+    "category": "devices",
+    "synonyms": [
+      "MitraClip"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3390",
+    "name": "Left atrial appendage ligation",
+    "category": "devices",
+    "synonyms": [
+      "AtriClip"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3400",
+    "name": "Hemodialysis catheter",
+    "category": "devices",
+    "synonyms": [
+      "Dialysis catheter",
+      "HD catheter"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3410",
+    "name": "Esophageal probe",
+    "category": "devices",
+    "synonyms": [
+      "Esophageal monitoring device",
+      "Esophageal temperature probe"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3420",
+    "name": "CABG",
+    "category": "devices",
+    "synonyms": [
+      "Coronary artery bypass graft"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3430",
+    "name": "Support device",
+    "category": "devices",
+    "synonyms": [
+      "Support lines and tubes",
+      "Support device",
+      "Support devices"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3440",
+    "name": "Tunneled catheter",
+    "category": "devices",
+    "synonyms": [
+      "Tunneled central catheter",
+      "Tunneled line"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3450",
+    "name": "Introducer sheath",
+    "category": "devices",
+    "synonyms": [
+      "Vascular sheath"
+    ],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3460",
+    "name": "Vascular stent",
+    "category": "devices",
+    "synonyms": [],
+    "actionability": "conditional"
+  },
+  {
+    "id": "FID3600",
+    "name": "AP projection",
+    "category": "technique",
+    "synonyms": [
+      "Anteroposterior projection"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3610",
+    "name": "Clipped costophrenic angles",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3620",
+    "name": "Clipped lateral soft tissues",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3630",
+    "name": "Clipped lung apices",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3640",
+    "name": "Grid artifact",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3650",
+    "name": "Image marker absent",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3660",
+    "name": "Image marker incorrect",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3670",
+    "name": "Improper centering",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3680",
+    "name": "Lateral projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3690",
+    "name": "Lungs incompletely imaged",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3700",
+    "name": "Motion artifact",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3710",
+    "name": "Oblique projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3720",
+    "name": "Obscured by external object",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3730",
+    "name": "Obscured by laterality marker",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3740",
+    "name": "Obscured by medical device",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3750",
+    "name": "Obscured by chin",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3760",
+    "name": "Overpenetrated",
+    "category": "technique",
+    "synonyms": [
+      "Overexposed"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3770",
+    "name": "PA projection",
+    "category": "technique",
+    "synonyms": [
+      "Posteroanterior projection"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3780",
+    "name": "Portable projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3790",
+    "name": "Rotated",
+    "category": "technique",
+    "synonyms": [
+      "Rotated image"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3795",
+    "name": "Lordotic positioning",
+    "category": "technique",
+    "synonyms": [
+      "Lordotic projection",
+      "Lordotic view"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3800",
+    "name": "Semi-erect projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3810",
+    "name": "Supine projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3820",
+    "name": "Underpenetrated",
+    "category": "technique",
+    "synonyms": [
+      "Underexposed"
+    ],
+    "actionability": "incidental"
+  },
+  {
+    "id": "FID3840",
+    "name": "Upright projection",
+    "category": "technique",
+    "synonyms": [],
+    "actionability": "incidental"
+  }
+]

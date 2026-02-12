@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extraction CSV Format Guide</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<div class="max-w-4xl mx-auto px-8 py-12">
+  <a href="index.html" class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
+    <i class="ti ti-arrow-left text-base"></i> Back to Annotator
+  </a>
+
+  <h1 class="text-2xl font-semibold text-gray-900 mb-2">Extraction CSV Format Guide</h1>
+  <p class="text-gray-500 mb-8">Field definitions and constraints for the CSV import format used by "Import LLM Extractions."</p>
+
+  <!-- Overview -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Overview</h2>
+    <ul class="text-sm text-gray-600 space-y-2 list-disc pl-5">
+      <li><strong>One finding per row per report.</strong> Each row represents a single extracted finding from a single report.</li>
+      <li><strong>UTF-8 CSV with header row.</strong> The first row must contain column names.</li>
+      <li><strong>Column order does not matter.</strong> Columns are mapped by name during import.</li>
+      <li>Empty cells are treated as "not provided." Values of <code class="bg-gray-100 px-1 rounded text-xs">nan</code> or <code class="bg-gray-100 px-1 rounded text-xs">NaN</code> are ignored.</li>
+    </ul>
+  </section>
+
+  <!-- Column Definitions -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-4">Column Definitions</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Column</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Type</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Required</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Valid Values / Constraints</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Example</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">record_id</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">Must match a record ID already loaded in the annotator</td>
+            <td class="px-3 py-2 text-gray-500">ARN-RSNA-CXR-0001</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">finding_name</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">Taxonomy finding name or synonym. Unmatched names are imported as custom findings.</td>
+            <td class="px-3 py-2 text-gray-500">pleural_effusion</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">presence</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Exactly one of: <code class="bg-gray-100 px-1 rounded text-xs">present</code>, <code class="bg-gray-100 px-1 rounded text-xs">absent</code>, <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code></td>
+            <td class="px-3 py-2 text-gray-500">present</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">source_text</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">The original sentence or phrase from the report that supports this finding</td>
+            <td class="px-3 py-2 text-gray-500">Small right pleural effusion.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">sentence_idx</td>
+            <td class="px-3 py-2">integer</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">1-based sentence index within the report. Used to assign findings to specific sentences.</td>
+            <td class="px-3 py-2 text-gray-500">3</td>
+          </tr>
+          <tr class="bg-gray-50">
+            <td class="px-3 py-2 font-mono text-xs font-medium" colspan="5">
+              <span class="text-gray-500 text-xs font-normal italic">Optional attribute columns below</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">laterality</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2"><code class="bg-gray-100 px-1 rounded text-xs">left</code>, <code class="bg-gray-100 px-1 rounded text-xs">right</code>, <code class="bg-gray-100 px-1 rounded text-xs">bilateral</code></td>
+            <td class="px-3 py-2 text-gray-500">right</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">temporal_status</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              <code class="bg-gray-100 px-1 rounded text-xs">unchanged</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">new</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">resolved</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">larger</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">smaller</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">increased_extent</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">decreased_extent</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">more_conspicuous</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">less_conspicuous</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">increased_complexity</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">decreased_complexity</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">unchanged</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">chronicity</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              <code class="bg-gray-100 px-1 rounded text-xs">acute</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">subacute</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">chronic</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">remote</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">evolving</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">resolving</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">healing</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">healed</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">chronic</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">size</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Numerical measurements with units <strong>only</strong> (e.g., "7 mm", "2.3 cm"). Qualitative descriptors like "small" or "large" go in <code class="bg-gray-100 px-1 rounded text-xs">severity</code>.</td>
+            <td class="px-3 py-2 text-gray-500">7 mm</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">severity</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              Intensity: <code class="bg-gray-100 px-1 rounded text-xs">mild</code>, <code class="bg-gray-100 px-1 rounded text-xs">moderate</code>, <code class="bg-gray-100 px-1 rounded text-xs">severe</code><br>
+              Extent: <code class="bg-gray-100 px-1 rounded text-xs">small</code>, <code class="bg-gray-100 px-1 rounded text-xs">medium</code>, <code class="bg-gray-100 px-1 rounded text-xs">large</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">small</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">anatomic_site</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Compound anatomic terms stay intact (e.g., "right upper lobe", "left lower lobe")</td>
+            <td class="px-3 py-2 text-gray-500">right upper lobe</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">features</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Comma-separated within the cell. Descriptive properties of the finding (e.g., cavitation, loculated, displaced).</td>
+            <td class="px-3 py-2 text-gray-500">loculated, septated</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Important Notes -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Important Notes</h2>
+    <ul class="text-sm text-gray-600 space-y-2 list-disc pl-5">
+      <li><strong>Empty cells</strong> are treated as "not provided" and will not set the attribute.</li>
+      <li><strong><code class="bg-gray-100 px-1 rounded text-xs">nan</code> / <code class="bg-gray-100 px-1 rounded text-xs">NaN</code></strong> values are automatically ignored (common pandas artifact).</li>
+      <li><strong>Column order</strong> does not matter — columns are mapped by name in the import wizard.</li>
+      <li><strong>Finding names</strong> are matched against the taxonomy (exact name or synonym). Unrecognized names are imported as custom findings with a warning.</li>
+      <li><strong>Record IDs</strong> must match reports already loaded in the annotator. Findings for unknown report IDs are skipped.</li>
+      <li><strong>Sentence index</strong> is 1-based. If omitted, findings appear in the "Unassigned" section for manual assignment.</li>
+    </ul>
+  </section>
+
+  <!-- Example CSV -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Example CSV</h2>
+    <div class="overflow-x-auto">
+      <pre class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto"><code>record_id,finding_name,presence,source_text,sentence_idx,laterality,temporal_status,chronicity,size,severity,anatomic_site,features
+ARN-RSNA-CXR-0001,pleural_effusion,present,Small right pleural effusion.,3,right,,,,,small,
+ARN-RSNA-CXR-0001,cardiomegaly,present,The heart is mildly enlarged.,2,,unchanged,,,,mild,</code></pre>
+    </div>
+  </section>
+
+  <p class="text-xs text-gray-400 text-center mt-8">
+    Attribute definitions sourced from
+    <code class="bg-gray-100 px-1 rounded">attributes.yaml</code>
+    (single source of truth).
+  </p>
+</div>
+
+</body>
+</html>
