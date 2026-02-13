@@ -157,8 +157,6 @@ Each person can annotate independently in their own browser. The tool doesn't ha
 - **Tailwind CSS** (Play CDN) — styling
 - **Tabler Icons** — iconography
 
-Zero build step. Pure static files served via GitHub Pages.
-
 ### Local Development
 
 ```bash
@@ -189,7 +187,7 @@ python3 -m http.server 8501
 
 ### Data Generation
 
-The `data/` JSON files are generated from the parent project ([report-labeler-concordance](https://github.com/hoodcm/report-labeler-concordance)). See that repo for the Python pipeline that produces taxonomy and attribute data from the [Open Imaging Finding Model (OIFM)](https://github.com/openimagingdata/findingmodels).
+The `data/` JSON files are generated externally from the [Open Imaging Finding Model (OIFM)](https://github.com/openimagingdata/findingmodels) taxonomy.
 
 </details>
 
