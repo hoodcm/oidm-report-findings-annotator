@@ -333,7 +333,7 @@
             <details class="text-sm">
               <summary class="cursor-pointer font-medium text-gray-600 hover:text-gray-800 py-1">Optional attribute columns</summary>
               <div class="grid grid-cols-2 gap-4 mt-3">
-                <template x-for="attr in ['laterality','temporal_status','chronicity','size','severity','anatomic_site','features']" :key="attr">
+                <template x-for="attr in Object.keys($store.app.attributeConfig).filter(a => a !== 'presence')" :key="attr">
                   <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1" x-text="attr.replace(/_/g, ' ')"></label>
                     <select x-model="$store.app.extractionColumnMap[attr]" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">

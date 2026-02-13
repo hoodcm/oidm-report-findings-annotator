@@ -465,12 +465,7 @@ document.addEventListener('alpine:init', () => {
       this.extractionStep = 1;
 
       // Auto-detect columns (matching old app's _COLUMN_GUESSES)
-      const guessMap = {
-        record_id: ['record_id', 'id', 'record', 'accession', 'case'],
-        finding_name: ['finding_name', 'finding', 'name', 'diagnosis', 'observation'],
-        presence: ['presence', 'status'],
-        source_text: ['source_text', 'source', 'text', 'sentence', 'context'],
-        sentence_idx: ['sentence_idx', 'sentence_index'],
+      const KNOWN_KEYWORDS = {
         laterality: ['laterality', 'lateral', 'side'],
         temporal_status: ['temporal_status', 'temporal', 'change', 'comparison'],
         chronicity: ['chronicity', 'chronic', 'acuity', 'duration'],
@@ -479,6 +474,17 @@ document.addEventListener('alpine:init', () => {
         anatomic_site: ['anatomic_site', 'site', 'location', 'anatomy'],
         features: ['features', 'feature', 'descriptor'],
       };
+      const guessMap = {
+        record_id: ['record_id', 'id', 'record', 'accession', 'case'],
+        finding_name: ['finding_name', 'finding', 'name', 'diagnosis', 'observation'],
+        presence: ['presence', 'status'],
+        source_text: ['source_text', 'source', 'text', 'sentence', 'context'],
+        sentence_idx: ['sentence_idx', 'sentence_index'],
+      };
+      for (const key of Object.keys(this.attributeConfig)) {
+        if (key === 'presence') continue; // already mapped above
+        guessMap[key] = KNOWN_KEYWORDS[key] || [key, key.replace(/_/g, ' ')];
+      }
       const map = {};
       const claimed = new Set();
       // Pass 1: exact matches only (field name === keyword)
@@ -802,14 +808,12 @@ document.addEventListener('alpine:init', () => {
     // --- Template CSV Download ---
 
     downloadExtractionTemplate() {
-      const headers = [
-        'record_id', 'finding_name', 'presence', 'source_text',
-        'laterality', 'temporal_status', 'chronicity',
-        'size', 'severity', 'anatomic_site', 'features',
-      ];
+      const attrKeys = Object.keys(this.attributeConfig).filter(a => a !== 'presence');
+      const headers = ['record_id', 'finding_name', 'presence', 'source_text', ...attrKeys];
+      const emptyAttrs = attrKeys.map(() => '');
       const rows = [
-        ['EXAMPLE-001', 'Pleural effusion', 'present', 'Small left-sided pleural effusion', 'left', '', '', '', 'small', '', ''],
-        ['EXAMPLE-001', 'Lung abnormality', 'absent', 'Lungs are clear', '', '', '', '', '', '', ''],
+        ['EXAMPLE-001', 'Pleural effusion', 'present', 'Small left-sided pleural effusion', ...emptyAttrs],
+        ['EXAMPLE-001', 'Lung abnormality', 'absent', 'Lungs are clear', ...emptyAttrs],
       ];
       const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
       this._downloadBlob(csv, 'extraction_template.csv', 'text/csv');
@@ -819,6 +823,16 @@ document.addEventListener('alpine:init', () => {
 
     downloadExtractionPrompt() {
       const findingNames = this.taxonomy.map(f => `- ${f.name}`).join('\n');
+      const attrLines = Object.entries(this.attributeConfig)
+        .filter(([key]) => key !== 'presence')
+        .map(([key, cfg]) => {
+          let desc = `- ${key}: ${cfg.description}`;
+          if (cfg.type === 'enum' && cfg.values.length) {
+            desc += ` (${cfg.values.join(', ')})`;
+          }
+          return desc;
+        })
+        .join('\n');
       const prompt = `You are a radiology report extractor. Given a chest X-ray radiology report, extract all findings mentioned in the FINDINGS section.
 
 For each finding, output one row in CSV format with these columns:
@@ -826,13 +840,7 @@ For each finding, output one row in CSV format with these columns:
 - finding_name: Use a name from the taxonomy list below. If no match, use a concise clinical name.
 - presence: One of: present, absent, indeterminate
 - source_text: The exact sentence or phrase from the report supporting this finding
-- laterality: left, right, or bilateral (if applicable)
-- temporal_status: unchanged, new, resolved, larger, smaller (if comparison to prior mentioned)
-- chronicity: acute, subacute, chronic, remote, evolving (if time course mentioned)
-- size: Measurements with units (e.g., "7 mm")
-- severity: mild, moderate, severe, small, medium, large (if degree mentioned)
-- anatomic_site: Anatomic location (e.g., "right upper lobe")
-- features: Comma-separated descriptors (e.g., "cavitation, thin-walled")
+${attrLines}
 
 TAXONOMY (use these finding names when possible):
 ${findingNames}
