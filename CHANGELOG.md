@@ -10,6 +10,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-02-13
+
+### Fixed
+
+- **Tabler Icons CDN path** — CSS file moved to `dist/` subdirectory in `@tabler/icons-webfont@3.36.1`, causing all icons to 404.
+
 ## [1.1.1] - 2026-02-13
 
 ### Fixed
