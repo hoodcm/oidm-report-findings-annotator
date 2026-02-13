@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **README rewritten for radiologist audience** — Replaced developer-focused README with plain-language documentation covering the problem, workflow, data privacy, getting started guide, annotation walkthrough, LLM-assisted workflow, FAQ, and keyboard shortcuts. Technical details moved to a collapsed section at the bottom.
+
 ## [1.1.2] - 2026-02-13
 
 ### Fixed
