@@ -53,6 +53,7 @@ document.addEventListener('alpine:init', () => {
     extractionMatchCategories: { matched: {}, fuzzy: {}, unmatched: [] },
     fuzzyAccepted: new Set(),
     extractionReportsWithExisting: [],
+    extractionReportsWithValidated: [],
 
     // Stats (populated on demand)
     _stats: null,
@@ -64,18 +65,26 @@ document.addEventListener('alpine:init', () => {
     toastMessage: '',
     toastType: 'info',
     toastVisible: false,
+    _toastTimerId: null,
+    _autoAdvanceTimerId: null,
 
     async init() {
       // Load preferences
       this.autoAdvance = localStorage.getItem('autoAdvance') !== 'false';
 
       // Load static data
-      const [taxonomyRes, attrsRes, rulesRes, normalityRes] = await Promise.all([
-        fetch('data/taxonomy.json').then(r => r.json()),
-        fetch('data/attributes.json').then(r => r.json()),
-        fetch('data/actionability-rules.json').then(r => r.json()),
-        fetch('data/normality-mappings.json').then(r => r.json()).catch(() => ({})),
-      ]);
+      let taxonomyRes, attrsRes, rulesRes, normalityRes;
+      try {
+        [taxonomyRes, attrsRes, rulesRes, normalityRes] = await Promise.all([
+          fetch('data/taxonomy.json').then(r => { if (!r.ok) throw new Error('taxonomy'); return r.json(); }),
+          fetch('data/attributes.json').then(r => { if (!r.ok) throw new Error('attributes'); return r.json(); }),
+          fetch('data/actionability-rules.json').then(r => { if (!r.ok) throw new Error('rules'); return r.json(); }),
+          fetch('data/normality-mappings.json').then(r => r.json()).catch(() => ({})),
+        ]);
+      } catch (e) {
+        this.showToast('Failed to load application data. Check your connection and refresh.', 'error');
+        return;
+      }
 
       this.taxonomy = taxonomyRes;
       this.attributeConfig = attrsRes;
@@ -123,6 +132,10 @@ document.addEventListener('alpine:init', () => {
 
     async navigateTo(idx, fromPopstate) {
       if (idx < 0 || idx >= this.recordIds.length) return;
+      if (this._autoAdvanceTimerId) {
+        clearTimeout(this._autoAdvanceTimerId);
+        this._autoAdvanceTimerId = null;
+      }
       this.currentIdx = idx;
       const recordId = this.recordIds[idx];
       this.report = await Storage.loadReport(recordId);
@@ -181,6 +194,11 @@ document.addEventListener('alpine:init', () => {
       // Update URL with sentence param
       const url = '?idx=' + this.currentIdx + '&sentence=' + idx;
       history.replaceState({ idx: this.currentIdx }, '', url);
+
+      // Scroll selected sentence into view
+      requestAnimationFrame(() => {
+        document.querySelector('[data-sentence-idx="' + idx + '"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
     },
 
     // --- Finding groups (computed) ---
@@ -324,12 +342,17 @@ document.addEventListener('alpine:init', () => {
 
       if (this.report.validated) {
         this.validatedIds.add(this.report.record_id);
+        this.validatedIds = new Set(this.validatedIds);
         this.validatedCount = this.validatedIds.size;
         if (!wasValidated && this.autoAdvance) {
-          setTimeout(() => this.goToNextUnvalidated(), 300);
+          this._autoAdvanceTimerId = setTimeout(() => {
+            this._autoAdvanceTimerId = null;
+            this.goToNextUnvalidated();
+          }, 300);
         }
       } else {
         this.validatedIds.delete(this.report.record_id);
+        this.validatedIds = new Set(this.validatedIds);
         this.validatedCount = this.validatedIds.size;
       }
     },
@@ -366,11 +389,18 @@ document.addEventListener('alpine:init', () => {
     // --- CSV Upload ---
 
     async handleReportsCsvUpload(file) {
+      if (!file) return;
       if (file.size > MAX_CSV_SIZE) {
         this.showToast('CSV file exceeds 10 MB limit', 'error');
         return;
       }
-      const result = await CsvImport.parseFile(file);
+      let result;
+      try {
+        result = await CsvImport.parseFile(file);
+      } catch (e) {
+        this.showToast('Could not parse CSV file', 'error');
+        return;
+      }
       this.uploadData = result.data;
       this.uploadFields = result.fields;
       const detected = CsvImport.detectColumns(result.fields);
@@ -392,12 +422,13 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Please select both ID and text columns', 'error');
         return;
       }
-      if (!this.validateUploadMapping()) return;
+      if (!this.validateUploadMapping()) {
+        this.showToast('Please fix validation errors before importing', 'error');
+        return;
+      }
 
-      // Clear existing data
-      await Storage.clearAllReports();
-
-      // Import reports
+      // Build reports array, then atomically replace
+      const reports = [];
       for (const row of this.uploadData) {
         const id = (row[this.uploadIdCol] || '').trim();
         const text = (row[this.uploadTextCol] || '').trim();
@@ -406,7 +437,7 @@ document.addEventListener('alpine:init', () => {
         const findingsText = Sentences.parseFindingsSection(text);
         const sentences = Sentences.splitIntoSentences(findingsText);
 
-        await Storage.saveReport({
+        reports.push({
           record_id: id,
           report_text: text,
           sentences,
@@ -419,22 +450,32 @@ document.addEventListener('alpine:init', () => {
           extraction_timestamp: null,
         });
       }
+      await Storage.atomicReplace(reports);
 
       await this._loadSession();
+      this.uploadData = null;
+      this.uploadFields = [];
+      this.uploadValidation = null;
       this.showToast(`Loaded ${this.totalCount} reports`, 'success');
     },
 
     // --- Sample data ---
 
     async loadSampleData() {
-      const res = await fetch('data/sample-reports.json');
-      const samples = await res.json();
+      let samples;
+      try {
+        const res = await fetch('data/sample-reports.json');
+        if (!res.ok) throw new Error('fetch failed');
+        samples = await res.json();
+      } catch (e) {
+        this.showToast('Failed to load sample reports', 'error');
+        return;
+      }
 
-      await Storage.clearAllReports();
-      for (const sample of samples) {
+      const reports = samples.map(sample => {
         const findingsText = Sentences.parseFindingsSection(sample.report_text);
         const sentences = Sentences.splitIntoSentences(findingsText);
-        await Storage.saveReport({
+        return {
           record_id: sample.record_id,
           report_text: sample.report_text,
           sentences,
@@ -445,8 +486,9 @@ document.addEventListener('alpine:init', () => {
           custom_findings_added: [],
           extraction_model: null,
           extraction_timestamp: null,
-        });
-      }
+        };
+      });
+      await Storage.atomicReplace(reports);
 
       await this._loadSession();
       this.showToast(`Loaded ${samples.length} sample reports`, 'success');
@@ -455,11 +497,18 @@ document.addEventListener('alpine:init', () => {
     // --- Extraction Import ---
 
     async handleExtractionCsvUpload(file) {
+      if (!file) return;
       if (file.size > MAX_CSV_SIZE) {
         this.showToast('CSV file exceeds 10 MB limit', 'error');
         return;
       }
-      const result = await CsvImport.parseFile(file);
+      let result;
+      try {
+        result = await CsvImport.parseFile(file);
+      } catch (e) {
+        this.showToast('Could not parse CSV file', 'error');
+        return;
+      }
       this.extractionData = result.data;
       this.extractionFields = result.fields;
       this.extractionStep = 1;
@@ -552,13 +601,17 @@ document.addEventListener('alpine:init', () => {
         Object.entries(fuzzy).filter(([, v]) => v.score >= 0.7).map(([k]) => k)
       );
 
-      // Check for reports with existing extractions
+      // Check for reports with existing extractions or validated findings
       const affectedIds = [...new Set(findings.map(f => f.record_id))];
       this.extractionReportsWithExisting = [];
+      this.extractionReportsWithValidated = [];
       for (const rid of affectedIds) {
         const report = await Storage.loadReport(rid);
         if (report && report.llm_extractions && report.llm_extractions.length > 0) {
           this.extractionReportsWithExisting.push(rid);
+        }
+        if (report && report.validated_findings && report.validated_findings.length > 0) {
+          this.extractionReportsWithValidated.push(rid);
         }
       }
 
@@ -647,6 +700,14 @@ document.addEventListener('alpine:init', () => {
       }
 
       await this._loadSession();
+      this.extractionData = null;
+      this.extractionFields = [];
+      this.extractionFindings = [];
+      this.extractionErrors = [];
+      this.extractionMatchCategories = { matched: {}, fuzzy: {}, unmatched: [] };
+      this.fuzzyAccepted = new Set();
+      this.extractionReportsWithExisting = [];
+      this.extractionReportsWithValidated = [];
       this.showToast(`Imported ${imported} findings into ${Object.keys(byRecord).length} reports`, 'success');
     },
 
@@ -655,26 +716,17 @@ document.addEventListener('alpine:init', () => {
     async exportSession() {
       const reports = await Storage.exportAllReports();
 
-      // Build csv_content from reports (record_id + report_text)
-      const csvRows = [['record_id', 'rad_deid_report']];
-      const reportsObj = {};
-      for (const r of reports) {
-        csvRows.push([r.record_id, (r.report_text || '').replace(/"/g, '""')]);
-        reportsObj[r.record_id] = r;
-      }
-      const csvContent = csvRows.map(row => row.map(v => `"${v}"`).join(',')).join('\n');
-
       const session = {
         version: 1,
         created_at: new Date().toISOString(),
-        csv_content: csvContent,
-        reports: reportsObj,
+        reports,
       };
       this._downloadJson(session, `annotation-session-${new Date().toISOString().slice(0, 10)}.json`);
       this.hasUnsavedChanges = false;
     },
 
     async restoreSession(file) {
+      if (!file) return;
       if (file.size > MAX_SESSION_SIZE) {
         this.showToast('Session file exceeds 50 MB limit', 'error');
         return;
@@ -704,49 +756,56 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      await Storage.clearAllReports();
-      await Storage.importReports(reportsArray);
+      // Filter out reports without a valid record_id
+      const validReports = reportsArray.filter(r => r && r.record_id);
+      const skipped = reportsArray.length - validReports.length;
+      if (validReports.length === 0) {
+        this.showToast('No valid reports found in session file', 'error');
+        return;
+      }
+
+      // Re-parse sentences for reports from older sessions that may lack them
+      for (const report of validReports) {
+        if (!report.sentences || !Array.isArray(report.sentences) || report.sentences.length === 0) {
+          if (report.report_text) {
+            const findingsText = Sentences.parseFindingsSection(report.report_text);
+            report.sentences = Sentences.splitIntoSentences(findingsText);
+          } else {
+            report.sentences = [];
+          }
+        }
+      }
+
+      // Atomic clear+import in a single transaction
+      try {
+        await Storage.atomicReplace(validReports);
+      } catch (e) {
+        this.showToast('Failed to restore session: ' + (e.message || 'unknown error'), 'error');
+        return;
+      }
+
       await this._loadSession();
-      this.showToast(`Restored ${reportsArray.length} reports`, 'success');
+      let msg = `Restored ${validReports.length} reports`;
+      if (skipped > 0) msg += ` (${skipped} invalid entries skipped)`;
+      this.showToast(msg, 'success');
     },
 
     async exportCurrentReportJson() {
       if (!this.report) return;
-      this._downloadJson(this.report, `${this.report.record_id}.json`);
+      const safeId = this.report.record_id.replace(/[^a-zA-Z0-9._-]/g, '_');
+      this._downloadJson(this.report, `${safeId}.json`);
     },
 
     async exportCurrentReportCsv() {
       if (!this.report) return;
-      const findings = this.report.validated_findings || [];
-      if (findings.length === 0) {
-        this.showToast('No validated findings to export', 'info');
+      const rows = this._buildFindingRows(this.report);
+      if (rows.length === 0) {
+        this.showToast('No findings to export', 'info');
         return;
       }
-      const rows = findings.map(f => {
-        const attrs = f.attributes || {};
-        return {
-          record_id: this.report.record_id,
-          finding_name: f.finding_name,
-          taxonomy_id: f.taxonomy_id || '',
-          source_sentence_idx: f.source_sentence_idx || '',
-          origin: f.origin || '',
-          was_modified: f.was_modified || false,
-          is_custom: f.is_custom || false,
-          presence: attrs.presence || '',
-          laterality: attrs.laterality || '',
-          temporal_status: attrs.temporal_status || '',
-          chronicity: attrs.chronicity || '',
-          severity: attrs.severity || '',
-          size: attrs.size || '',
-          anatomic_site: attrs.anatomic_site || '',
-          tip_location: attrs.tip_location || '',
-          position_status: attrs.position_status || '',
-          features: Array.isArray(attrs.features) ? attrs.features.join('; ') : (attrs.features || ''),
-          actionability: this.resolveActionability(f.taxonomy_id, attrs) || '',
-        };
-      });
       const csv = Papa.unparse(rows);
-      this._downloadBlob(csv, `${this.report.record_id}-findings.csv`, 'text/csv');
+      const safeId = this.report.record_id.replace(/[^a-zA-Z0-9._-]/g, '_');
+      this._downloadBlob(csv, `${safeId}-findings.csv`, 'text/csv');
     },
 
     async exportAllJson() {
@@ -757,40 +816,17 @@ document.addEventListener('alpine:init', () => {
     async exportAllCsv() {
       const reports = await Storage.exportAllReports();
       const rows = [];
-
       for (const report of reports) {
-        for (const f of (report.validated_findings || [])) {
-          const attrs = f.attributes || {};
-          rows.push({
-            record_id: report.record_id,
-            finding_name: f.finding_name,
-            taxonomy_id: f.taxonomy_id || '',
-            source_sentence_idx: f.source_sentence_idx || '',
-            origin: f.origin || '',
-            was_modified: f.was_modified || false,
-            is_custom: f.is_custom || false,
-            presence: attrs.presence || '',
-            laterality: attrs.laterality || '',
-            temporal_status: attrs.temporal_status || '',
-            chronicity: attrs.chronicity || '',
-            severity: attrs.severity || '',
-            size: attrs.size || '',
-            anatomic_site: attrs.anatomic_site || '',
-            tip_location: attrs.tip_location || '',
-            position_status: attrs.position_status || '',
-            features: Array.isArray(attrs.features) ? attrs.features.join('; ') : (attrs.features || ''),
-            actionability: this.resolveActionability(f.taxonomy_id, attrs) || '',
-          });
-        }
+        rows.push(...this._buildFindingRows(report));
       }
 
       if (rows.length === 0) {
-        this.showToast('No validated findings to export', 'info');
+        this.showToast('No findings to export', 'info');
         return;
       }
 
       const csv = Papa.unparse(rows);
-      this._downloadBlob(csv, 'validated-findings.csv', 'text/csv');
+      this._downloadBlob(csv, 'all-findings.csv', 'text/csv');
     },
 
     async exportTaxonomyCsv() {
@@ -815,7 +851,7 @@ document.addEventListener('alpine:init', () => {
         ['EXAMPLE-001', 'Pleural effusion', 'present', 'Small left-sided pleural effusion', ...emptyAttrs],
         ['EXAMPLE-001', 'Lung abnormality', 'absent', 'Lungs are clear', ...emptyAttrs],
       ];
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csv = Papa.unparse({ fields: headers, data: rows });
       this._downloadBlob(csv, 'extraction_template.csv', 'text/csv');
     },
 
@@ -907,6 +943,47 @@ Do not include any other text, explanation, or markdown formatting.
 
     // --- Internal helpers ---
 
+    _buildFindingRows(report) {
+      const rows = [];
+      const sentences = report.sentences || [];
+
+      // Helper to build one row
+      const makeRow = (f, status) => {
+        const attrs = f.attributes || {};
+        const idx = f.source_sentence_idx;
+        const sentenceText = (idx && idx > 0 && idx <= sentences.length)
+          ? Sentences.splitSentenceHeader(sentences[idx - 1])[1]
+          : '';
+        const row = {
+          record_id: report.record_id,
+          status,
+          finding_name: f.finding_name,
+          taxonomy_id: f.taxonomy_id || '',
+          source_sentence_idx: idx || '',
+          source_text: f.source_text || sentenceText || '',
+          origin: f.origin || '',
+          was_modified: f.was_modified || false,
+          is_custom: f.is_custom || false,
+        };
+        for (const key of Object.keys(this.attributeConfig)) {
+          const val = attrs[key];
+          row[key] = Array.isArray(val) ? val.join('; ') : (val || '');
+        }
+        row.actionability = this.resolveActionability(f.taxonomy_id, attrs) || '';
+        row.report_validated = report.validated || false;
+        row.report_validated_at = report.validated_at || '';
+        return row;
+      };
+
+      for (const f of (report.validated_findings || [])) {
+        rows.push(makeRow(f, 'validated'));
+      }
+      for (const f of (report.llm_extractions || [])) {
+        rows.push(makeRow(f, 'pending'));
+      }
+      return rows;
+    },
+
     async _saveCurrentReport() {
       if (!this.report) return;
       // Strip Alpine reactive proxies before IndexedDB storage
@@ -921,20 +998,22 @@ Do not include any other text, explanation, or markdown formatting.
     },
 
     _downloadBlob(content, filename, type) {
-      const blob = new Blob([content], { type });
+      const parts = type === 'text/csv' ? ['\uFEFF', content] : [content];
+      const blob = new Blob(parts, { type });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       a.click();
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     },
 
     showToast(message, type = 'info') {
       this.toastMessage = message;
       this.toastType = type;
       this.toastVisible = true;
-      setTimeout(() => { this.toastVisible = false; }, 3000);
+      if (this._toastTimerId) clearTimeout(this._toastTimerId);
+      this._toastTimerId = setTimeout(() => { this.toastVisible = false; }, 3000);
     },
 
     // --- Attribute helpers ---
@@ -961,6 +1040,9 @@ Do not include any other text, explanation, or markdown formatting.
 });
 
 // --- Keyboard shortcuts ---
+// Keys are chosen for ergonomic positioning on a standard keyboard, not
+// mapped to Vim or any other convention. u/i and j/k sit on the home row
+// under the right hand, arrows supplement for discoverability.
 
 document.addEventListener('keydown', (e) => {
   // Don't trigger when typing in inputs
@@ -1021,7 +1103,11 @@ document.addEventListener('keydown', (e) => {
     case 'J':
     case 'ArrowUp':
       e.preventDefault();
-      if (app.selectedSentenceIdx && app.selectedSentenceIdx > 1) {
+      if (app.selectedSentenceIdx === null) {
+        if (app.report && app.report.sentences && app.report.sentences.length > 0) {
+          app.selectSentence(app.report.sentences.length);
+        }
+      } else if (app.selectedSentenceIdx > 1) {
         app.selectSentence(app.selectedSentenceIdx - 1);
       }
       break;
@@ -1029,7 +1115,11 @@ document.addEventListener('keydown', (e) => {
     case 'K':
     case 'ArrowDown':
       e.preventDefault();
-      if (app.report && app.selectedSentenceIdx < app.report.sentences.length) {
+      if (app.selectedSentenceIdx === null) {
+        if (app.report && app.report.sentences && app.report.sentences.length > 0) {
+          app.selectSentence(1);
+        }
+      } else if (app.report && app.selectedSentenceIdx < app.report.sentences.length) {
         app.selectSentence(app.selectedSentenceIdx + 1);
       }
       break;
@@ -1039,6 +1129,7 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'Escape':
       document.getElementById('shortcuts-overlay')?.classList.add('hidden');
+      document.getElementById('stats-overlay')?.classList.add('hidden');
       break;
   }
 });

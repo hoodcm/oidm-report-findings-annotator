@@ -8,3 +8,7 @@ Thumbs.db
 *.swp
 
 
+
+# Session management docs (personal/private)
+CONTEXT.md
+TODO.md

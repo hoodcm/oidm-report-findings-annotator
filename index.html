@@ -27,7 +27,7 @@
   </script>
 
   <!-- Tabler Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.36.1/tabler-icons.min.css">
 
   <!-- Dexie.js (IndexedDB) -->
   <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
@@ -89,7 +89,7 @@
                    @dragleave.prevent="$el.classList.remove('drop-zone-active')"
                    @drop.prevent="$el.classList.remove('drop-zone-active'); $store.app.handleReportsCsvUpload($event.dataTransfer.files[0])">
               <input type="file" accept=".csv" class="absolute inset-0 opacity-0 cursor-pointer"
-                     @change="$store.app.handleReportsCsvUpload($event.target.files[0])">
+                     @change="$store.app.handleReportsCsvUpload($event.target.files[0]); $event.target.value = ''">
               <div class="pointer-events-none text-center">
                 <i class="ti ti-file-spreadsheet text-2xl text-blue-600"></i>
                 <p class="mt-2 text-sm font-medium text-blue-700">Drop a CSV here or click to browse</p>
@@ -107,7 +107,7 @@
                    @dragleave.prevent="$el.classList.remove('drop-zone-active')"
                    @drop.prevent="$el.classList.remove('drop-zone-active'); if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.dataTransfer.files[0])">
               <input type="file" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer"
-                     @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0])">
+                     @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0]); $event.target.value = ''">
               <div class="pointer-events-none text-center">
                 <i class="ti ti-folder-open text-2xl text-gray-700"></i>
                 <p class="mt-2 text-sm font-medium text-gray-800">Drop a session JSON here or click to browse</p>
@@ -161,7 +161,7 @@
               <i class="ti ti-list-details text-lg text-gray-600 mt-0.5"></i>
               <div>
                 <span class="text-sm font-medium text-gray-800">Finding Taxonomy Reference</span>
-                <p class="text-xs text-gray-500 mt-0.5">The complete list of 313 recognized finding names with categories, synonyms, and actionability tiers. Use this to map your extracted findings to standard terminology.</p>
+                <p class="text-xs text-gray-500 mt-0.5">The complete list of <span x-text="$store.app.taxonomy.length"></span> recognized finding names with categories, synonyms, and actionability tiers. Use this to map your extracted findings to standard terminology.</p>
               </div>
             </button>
           </div>
@@ -175,6 +175,14 @@
             <i class="ti ti-test-pipe text-base"></i>
             Load Sample Reports
           </button>
+        </div>
+
+        <!-- Author credit -->
+        <div class="mt-10 pt-6 border-t border-gray-200 text-center">
+          <p class="text-xs text-gray-400">
+            Created by <a href="https://github.com/hoodcm" class="text-gray-500 hover:text-gray-700 underline">Michael Hood</a>
+            · <a href="https://github.com/hoodcm/cxr-annotation-tool" class="text-gray-500 hover:text-gray-700 underline">Source on GitHub</a>
+          </p>
         </div>
       </div>
     </div>
@@ -230,7 +238,7 @@
                     <template x-for="(row, i) in $store.app.uploadData.slice(0, 3)" :key="i">
                       <tr class="border-t border-gray-100">
                         <td class="px-3 py-2 font-mono" x-text="row[$store.app.uploadIdCol]"></td>
-                        <td class="px-3 py-2 truncate max-w-xs" x-text="(row[$store.app.uploadTextCol] || '').slice(0, 100) + '...'"></td>
+                        <td class="px-3 py-2 truncate max-w-xs" x-text="((row[$store.app.uploadTextCol] || '').length > 100 ? (row[$store.app.uploadTextCol] || '').slice(0, 100) + '...' : (row[$store.app.uploadTextCol] || ''))"></td>
                       </tr>
                     </template>
                   </tbody>
@@ -400,7 +408,18 @@
                   <span x-text="$store.app.extractionReportsWithExisting.length"></span>
                   report(s) already have extractions that will be replaced.
                 </p>
-                <p class="text-xs text-amber-700 mt-1">Existing extractions and validated findings will be cleared.</p>
+              </div>
+            </template>
+
+            <!-- Validated findings warning -->
+            <template x-if="$store.app.extractionReportsWithValidated.length > 0">
+              <div class="bg-red-50 border border-red-300 rounded-lg p-4">
+                <p class="text-sm font-medium text-red-800">
+                  <i class="ti ti-alert-triangle mr-1"></i>
+                  <span x-text="$store.app.extractionReportsWithValidated.length"></span>
+                  report(s) have validated findings that will be permanently deleted.
+                </p>
+                <p class="text-xs text-red-700 mt-1">Export your session first if you want to preserve this work.</p>
               </div>
             </template>
 
@@ -578,7 +597,7 @@
                 <p class="text-sm font-medium text-gray-900" x-text="$store.app.report.record_id"></p>
                 <p class="text-xs text-gray-500 mt-0.5" x-text="($store.app.report.sentences || []).length + ' sentences'"></p>
               </div>
-              <span x-show="$store.app.report.validated"
+              <span x-show="$store.app.report.validated" x-cloak
                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                 Validated
               </span>
@@ -608,7 +627,7 @@
                 <label class="flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 rounded transition-colors cursor-pointer">
                   <i class="ti ti-folder-open text-base"></i> Load
                   <input type="file" accept=".json" class="hidden"
-                         @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0])">
+                         @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0]); $event.target.value = ''">
                 </label>
               </div>
 
@@ -616,7 +635,7 @@
               <label class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 hover:text-indigo-800 bg-indigo-100 hover:bg-indigo-200 rounded transition-colors cursor-pointer">
                 <i class="ti ti-file-import text-base"></i> Import LLM Extractions
                 <input type="file" accept=".csv" class="hidden"
-                       @change="$store.app.handleExtractionCsvUpload($event.target.files[0])">
+                       @change="$store.app.handleExtractionCsvUpload($event.target.files[0]); $event.target.value = ''">
               </label>
               <p class="text-xs text-indigo-500 -mt-1">
                 <a href="extraction-format-guide.html" target="_blank"
@@ -865,10 +884,11 @@
                             <div class="flex items-center gap-2 ml-2 flex-shrink-0">
                               <!-- Presence dropdown -->
                               <select @change="$store.app.updatePresence(finding._globalIdx, $event.target.value)"
+                                      :value="(finding.attributes||{}).presence || 'present'"
                                       class="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="present" :selected="(finding.attributes||{}).presence === 'present'">Present</option>
-                                <option value="absent" :selected="(finding.attributes||{}).presence === 'absent'">Absent</option>
-                                <option value="indeterminate" :selected="(finding.attributes||{}).presence === 'indeterminate'">Indeterminate</option>
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                                <option value="indeterminate">Indeterminate</option>
                               </select>
                               <!-- Delete button -->
                               <button @click="if(confirm('Delete this finding?')) $store.app.deleteFinding(finding._globalIdx)"
@@ -879,7 +899,7 @@
                           </div>
 
                           <!-- Attributes (collapsible) -->
-                          <details class="mt-2 text-xs" :open="$store.app.getSetAttributes(finding).length > 0">
+                          <details class="mt-2 text-xs">
                             <summary class="cursor-pointer text-gray-500 hover:text-gray-700 flex items-center gap-1"
                                      x-text="$store.app.getSetAttributes(finding).length + ' attribute' + ($store.app.getSetAttributes(finding).length !== 1 ? 's' : '')">
                             </summary>

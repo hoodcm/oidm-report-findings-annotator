@@ -50,6 +50,10 @@ The `data/` directory contains static JSON generated from the parent taxonomy pr
 | `normality-mappings.json` | Normality phrase-to-finding mappings |
 | `sample-reports.json` | 5 sample CXR reports for demo |
 
+## Author
+
+Created by [Michael Hood](https://github.com/hoodcm) as part of the [Open Imaging Data Model (OIDM)](https://github.com/openimagingdata) initiative.
+
 ## License
 
-MIT
+MIT — Copyright (c) 2026 Michael Hood

@@ -52,6 +52,13 @@ const Storage = {
 
   async getReportCount() {
     return await db.reports.count();
+  },
+
+  async atomicReplace(reports) {
+    await db.transaction('rw', db.reports, async () => {
+      await db.reports.clear();
+      await db.reports.bulkPut(reports);
+    });
   }
 };
 

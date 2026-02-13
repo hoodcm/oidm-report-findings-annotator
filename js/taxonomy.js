@@ -78,7 +78,7 @@ const Taxonomy = {
     }
 
     // Level 3: Normality mapping match
-    if (_normalityMappings && normalized in _normalityMappings) {
+    if (_normalityMappings && Object.hasOwn(_normalityMappings, normalized)) {
       const mapped = _normalityMappings[normalized];
       // mapped is either a string or an array (decomposition)
       const targetName = Array.isArray(mapped) ? mapped[0] : mapped;
@@ -134,7 +134,7 @@ const Taxonomy = {
    * Try normality mapping only (no fuzzy). Returns first matched finding or null.
    */
   matchNormality(normalized, findings) {
-    if (!_normalityMappings || !(normalized in _normalityMappings)) return null;
+    if (!_normalityMappings || !Object.hasOwn(_normalityMappings, normalized)) return null;
     const mapped = _normalityMappings[normalized];
     const targetName = (Array.isArray(mapped) ? mapped[0] : mapped).toLowerCase();
     for (const f of findings) {
