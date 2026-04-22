@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Report Annotator</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <!-- Tailwind CSS Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -144,7 +144,7 @@
               <div>
                 <span class="text-sm font-medium text-gray-800">Extraction Output Template</span>
                 <p class="text-xs text-gray-500 mt-0.5">The required CSV format your extractor should produce. Includes column definitions (record_id, finding_name, presence, source_text, and optional attribute columns) with example rows.</p>
-                <a href="extraction-format-guide.html" target="_blank"
+                <a href="pages/extraction-format-guide.html" target="_blank"
                    class="text-xs text-indigo-600 hover:text-indigo-800 underline mt-1 inline-block">Full format specification</a>
               </div>
             </button>
@@ -638,7 +638,7 @@
                        @change="$store.app.handleExtractionCsvUpload($event.target.files[0]); $event.target.value = ''">
               </label>
               <p class="text-xs text-indigo-500 -mt-1">
-                <a href="extraction-format-guide.html" target="_blank"
+                <a href="pages/extraction-format-guide.html" target="_blank"
                    class="hover:text-indigo-700 underline">Format guide</a>
                 &middot; See Home for instructions
               </p>
@@ -695,27 +695,36 @@
               <!-- Report prose -->
               <div class="text-lg max-w-none leading-relaxed text-gray-800">
                 <template x-for="(sentence, sIdx) in $store.app.report.sentences" :key="sIdx">
-                  <span @click="$store.app.selectSentence(sIdx + 1)" class="cursor-pointer">
-                    <!-- Line break before headers (not first) -->
-                    <br x-show="sIdx > 0 && Sentences.splitSentenceHeader(sentence)[0]" class="block my-2">
+                  <span>
+                    <!-- Section dividers before this sentence -->
+                    <template x-for="brk in ($store.app.report.sectionBreaks || []).filter(b => b.before === sIdx)" :key="brk.header">
+                      <span class="block mt-4 mb-1 text-sm font-semibold text-gray-500 uppercase tracking-wider"
+                            x-text="brk.header"></span>
+                    </template>
 
-                    <!-- Header prefix -->
-                    <span x-show="Sentences.splitSentenceHeader(sentence)[0]"
-                          class="text-gray-700 font-medium"
-                          x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
-                    <span x-show="Sentences.splitSentenceHeader(sentence)[0]"> </span>
+                    <span @click="$store.app.selectSentence(sIdx + 1)" class="cursor-pointer">
+                      <!-- Vertical space before headers -->
+                      <span x-show="sIdx > 0 && Sentences.splitSentenceHeader(sentence)[0]"
+                            class="block" style="margin-top: 0.75rem;"></span>
 
-                    <!-- Sentence content (highlighted) -->
-                    <span class="rounded px-0.5 transition-all"
-                          :class="{
-                            'ring-2 ring-blue-500 ring-offset-1': $store.app.selectedSentenceIdx === sIdx + 1,
-                            'bg-green-100 hover:bg-green-200': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0,
-                            'bg-amber-100 hover:bg-amber-200': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0,
-                            'hover:bg-gray-100': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending === 0,
-                          }"
-                          x-text="Sentences.splitSentenceHeader(sentence)[1]"
-                          :data-sentence-idx="sIdx + 1"></span>
-                    <span> </span>
+                      <!-- Header prefix -->
+                      <span x-show="Sentences.splitSentenceHeader(sentence)[0]"
+                            class="text-stone-900 font-bold"
+                            x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
+                      <span x-show="Sentences.splitSentenceHeader(sentence)[0]"> </span>
+
+                      <!-- Sentence content (highlighted) -->
+                      <span class="rounded px-0.5 transition-all"
+                            :class="{
+                              'ring-2 ring-blue-500 ring-offset-1': $store.app.selectedSentenceIdx === sIdx + 1,
+                              'bg-green-100 hover:bg-green-200': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0,
+                              'bg-amber-100 hover:bg-amber-200': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0,
+                              'hover:bg-gray-100': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending === 0,
+                            }"
+                            x-text="Sentences.splitSentenceHeader(sentence)[1]"
+                            :data-sentence-idx="sIdx + 1"></span>
+                      <span> </span>
+                    </span>
                   </span>
                 </template>
               </div>

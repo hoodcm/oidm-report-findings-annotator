@@ -16,3 +16,6 @@ CLAUDE.local.md
 CONTEXT.md
 TODO.md
 CHANGELOG.md
+
+# Data files
+*.csv

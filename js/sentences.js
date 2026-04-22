@@ -3,8 +3,7 @@
  * Ported from src/extractor.py and src/config.py.
  */
 
-const HEADER_RE = /^([A-Z][A-Za-z]+(?:[/\s]+[A-Z][A-Za-z]+)*:\s*)/;
-const SUBSECTION_RE = /([A-Z][A-Za-z]+(?:[/\s]+[A-Z][A-Za-z]+)*:)/;
+const HEADER_RE = /^([A-Za-z][\w ,/\-&]+?:\s*)/;
 const TEMPLATED_NONE_RE = /^[A-Za-z/\s]+:\s*none\.?\s*$/i;
 
 const Sentences = {
@@ -28,30 +27,53 @@ const Sentences = {
    * Split text into sentences for annotation.
    */
   splitIntoSentences(text) {
-    const parts = text.split(SUBSECTION_RE);
+    const lines = text.split(/\n/);
     const sentences = [];
-    let currentHeader = '';
+    const sectionBreaks = [];
+    let pendingContent = '';
 
-    for (const part of parts) {
-      const trimmed = part.trim();
-      if (!trimmed) continue;
-
-      if (new RegExp(SUBSECTION_RE.source + '$').test(trimmed)) {
-        currentHeader = trimmed;
-      } else {
-        const content = currentHeader ? `${currentHeader} ${trimmed}`.trim() : trimmed;
-        // Split on ". " followed by capital letter
-        const subSentences = content.split(/(?<=\.)\s+(?=[A-Z])/);
-        for (const s of subSentences) {
-          const st = s.trim();
-          if (st && st.toLowerCase() !== 'none') {
-            sentences.push(st);
-          }
+    const flush = (headerPrefix) => {
+      if (!pendingContent) return;
+      const subSentences = pendingContent.split(/(?<=\.)\s+(?=[A-Z])/);
+      for (let i = 0; i < subSentences.length; i++) {
+        const st = subSentences[i].trim();
+        if (st && st.toLowerCase() !== 'none') {
+          const full = (i === 0 && headerPrefix) ? `${headerPrefix} ${st}` : st;
+          sentences.push(full);
         }
-        currentHeader = '';
+      }
+      pendingContent = '';
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      // Header: short text ending with colon at start of line
+      const headerMatch = line.match(/^([A-Za-z][\w ,/\-&]+?):\s*(.*)/);
+
+      if (headerMatch && headerMatch[1].trim().length < 60) {
+        const headerLabel = headerMatch[1].trim();
+        const afterColon = (headerMatch[2] || '').trim();
+
+        if (!afterColon || /^none\.?\s*$/i.test(afterColon)) {
+          // Bare header or "Header: none" — section divider
+          flush('');
+          sectionBreaks.push({ before: sentences.length, header: headerLabel + ':' });
+        } else {
+          // Content header — prefix onto sentences
+          flush('');
+          pendingContent = afterColon;
+          flush(headerLabel + ':');
+        }
+      } else {
+        // Continuation line
+        pendingContent += (pendingContent ? ' ' : '') + line;
       }
     }
-    return sentences;
+
+    flush('');
+    return { sentences, sectionBreaks };
   },
 
   /**
