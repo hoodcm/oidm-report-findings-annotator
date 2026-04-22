@@ -435,12 +435,13 @@ document.addEventListener('alpine:init', () => {
         if (!id || !text) continue;
 
         const findingsText = Sentences.parseFindingsSection(text);
-        const sentences = Sentences.splitIntoSentences(findingsText);
+        const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
 
         reports.push({
           record_id: id,
           report_text: text,
           sentences,
+          sectionBreaks,
           llm_extractions: [],
           validated_findings: [],
           validated: false,
@@ -474,11 +475,12 @@ document.addEventListener('alpine:init', () => {
 
       const reports = samples.map(sample => {
         const findingsText = Sentences.parseFindingsSection(sample.report_text);
-        const sentences = Sentences.splitIntoSentences(findingsText);
+        const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
         return {
           record_id: sample.record_id,
           report_text: sample.report_text,
           sentences,
+          sectionBreaks,
           llm_extractions: [],
           validated_findings: [],
           validated: false,
@@ -769,10 +771,17 @@ document.addEventListener('alpine:init', () => {
         if (!report.sentences || !Array.isArray(report.sentences) || report.sentences.length === 0) {
           if (report.report_text) {
             const findingsText = Sentences.parseFindingsSection(report.report_text);
-            report.sentences = Sentences.splitIntoSentences(findingsText);
+            const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
+            report.sentences = sentences;
+            report.sectionBreaks = sectionBreaks;
           } else {
             report.sentences = [];
+            report.sectionBreaks = [];
           }
+        }
+        // Backfill sectionBreaks for old sessions that have sentences but no sectionBreaks
+        if (!report.sectionBreaks) {
+          report.sectionBreaks = [];
         }
       }
 

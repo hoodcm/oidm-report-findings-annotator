@@ -100,7 +100,7 @@ Once all sentences in a report have been reviewed, click **Validate** to mark th
 For large datasets, you can speed up annotation by having an AI or language model pre-extract findings from your reports, then import those extractions for human review.
 
 1. **Extract findings** from your reports using an LLM of your choice (the tool provides a downloadable prompt template and taxonomy reference to help)
-2. **Format the extractions** as a CSV following the [Extraction CSV Format Guide](https://hoodcm.github.io/cxr-annotation-tool/extraction-format-guide.html)
+2. **Format the extractions** as a CSV following the [Extraction CSV Format Guide](https://hoodcm.github.io/cxr-annotation-tool/pages/extraction-format-guide.html)
 3. **Import** the extraction CSV into the tool — it will automatically match extracted finding names to the taxonomy
 4. **Review** each finding: accept correct extractions, reject incorrect ones, and add any that the LLM missed
 
