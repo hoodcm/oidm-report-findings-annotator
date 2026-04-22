@@ -719,9 +719,9 @@
                       <span class="rounded px-0.5 transition-all"
                             :class="{
                               'ring-2 ring-blue-500 ring-offset-1': $store.app.selectedSentenceIdx === sIdx + 1,
-                              'bg-green-100 hover:bg-green-200': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0,
-                              'bg-amber-100 hover:bg-amber-200': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0,
-                              'hover:bg-gray-100': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending === 0,
+                              'bg-green-100 hover:bg-green-300': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0,
+                              'bg-amber-100 hover:bg-amber-300': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0,
+                              'hover:bg-gray-200': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending === 0,
                             }"
                             x-text="Sentences.splitSentenceHeader(sentence)[1]"
                             :data-sentence-idx="sIdx + 1"></span>
