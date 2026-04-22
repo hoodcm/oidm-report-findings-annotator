@@ -1,8 +1,8 @@
-# CXR Annotation Tool
+# OIDM Report Findings Annotator
 
 A free, browser-based tool for converting radiology reports into structured data. No installation, no accounts, no data leaves your computer.
 
-**Use it now:** [hoodcm.github.io/cxr-annotation-tool](https://hoodcm.github.io/cxr-annotation-tool/)
+**Use it now:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
 
 ---
 
@@ -22,7 +22,7 @@ Doing this by hand is slow. This tool makes it fast, consistent, and reviewable.
 
 ## What This Tool Does
 
-The CXR Annotation Tool provides a structured workspace for reading radiology reports sentence by sentence and tagging each sentence with the specific findings it describes.
+The OIDM Report Findings Annotator provides a structured workspace for reading radiology reports sentence by sentence and tagging each sentence with the specific findings it describes.
 
 The workflow is:
 
@@ -45,7 +45,7 @@ This means the tool is safe to use with sensitive or protected health informatio
 
 ### Step 1: Open the tool
 
-Go to **[hoodcm.github.io/cxr-annotation-tool](https://hoodcm.github.io/cxr-annotation-tool/)** in any modern web browser (Chrome, Firefox, Safari, or Edge). There is nothing to install.
+Go to **[hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)** in any modern web browser (Chrome, Firefox, Safari, or Edge). There is nothing to install.
 
 ### Step 2: Load your reports
 
@@ -100,7 +100,7 @@ Once all sentences in a report have been reviewed, click **Validate** to mark th
 For large datasets, you can speed up annotation by having an AI or language model pre-extract findings from your reports, then import those extractions for human review.
 
 1. **Extract findings** from your reports using an LLM of your choice (the tool provides a downloadable prompt template and taxonomy reference to help)
-2. **Format the extractions** as a CSV following the [Extraction CSV Format Guide](https://hoodcm.github.io/cxr-annotation-tool/pages/extraction-format-guide.html)
+2. **Format the extractions** as a CSV following the [Extraction CSV Format Guide](https://hoodcm.github.io/oidm-report-findings-annotator/pages/extraction-format-guide.html)
 3. **Import** the extraction CSV into the tool — it will automatically match extracted finding names to the taxonomy
 4. **Review** each finding: accept correct extractions, reject incorrect ones, and add any that the LLM missed
 
@@ -193,7 +193,7 @@ The `data/` JSON files are generated externally from the [Open Imaging Finding M
 
 ## Author
 
-Created by [Michael Hood](https://github.com/hoodcm) as part of the [Open Imaging Data Model (OIDM)](https://github.com/openimagingdata) initiative.
+Built by [Michael Hood, MD](https://github.com/hoodcm) · [OIDM Initiative](https://openimagingdata.org) · Mass General Brigham
 
 ## License
 
