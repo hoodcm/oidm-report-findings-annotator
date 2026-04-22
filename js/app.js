@@ -929,7 +929,7 @@ Do not include any other text, explanation, or markdown formatting.
 
     async showStats() {
       this._stats = await this.getAnnotationStats();
-      document.getElementById('stats-overlay')?.classList.remove('hidden');
+      window.dispatchEvent(new CustomEvent('open-stats'));
     },
 
     async exportStats() {
@@ -1134,11 +1134,10 @@ document.addEventListener('keydown', (e) => {
       break;
     case '?':
       e.preventDefault();
-      document.getElementById('shortcuts-overlay')?.classList.toggle('hidden');
+      window.dispatchEvent(new CustomEvent('open-shortcuts'));
       break;
     case 'Escape':
-      document.getElementById('shortcuts-overlay')?.classList.add('hidden');
-      document.getElementById('stats-overlay')?.classList.add('hidden');
+      window.dispatchEvent(new CustomEvent('close-overlays'));
       break;
   }
 });
