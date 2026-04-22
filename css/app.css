@@ -1,5 +1,10 @@
 /* Custom styles for Report Annotator (client-side) */
 
+/* Custom easing curves */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
 /* Focus states for accessibility */
 button:focus-visible,
 select:focus-visible,
@@ -8,10 +13,45 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
+/* Button press feedback — every pressable element feels responsive */
+button,
+label.cursor-pointer,
+.drop-zone {
+  transition: transform 160ms var(--ease-out);
+}
+
+button:active,
+label.cursor-pointer:active {
+  transform: scale(0.985);
+}
+
 /* Sentence selection highlight animation */
-[data-sentence-idx]:hover {
-  transform: translateX(2px);
-  transition: transform 150ms ease-out;
+@media (hover: hover) and (pointer: fine) {
+  [data-sentence-idx]:hover {
+    transform: translateX(2px);
+    transition: transform 80ms var(--ease-out);
+  }
+}
+
+/* Selected sentence: outline renders outside the box model — no layout shift.
+   Negative offset pulls it inward so it won't overlap adjacent sentence highlights. */
+.sentence-selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 0px;
+  border-radius: 3px;
+}
+
+/* Sentence spans: extend hover target to fill inter-line gaps without changing line spacing */
+[data-sentence-idx] {
+  padding-block: 3px;
+  margin-block: -3px;
+}
+
+/* Hover highlight transition — gated to pointer devices only */
+@media (hover: hover) and (pointer: fine) {
+  [data-sentence-idx] {
+    transition: background-color 100ms ease-out, box-shadow 100ms ease-out !important;
+  }
 }
 
 /* Keyboard shortcut hints */
@@ -65,10 +105,19 @@ details[open] summary::before {
   background: #94a3b8;
 }
 
-/* Disable animation when reduced motion is preferred */
+/* Reduced motion: keep opacity/color fades, suppress transform-based motion */
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* Allow opacity and color transitions (aid comprehension) */
   * {
-    transition-duration: 0.01ms !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    transition-duration: 200ms !important;
   }
 }
 
@@ -105,7 +154,11 @@ details[open] summary::before {
   animation: fadeIn 150ms ease-out;
 }
 
-/* Drop zone active state */
+/* Drop zone: smooth border/bg transition on drag-over */
+.drop-zone {
+  transition: transform 160ms var(--ease-out), border-color 150ms ease-out, background-color 150ms ease-out;
+}
+
 .drop-zone-active {
   border-color: #3b82f6 !important;
   background-color: #eff6ff !important;
