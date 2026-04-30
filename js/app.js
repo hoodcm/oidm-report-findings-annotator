@@ -17,11 +17,10 @@ document.addEventListener('alpine:init', () => {
     report: null,
     selectedSentenceIdx: null,
 
-    // Taxonomy (loaded from static JSON)
+    // Taxonomy (loaded from CSV)
     taxonomy: [],
     attributeConfig: {},
-    actionabilityLookup: {},
-    actionabilityRules: {},
+    examType: 'XR CXR',
 
     // Progress
     validatedCount: 0,
@@ -72,25 +71,32 @@ document.addEventListener('alpine:init', () => {
       // Load preferences
       this.autoAdvance = localStorage.getItem('autoAdvance') !== 'false';
 
-      // Load static data
-      let taxonomyRes, attrsRes, rulesRes, normalityRes;
+      // Load taxonomy (from IndexedDB if persisted, else default CSV)
       try {
-        [taxonomyRes, attrsRes, rulesRes, normalityRes] = await Promise.all([
-          fetch('data/taxonomy.json').then(r => { if (!r.ok) throw new Error('taxonomy'); return r.json(); }),
-          fetch('data/attributes.json').then(r => { if (!r.ok) throw new Error('attributes'); return r.json(); }),
-          fetch('data/actionability-rules.json').then(r => { if (!r.ok) throw new Error('rules'); return r.json(); }),
-          fetch('data/normality-mappings.json').then(r => r.json()).catch(() => ({})),
-        ]);
+        const stored = await Storage.loadTaxonomy();
+        if (stored) {
+          this.taxonomy = stored.findings;
+          this.examType = stored.examType;
+        } else {
+          const csvRes = await fetch('data/xr-cxr-findings-taxonomy.csv');
+          if (!csvRes.ok) throw new Error('taxonomy');
+          const csvText = await csvRes.text();
+          this.taxonomy = this._parseTaxonomyCsv(csvText);
+          this.examType = 'XR CXR';
+          await Storage.saveTaxonomy('XR CXR', 'xr-cxr-findings-taxonomy.csv', this.taxonomy, true);
+        }
+      } catch (e) {
+        this.showToast('Failed to load taxonomy data. Check your connection and refresh.', 'error');
+        return;
+      }
+
+      // Load attributes
+      try {
+        this.attributeConfig = await fetch('data/attributes.json').then(r => { if (!r.ok) throw new Error('attributes'); return r.json(); });
       } catch (e) {
         this.showToast('Failed to load application data. Check your connection and refresh.', 'error');
         return;
       }
-
-      this.taxonomy = taxonomyRes;
-      this.attributeConfig = attrsRes;
-      this.actionabilityRules = rulesRes;
-      this.actionabilityLookup = Actionability.buildLookup(this.taxonomy);
-      Taxonomy.setNormalityMappings(normalityRes);
 
       // Check for existing data in IndexedDB
       const count = await Storage.getReportCount();
@@ -195,9 +201,10 @@ document.addEventListener('alpine:init', () => {
       const url = '?idx=' + this.currentIdx + '&sentence=' + idx;
       history.replaceState({ idx: this.currentIdx }, '', url);
 
-      // Scroll selected sentence into view
+      // Scroll selected sentence into view, then focus finding search
       requestAnimationFrame(() => {
         document.querySelector('[data-sentence-idx="' + idx + '"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        document.getElementById('finding-search-input')?.focus();
       });
     },
 
@@ -377,15 +384,6 @@ document.addEventListener('alpine:init', () => {
       if (name) this.addFinding(name, true);
     },
 
-    // --- Actionability helper ---
-
-    resolveActionability(taxonomyId, attributes) {
-      return Actionability.resolve(
-        taxonomyId, attributes,
-        this.actionabilityLookup, this.actionabilityRules
-      );
-    },
-
     // --- CSV Upload ---
 
     async handleReportsCsvUpload(file) {
@@ -458,42 +456,6 @@ document.addEventListener('alpine:init', () => {
       this.uploadFields = [];
       this.uploadValidation = null;
       this.showToast(`Loaded ${this.totalCount} reports`, 'success');
-    },
-
-    // --- Sample data ---
-
-    async loadSampleData() {
-      let samples;
-      try {
-        const res = await fetch('data/sample-reports.json');
-        if (!res.ok) throw new Error('fetch failed');
-        samples = await res.json();
-      } catch (e) {
-        this.showToast('Failed to load sample reports', 'error');
-        return;
-      }
-
-      const reports = samples.map(sample => {
-        const findingsText = Sentences.parseFindingsSection(sample.report_text);
-        const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
-        return {
-          record_id: sample.record_id,
-          report_text: sample.report_text,
-          sentences,
-          sectionBreaks,
-          llm_extractions: [],
-          validated_findings: [],
-          validated: false,
-          validated_at: null,
-          custom_findings_added: [],
-          extraction_model: null,
-          extraction_timestamp: null,
-        };
-      });
-      await Storage.atomicReplace(reports);
-
-      await this._loadSession();
-      this.showToast(`Loaded ${samples.length} sample reports`, 'success');
     },
 
     // --- Extraction Import ---
@@ -582,8 +544,8 @@ document.addEventListener('alpine:init', () => {
       const unmatched = []; // names with no match
 
       for (const name of uniqueNames) {
-        // matchFindingToTaxonomy includes exact + synonym + normality (but not fuzzy alone)
-        const exactResult = this._findByExactOrNormality(name);
+        // Try exact name + synonym match (no fuzzy)
+        const exactResult = this._findByExactOrSynonym(name);
         if (exactResult) {
           matched[name] = { name: exactResult.name, id: exactResult.id };
         } else {
@@ -620,8 +582,8 @@ document.addEventListener('alpine:init', () => {
       this.extractionStep = 2;
     },
 
-    // Helper: find by exact name, synonym, or normality mapping (no fuzzy).
-    _findByExactOrNormality(findingName) {
+    // Helper: find by exact name or synonym (no fuzzy).
+    _findByExactOrSynonym(findingName) {
       const normalized = Taxonomy.normalizeName(findingName);
       const withSpaces = normalized.replace(/_/g, ' ');
 
@@ -635,8 +597,7 @@ document.addEventListener('alpine:init', () => {
           if (syn.toLowerCase() === withSpaces) return f;
         }
       }
-      // Level 3: Normality mapping
-      return Taxonomy.matchNormality(normalized, this.taxonomy);
+      return null;
     },
 
     toggleFuzzyAccept(name) {
@@ -838,16 +799,108 @@ document.addEventListener('alpine:init', () => {
       this._downloadBlob(csv, 'all-findings.csv', 'text/csv');
     },
 
-    async exportTaxonomyCsv() {
-      const rows = this.taxonomy.map(f => ({
-        id: f.id,
-        name: f.name,
-        category: f.category,
-        synonyms: f.synonyms.join(', '),
-        actionability: f.actionability,
-      }));
-      const csv = Papa.unparse(rows);
-      this._downloadBlob(csv, 'findings-taxonomy.csv', 'text/csv');
+    // --- Taxonomy Viewer ---
+
+    getTaxonomyTree() {
+      const byId = {};
+      const roots = [];
+      for (const f of this.taxonomy) {
+        byId[f.id] = { ...f, children: [] };
+      }
+      for (const f of this.taxonomy) {
+        if (f.parent_id && byId[f.parent_id]) {
+          byId[f.parent_id].children.push(byId[f.id]);
+        } else {
+          roots.push(byId[f.id]);
+        }
+      }
+      // Group roots by category
+      const byCategory = {};
+      for (const node of roots) {
+        const cat = node.category || 'other';
+        if (!byCategory[cat]) byCategory[cat] = [];
+        byCategory[cat].push(node);
+      }
+      return byCategory;
+    },
+
+    // --- Taxonomy Management ---
+
+    _parseTaxonomyCsv(csvText) {
+      const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+      return parsed.data.map(row => ({
+        id: row.id,
+        name: row.name,
+        category: row.category,
+        parent_id: row.parent_id || null,
+        synonyms: row.synonyms ? row.synonyms.split(',').map(s => s.trim()).filter(Boolean) : [],
+        finding_type: row.finding_type || null,
+      })).filter(f => f.id && f.name);
+    },
+
+    _deriveExamType(filename) {
+      return filename
+        .replace(/\.csv$/i, '')
+        .replace(/-findings-taxonomy$/i, '')
+        .split('-')
+        .map(s => s.toUpperCase() === s ? s : s.charAt(0).toUpperCase() + s.slice(1))
+        .join(' ');
+    },
+
+    humanizeName(name) {
+      if (!name) return '';
+      return name.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+    },
+
+    async handleTaxonomyUpload(file) {
+      if (!file) return;
+      if (file.size > MAX_CSV_SIZE) {
+        this.showToast('Taxonomy CSV exceeds 10 MB limit', 'error');
+        return;
+      }
+      const text = await file.text();
+      const findings = this._parseTaxonomyCsv(text);
+      if (findings.length === 0) {
+        this.showToast('No valid findings found in CSV. Expected columns: id, name, category, synonyms', 'error');
+        return;
+      }
+
+      // Warn and clear session if reports are loaded
+      const reportCount = await Storage.getReportCount();
+      if (reportCount > 0) {
+        if (!confirm(`Switching taxonomy will clear all ${reportCount} loaded reports and annotations. Export your session first if needed.\n\nContinue?`)) {
+          return;
+        }
+        await this.clearAllData();
+      }
+
+      const examType = this._deriveExamType(file.name);
+      this.taxonomy = findings;
+      this.examType = examType;
+      await Storage.saveTaxonomy(examType, file.name, findings, false);
+      this.showToast(`Loaded ${findings.length} findings for ${examType}`, 'success');
+    },
+
+    async resetTaxonomyToDefault() {
+      const reportCount = await Storage.getReportCount();
+      if (reportCount > 0) {
+        if (!confirm(`Resetting taxonomy will clear all ${reportCount} loaded reports and annotations. Export your session first if needed.\n\nContinue?`)) {
+          return;
+        }
+        await this.clearAllData();
+      }
+
+      try {
+        const csvRes = await fetch('data/xr-cxr-findings-taxonomy.csv');
+        if (!csvRes.ok) throw new Error('fetch failed');
+        const csvText = await csvRes.text();
+        this.taxonomy = this._parseTaxonomyCsv(csvText);
+        this.examType = 'XR CXR';
+        await Storage.saveTaxonomy('XR CXR', 'xr-cxr-findings-taxonomy.csv', this.taxonomy, true);
+        this.showToast('Reset to default CXR taxonomy', 'success');
+      } catch (e) {
+        this.showToast('Failed to load default taxonomy', 'error');
+      }
     },
 
     // --- Template CSV Download ---
@@ -878,7 +931,8 @@ document.addEventListener('alpine:init', () => {
           return desc;
         })
         .join('\n');
-      const prompt = `You are a radiology report extractor. Given a chest X-ray radiology report, extract all findings mentioned in the FINDINGS section.
+      const examLabel = this.examType.toLowerCase().replace(/ /g, ' ');
+      const prompt = `You are a radiology report extractor. Given a ${examLabel} radiology report, extract all findings mentioned in the FINDINGS section.
 
 For each finding, output one row in CSV format with these columns:
 - record_id: The report identifier (provided with each report)
@@ -894,7 +948,8 @@ OUTPUT FORMAT:
 Output ONLY valid CSV with the header row followed by data rows. One row per finding per report.
 Do not include any other text, explanation, or markdown formatting.
 `;
-      this._downloadBlob(prompt, 'extraction_prompt.txt', 'text/plain');
+      const filename = this.examType.toLowerCase().replace(/ /g, '_') + '_extraction_prompt.txt';
+      this._downloadBlob(prompt, filename, 'text/plain');
     },
 
     // --- Annotation Stats ---
@@ -978,7 +1033,6 @@ Do not include any other text, explanation, or markdown formatting.
           const val = attrs[key];
           row[key] = Array.isArray(val) ? val.join('; ') : (val || '');
         }
-        row.actionability = this.resolveActionability(f.taxonomy_id, attrs) || '';
         row.report_validated = report.validated || false;
         row.report_validated_at = report.validated_at || '';
         return row;
@@ -1101,6 +1155,16 @@ document.addEventListener('keydown', (e) => {
         app.rejectFinding(app.pendingFindings[0]._globalIdx);
       } else if (app.unassignedFindings.length > 0) {
         app.rejectFinding(app.unassignedFindings[0]._globalIdx);
+      }
+      break;
+    case 'd':
+    case 'D':
+      e.preventDefault();
+      if (app.validatedFindings.length > 0) {
+        const f = app.validatedFindings[0];
+        const current = (f.attributes || {}).presence || 'present';
+        const cycle = { present: 'absent', absent: 'indeterminate', indeterminate: 'present' };
+        app.updatePresence(f._globalIdx, cycle[current] || 'present');
       }
       break;
     case 'f':

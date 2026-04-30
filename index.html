@@ -45,7 +45,6 @@
   <script src="js/storage.js"></script>
   <script src="js/sentences.js"></script>
   <script src="js/taxonomy.js"></script>
-  <script src="js/actionability.js"></script>
   <script src="js/csv-import.js"></script>
   <script src="js/app.js"></script>
 
@@ -81,6 +80,30 @@
             </button>
           </div>
         </template>
+
+        <!-- Taxonomy selector -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-sm font-semibold text-gray-900">Active Taxonomy</h2>
+              <p class="text-sm text-gray-500 mt-0.5">
+                <span class="font-medium" x-text="$store.app.examType"></span>
+                &mdash; <span x-text="$store.app.taxonomy.length"></span> findings
+              </p>
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer">
+                <i class="ti ti-upload text-base"></i> Upload Taxonomy CSV
+                <input type="file" accept=".csv" class="hidden"
+                       @change="$store.app.handleTaxonomyUpload($event.target.files[0]); $event.target.value = ''">
+              </label>
+              <button @click="$store.app.resetTaxonomyToDefault()"
+                      class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Reset to Default
+              </button>
+            </div>
+          </div>
+        </div>
 
         <div class="grid grid-cols-2 gap-6">
           <!-- Upload reports CSV -->
@@ -159,25 +182,15 @@
                 <p class="text-xs text-gray-500 mt-0.5">A ready-to-use prompt you can give to any LLM to extract findings. Includes instructions for output format and the full taxonomy list.</p>
               </div>
             </button>
-            <button @click="$store.app.exportTaxonomyCsv()"
+            <button @click="window.dispatchEvent(new CustomEvent('open-taxonomy'))"
                     class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
               <i class="ti ti-list-details text-lg text-gray-600 mt-0.5"></i>
               <div>
-                <span class="text-sm font-medium text-gray-800">Finding Taxonomy Reference</span>
-                <p class="text-xs text-gray-500 mt-0.5">The complete list of <span x-text="$store.app.taxonomy.length"></span> recognized finding names with categories, synonyms, and actionability tiers. Use this to map your extracted findings to standard terminology.</p>
+                <span class="text-sm font-medium text-gray-800">Browse Finding Taxonomy</span>
+                <p class="text-xs text-gray-500 mt-0.5">Browse the <span x-text="$store.app.taxonomy.length"></span> recognized finding names organized by category with synonyms. Use this to understand the taxonomy your extractor should target.</p>
               </div>
             </button>
           </div>
-        </div>
-
-        <!-- Sample data -->
-        <div class="mt-6 text-center">
-          <p class="text-sm text-gray-400 mb-3">No data yet? Try the built-in samples.</p>
-          <button @click="$store.app.loadSampleData()"
-                  class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-blue-700 bg-white border-2 border-blue-200 hover:border-blue-400 hover:bg-blue-50 rounded-lg transition-colors">
-            <i class="ti ti-test-pipe text-base"></i>
-            Load Sample Reports
-          </button>
         </div>
 
         <!-- Author credit -->
@@ -548,6 +561,7 @@
               <i class="ti ti-home text-lg"></i>
             </button>
             <h1 class="text-sm font-semibold text-gray-500">Report Annotator</h1>
+            <span class="text-xs text-gray-400" x-text="$store.app.examType"></span>
           </div>
         </div>
 
@@ -610,8 +624,8 @@
 
           <!-- Next unvalidated button -->
           <button @click="$store.app.goToNextUnvalidated()"
-                  class="w-full px-2 py-1.5 text-xs font-medium text-blue-700 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 rounded transition-colors">
-            Next Unvalidated <kbd class="ml-1 px-1 bg-blue-200 rounded text-xs">n</kbd>
+                  class="w-full px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+            Next Unvalidated <kbd class="ml-1 px-1 bg-gray-200 rounded text-xs">n</kbd>
           </button>
         </div>
 
@@ -785,7 +799,7 @@
                         <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-gray-200">
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                              <span class="text-sm font-medium text-gray-900 truncate" x-text="finding.finding_name"></span>
+                              <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                               <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
@@ -826,7 +840,7 @@
                         <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-amber-100">
                           <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2">
-                              <span class="text-sm font-medium text-gray-900 truncate" x-text="finding.finding_name"></span>
+                              <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                               <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
@@ -879,21 +893,12 @@
                           <div class="flex items-center justify-between">
                             <div class="flex-1 min-w-0">
                               <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium text-gray-900 truncate" x-text="finding.finding_name"></span>
+                                <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                                 <span class="flex-shrink-0 flex items-center gap-1">
                                   <i x-show="finding.origin === 'llm'" class="ti ti-sparkles text-sm text-amber-500" title="LLM extracted"></i>
                                   <i x-show="finding.origin !== 'llm'" class="ti ti-user-filled text-sm text-blue-500" title="User added"></i>
                                   <span x-show="finding.was_modified && finding.origin === 'llm'" class="text-xs text-amber-500 whitespace-nowrap">edited</span>
                                 </span>
-                                <!-- Actionability badge -->
-                                <template x-if="['critical', 'significant'].includes($store.app.resolveActionability(finding.taxonomy_id, finding.attributes))">
-                                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
-                                        :class="{
-                                          'bg-red-100 text-red-800 border border-red-200': $store.app.resolveActionability(finding.taxonomy_id, finding.attributes) === 'critical',
-                                          'bg-amber-100 text-amber-800 border border-amber-200': $store.app.resolveActionability(finding.taxonomy_id, finding.attributes) === 'significant',
-                                        }"
-                                        x-text="$store.app.resolveActionability(finding.taxonomy_id, finding.attributes)"></span>
-                                </template>
                               </div>
                             </div>
                             <div class="flex items-center gap-2 ml-2 flex-shrink-0">
@@ -925,7 +930,7 @@
                                   <span class="font-semibold text-gray-600 w-28 flex-shrink-0 text-right" x-text="attr.key.replace(/_/g, ' ') + ':'"></span>
                                   <template x-if="$store.app.attributeConfig[attr.key]?.type === 'enum' && $store.app.attributeConfig[attr.key]?.values?.length > 0">
                                     <select @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
-                                            class="flex-1 border rounded px-1 py-0.5 text-xs">
+                                            class="flex-1 border rounded px-1 h-6 text-xs">
                                       <option value="">--</option>
                                       <template x-for="opt in $store.app.attributeConfig[attr.key].values" :key="opt">
                                         <option :value="opt" :selected="attr.value === opt" x-text="opt"></option>
@@ -936,10 +941,10 @@
                                     <input type="text" :value="$store.app.formatAttrValue(attr.value)"
                                            @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
                                            @keydown.enter="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value); $event.target.blur()"
-                                           class="flex-1 border rounded px-1 py-0.5 text-xs">
+                                           class="flex-1 border rounded px-1 h-6 text-xs">
                                   </template>
                                   <button @click="$store.app.removeAttribute(finding._globalIdx, attr.key)"
-                                          class="p-0.5 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" title="Remove">
+                                          class="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" title="Remove">
                                     <i class="ti ti-x text-sm"></i>
                                   </button>
                                 </div>
@@ -948,14 +953,14 @@
                               <!-- Add attribute -->
                               <template x-if="$store.app.getAvailableAttributes(finding).length > 0">
                                 <div class="flex items-center gap-2 mt-1" x-data="{ newAttrKey: '', newAttrValue: '' }">
-                                  <select x-model="newAttrKey" class="w-28 flex-shrink-0 border rounded px-1 py-0.5 text-xs text-gray-500">
+                                  <select x-model="newAttrKey" class="w-28 flex-shrink-0 border rounded px-1 h-6 text-xs text-gray-500">
                                     <option value="">+ attribute</option>
                                     <template x-for="avail in $store.app.getAvailableAttributes(finding)" :key="avail.key">
                                       <option :value="avail.key" x-text="avail.key.replace(/_/g, ' ')"></option>
                                     </template>
                                   </select>
                                   <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type === 'enum'">
-                                    <select x-model="newAttrValue" class="flex-1 border rounded px-1 py-0.5 text-xs">
+                                    <select x-model="newAttrValue" class="flex-1 border rounded px-1 h-6 text-xs">
                                       <option value="">--</option>
                                       <template x-for="opt in $store.app.attributeConfig[newAttrKey]?.values || []" :key="opt">
                                         <option :value="opt" x-text="opt"></option>
@@ -965,11 +970,11 @@
                                   <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type !== 'enum'">
                                     <input type="text" x-model="newAttrValue" placeholder="value"
                                            @keydown.enter.prevent="if(newAttrKey && newAttrValue) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, newAttrValue); newAttrKey = ''; newAttrValue = '' }"
-                                           class="flex-1 border rounded px-1 py-0.5 text-xs">
+                                           class="flex-1 border rounded px-1 h-6 text-xs">
                                   </template>
                                   <button x-show="newAttrKey && newAttrValue"
                                           @click="$store.app.updateAttribute(finding._globalIdx, newAttrKey, newAttrValue); newAttrKey = ''; newAttrValue = ''"
-                                          class="p-0.5 text-green-600 hover:text-green-800" title="Add">
+                                          class="flex items-center justify-center w-6 h-6 text-green-600 hover:text-green-800" title="Add">
                                     <i class="ti ti-plus text-sm"></i>
                                   </button>
                                 </div>
@@ -1004,7 +1009,7 @@
                              @input="$store.app.updateSearch($event.target.value)"
                              @keydown.arrow-down.prevent="$store.app.autocompleteIndex = Math.min($store.app.autocompleteIndex + 1, $store.app.searchResults.length - 1)"
                              @keydown.arrow-up.prevent="$store.app.autocompleteIndex = Math.max($store.app.autocompleteIndex - 1, 0)"
-                             @keydown.enter.prevent="if($store.app.autocompleteIndex >= 0 && $store.app.searchResults[$store.app.autocompleteIndex]) $store.app.selectSearchResult($store.app.searchResults[$store.app.autocompleteIndex])"
+                             @keydown.enter.prevent="if($store.app.searchResults.length > 0) $store.app.selectSearchResult($store.app.searchResults[Math.max(0, $store.app.autocompleteIndex)])"
                              @keydown.escape="$store.app.searchQuery = ''; $store.app.searchResults = []; $event.target.blur()"
                              placeholder="Type to search findings..."
                              autocomplete="off"
@@ -1025,7 +1030,7 @@
                         <button @click="$store.app.selectSearchResult(result)"
                                 class="finding-option w-full text-left px-3 py-2 text-sm hover:bg-blue-50 transition-colors"
                                 :class="{ 'bg-blue-100': rIdx === $store.app.autocompleteIndex }">
-                          <span class="font-medium text-gray-900" x-text="result.name"></span>
+                          <span class="font-medium text-gray-900" x-text="$store.app.humanizeName(result.name)"></span>
                           <span x-show="result.synonyms.length > 0" class="text-xs text-gray-400 ml-2"
                                 x-text="'(' + result.synonyms.slice(0, 2).join(', ') + ')'"></span>
                           <span class="text-xs text-gray-400 ml-1" x-text="'[' + result.category + ']'"></span>
@@ -1144,6 +1149,10 @@
           <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">r</kbd>
         </div>
         <div class="flex justify-between">
+          <span class="text-gray-600">Cycle presence</span>
+          <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">d</kbd>
+        </div>
+        <div class="flex justify-between">
           <span class="text-gray-600">Focus search</span>
           <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">f</kbd>
         </div>
@@ -1231,8 +1240,210 @@
   </div>
 </div>
 
+  <!-- ============================== -->
+  <!-- Taxonomy Viewer overlay       -->
+  <!-- ============================== -->
+  <div id="taxonomy-overlay" x-data="{ open: false }" x-show="open" x-cloak class="fixed inset-0 z-50"
+       @open-taxonomy.window="open = true; $nextTick(() => TaxonomyViewer.render())"
+       @close-overlays.window="open = false"
+       @keydown.escape.window="open = false">
+    <div class="absolute inset-0 bg-black/50" @click="open = false"
+         x-transition:enter="transition ease-custom duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-custom duration-150" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-full max-w-[800px] max-h-[85vh] flex flex-col mx-4"
+         x-transition:enter="transition ease-custom duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+         x-transition:leave="transition ease-custom duration-150" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
+      <div class="px-6 py-4 border-b border-gray-200 flex-shrink-0 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-semibold text-gray-900" x-text="$store.app.examType + ' Findings Taxonomy'"></h2>
+            <p class="text-xs text-gray-500" id="taxonomy-count"></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="TaxonomyViewer.expandAll()" class="text-xs text-gray-500 hover:text-gray-700 font-medium">Expand all</button>
+            <button onclick="TaxonomyViewer.collapseAll()" class="text-xs text-gray-500 hover:text-gray-700 font-medium">Collapse all</button>
+            <button @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+              <i class="ti ti-x text-lg"></i>
+            </button>
+          </div>
+        </div>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="ti ti-search text-base"></i></span>
+          <input type="text" id="taxonomy-search" placeholder="Search findings by name or synonym..."
+                 oninput="TaxonomyViewer.filter(this.value)"
+                 class="w-full text-sm border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+        </div>
+      </div>
+      <div id="taxonomy-tree" class="flex-1 overflow-y-auto px-6 py-4"></div>
+    </div>
+  </div>
+
 <!-- x-cloak: hide Alpine elements until initialized -->
-<style>[x-cloak] { display: none !important; }</style>
+<style>
+[x-cloak] { display: none !important; }
+.tax-children { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 200ms ease-out; overflow: hidden; }
+.tax-children.expanded { grid-template-rows: 1fr; }
+.tax-children > div { overflow: hidden; }
+.tax-chevron { transition: transform 150ms ease-out; }
+</style>
+
+<script>
+const TaxonomyViewer = {
+  _tree: null,
+
+  render() {
+    const app = Alpine.store('app');
+    this._tree = app.getTaxonomyTree();
+    const searchInput = document.getElementById('taxonomy-search');
+    if (searchInput) searchInput.value = '';
+    this._renderTree(this._tree, null);
+  },
+
+  _renderTree(tree, query) {
+    const app = Alpine.store('app');
+    const container = document.getElementById('taxonomy-tree');
+    const countEl = document.getElementById('taxonomy-count');
+    const categories = Object.keys(tree);
+
+    let html = '';
+    let matchCount = 0;
+    for (const cat of categories) {
+      const nodes = tree[cat];
+      let catHtml = '';
+      let catCount = 0;
+      for (const node of nodes) {
+        const result = this._renderNode(node, 0, app, query);
+        if (result.visible) {
+          catHtml += result.html;
+          catCount += result.count;
+        }
+      }
+      if (catHtml) {
+        const label = cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        html += `<div class="mb-4">`;
+        html += `<div class="text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 inline-block px-2 py-0.5 rounded mb-2">${label} <span class="font-normal text-gray-400">(${catCount})</span></div>`;
+        html += catHtml;
+        html += `</div>`;
+        matchCount += catCount;
+      }
+    }
+
+    if (query && matchCount === 0) {
+      html = `<div class="text-center py-8 text-gray-400"><p class="text-sm">No findings match "${query}"</p></div>`;
+    }
+
+    const total = query ? matchCount : app.taxonomy.length;
+    countEl.textContent = query
+      ? `${matchCount} matches found`
+      : `${app.taxonomy.length} findings across ${categories.length} categories`;
+
+    container.innerHTML = html;
+    container.onclick = (e) => {
+      const toggle = e.target.closest('[data-tax-toggle]');
+      if (toggle) this._toggle(toggle.dataset.taxToggle);
+    };
+
+    // When filtering, expand all to show results
+    if (query) this.expandAll();
+  },
+
+  filter(query) {
+    if (!this._tree) return;
+    const q = query.trim().toLowerCase();
+    this._renderTree(this._tree, q || null);
+  },
+
+  _nodeMatches(node, query) {
+    if (!query) return true;
+    if (node.name.toLowerCase().includes(query)) return true;
+    if (node.synonyms && node.synonyms.some(s => s.toLowerCase().includes(query))) return true;
+    return false;
+  },
+
+  _renderNode(node, depth, app, query) {
+    const hasChildren = node.children && node.children.length > 0;
+
+    // Check if this node or any descendant matches
+    const selfMatch = this._nodeMatches(node, query);
+    let childResults = [];
+    let childCount = 0;
+    if (hasChildren) {
+      for (const child of node.children) {
+        const r = this._renderNode(child, depth + 1, app, query);
+        if (r.visible) {
+          childResults.push(r);
+          childCount += r.count;
+        }
+      }
+    }
+
+    const visible = query ? (selfMatch || childResults.length > 0) : true;
+    if (!visible) return { html: '', visible: false, count: 0 };
+
+    const indent = depth * 20;
+    const isHighlighted = query && selfMatch;
+    let html = `<div style="padding-left:${indent}px">`;
+    html += `<div class="flex items-center gap-2 py-1 group ${isHighlighted ? 'bg-yellow-50 -mx-1 px-1 rounded' : ''}">`;
+
+    if (hasChildren) {
+      html += `<span data-tax-toggle="${node.id}" class="flex-none w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer">`;
+      html += `<i class="ti ti-chevron-right text-xs tax-chevron" data-chev="${node.id}"></i></span>`;
+    } else {
+      html += `<span class="flex-none w-4"></span>`;
+    }
+
+    const nameWeight = hasChildren && !node.finding_type ? 'font-semibold text-gray-800' : 'text-gray-700';
+    const clickAttr = hasChildren ? `data-tax-toggle="${node.id}"` : '';
+    const cursor = hasChildren ? 'cursor-pointer' : '';
+    html += `<span class="${nameWeight} text-sm ${cursor} select-none" ${clickAttr}>${app.humanizeName(node.name)}</span>`;
+
+    if (node.finding_type === 'observation') {
+      html += `<span class="text-[10px] font-medium text-blue-600 bg-blue-50 px-1 rounded">obs</span>`;
+    } else if (node.finding_type === 'diagnosis') {
+      html += `<span class="text-[10px] font-medium text-amber-600 bg-amber-50 px-1 rounded">dx</span>`;
+    }
+
+    html += `<span class="text-[10px] text-gray-400 font-mono opacity-0 group-hover:opacity-100 transition-opacity">${node.id}</span>`;
+
+    if (node.synonyms && node.synonyms.length > 0) {
+      const synList = node.synonyms.slice(0, 4).join(', ');
+      const more = node.synonyms.length > 4 ? '...' : '';
+      html += `<span class="text-[10px] text-gray-400 italic opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-[250px]">${synList}${more}</span>`;
+    }
+
+    html += `</div>`;
+
+    if (hasChildren && childResults.length > 0) {
+      html += `<div class="tax-children" data-children="${node.id}"><div>`;
+      for (const r of childResults) html += r.html;
+      html += `</div></div>`;
+    }
+
+    html += `</div>`;
+    const count = (selfMatch ? 1 : 0) + childCount;
+    return { html, visible: true, count: query ? count : 1 };
+  },
+
+  _toggle(id) {
+    const el = document.querySelector(`[data-children="${id}"]`);
+    const chev = document.querySelector(`[data-chev="${id}"]`);
+    if (el) {
+      el.classList.toggle('expanded');
+      if (chev) chev.style.transform = el.classList.contains('expanded') ? 'rotate(90deg)' : '';
+    }
+  },
+
+  expandAll() {
+    document.querySelectorAll('.tax-children').forEach(el => el.classList.add('expanded'));
+    document.querySelectorAll('.tax-chevron').forEach(el => { el.style.transform = 'rotate(90deg)'; });
+  },
+
+  collapseAll() {
+    document.querySelectorAll('.tax-children').forEach(el => el.classList.remove('expanded'));
+    document.querySelectorAll('.tax-chevron').forEach(el => { el.style.transform = ''; });
+  }
+};
+</script>
 
 </body>
 </html>
