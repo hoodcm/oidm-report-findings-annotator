@@ -90,7 +90,7 @@
     "description": "Finding-specific descriptive properties that cannot exist independently",
     "values": []
   },
-  "aggregate": {
+  "multiple": {
     "type": "boolean",
     "description": "Marks a finding row as representing a non-discrete collection or diffuse pattern rather than a single discrete instance",
     "values": []

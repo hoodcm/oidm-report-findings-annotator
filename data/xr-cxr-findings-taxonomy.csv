@@ -1,0 +1,379 @@
+id,name,category,parent_id,synonyms,finding_type
+FID0010,air_bronchogram,lung,FID0460,,observation
+FID0020,airspace_opacity,lung,FID0460,"Air space opacity,Infiltrate",observation
+FID0040,airway_abnormality,airway,,,
+FID0060,pulmonary_scarring,lung,FID0460,Scarring,observation
+FID0070,architectural_distortion,lung,FID0460,,observation
+FID0080,aspiration,lung,FID0460,,diagnosis
+FID0090,atelectasis,lung,FID0020,"Collapse,Lung collapse",observation
+FID0100,azygos_fissure,lung,FID3940,,observation
+FID0110,azygos_lobe,lung,FID3940,,observation
+FID0120,accessory_fissure,lung,FID3940,,observation
+FID0130,reticular_opacity,lung,FID0460,"Reticular opacities,Interstitial opacity,Interstitial opacities",observation
+FID0150,thickening_of_bronchial_wall,airway,FID3990,"Peribronchial cuffing,Bronchial wall thickening",observation
+FID0160,bronchiectasis,airway,FID3990,,observation
+FID0170,calcified_pulmonary_nodule,lung,FID0490,"Calcified granuloma,Calcified nodule",observation
+FID0180,cavitary_lesion,lung,FID3970,"Cavitation,Cavitary lucency",observation
+FID0190,consolidation,lung,FID0020,Airspace consolidation,observation
+FID0210,ground_glass_opacity,lung,FID0020,"Hazy opacity,Ground-glass opacification,Ground glass opacification",observation
+FID0230,diffuse_increased_lung_lucency,lung,FID0470,,observation
+FID0250,miliary_pattern,lung,FID0460,"Miliary nodules,Miliary nodularity",observation
+FID0260,elevation_of_hemidiaphragm,diaphragm,FID0315,Elevated hemidiaphragm,observation
+FID0265,depression_of_hemidiaphragm,diaphragm,FID0315,Depressed hemidiaphragm,observation
+FID0270,emphysema,lung,FID0460,Emphysematous changes,diagnosis
+FID0275,bulla,lung,FID0470,,observation
+FID0280,engorgement_of_pulmonary_vasculature,lung,FID0305,"Pulmonary vascular congestion,Pulmonary venous congestion",observation
+FID0290,blood_flow_redistribution,lung,FID0305,"Cephalization of pulmonary vasculature,Cephalization,Vascular redistribution,Pulmonary vascular redistribution",observation
+FID0300,indistinct_pulmonary_vasculature,lung,FID0305,,observation
+FID0305,pulmonary_vascular_abnormality,lung,FID0460,"Abnormal pulmonary vasculature,Pulmonary vascularity abnormality,Pulmonary vasculature abnormality",
+FID0310,eventration_of_hemidiaphragm,diaphragm,FID0315,,observation
+FID0315,diaphragmatic_abnormality,diaphragm,,Diaphragm abnormality,
+FID0320,thickening_of_fissure,pleura,FID1030,,observation
+FID0330,flattening_of_hemidiaphragm,diaphragm,FID0315,,observation
+FID0360,pulmonary_calcification,lung,FID0460,,observation
+FID0370,pulmonary_hyperinflation,lung,FID0460,"Hyperinflation of lungs,Hyperexpanded lungs,Hyperinflated lungs",observation
+FID0380,interstitial_pulmonary_edema,lung,FID0600,Pulmonary interstitial edema,diagnosis
+FID0390,thickening_of_interstitium,lung,FID0460,"Interstitial thickening,Interstitial prominence",observation
+FID0420,linear_opacity,lung,FID0460,"Bandlike opacity,Linear opacities",observation
+FID0440,lobectomy,lung,FID3950,,observation
+FID0450,low_lung_volumes,image_quality,FID4380,"Poor inspiratory volume,Decreased lung volumes,Suboptimal inspiration,Poor inspiratory effort",observation
+FID0460,lung_abnormality,lung,,,
+FID0465,osseous_lucency,osseous,FID1790,,observation
+FID0470,lung_lucency,lung,FID0460,,observation
+FID0475,pulmonary_mass,lung,FID3970,Lung mass,observation
+FID0480,mucoid_impaction,airway,FID3990,,diagnosis
+FID0485,bronchial_occlusion,airway,FID3990,"Endobronchial obstruction,Bronchial cutoff sign",observation
+FID0490,pulmonary_nodule,lung,FID3970,Lung nodule,observation
+FID0500,lung_transplant,lung,FID3950,,observation
+FID0530,nipple_shadow,soft_tissue,FID4170,,observation
+FID0550,pneumonectomy,lung,FID3950,,observation
+FID0560,pneumonia,lung,FID0460,,diagnosis
+FID0570,post_resection_volume_loss,lung,FID3950,,observation
+FID0590,pulmonary_contusion,lung,FID0460,,diagnosis
+FID0595,pulmonary_laceration,lung,FID0460,,observation
+FID0600,pulmonary_edema,lung,FID0460,Edema,diagnosis
+FID0605,alveolar_pulmonary_edema,lung,FID0600,,diagnosis
+FID0610,pulmonary_fibrosis,lung,FID0460,,diagnosis
+FID0620,pulmonary_oligemia,lung,FID0305,,diagnosis
+FID0640,reduction_of_lung_markings,lung,FID0305,,observation
+FID0650,reticulonodular_opacity,lung,FID0460,,observation
+FID0660,surgical_staple_line,lung,FID3950,,observation
+FID0670,calcification_of_trachea,airway,FID3980,,observation
+FID0680,deviation_of_trachea,airway,FID3980,Tracheal deviation,observation
+FID0690,diverticulum_of_trachea,airway,FID3980,,observation
+FID0710,obstruction_of_trachea,airway,FID3980,,observation
+FID0720,stenosis_of_trachea,airway,FID3980,Tracheal narrowing,observation
+FID0730,tracheomegaly,airway,FID3980,,observation
+FID0750,volume_loss,lung,FID0460,,observation
+FID0760,wedge_resection,lung,FID3950,,observation
+FID0770,cystic_fibrosis,lung,FID0460,,diagnosis
+FID0780,air_fluid_level,lung,FID0460,,observation
+FID1000,blunting_of_costophrenic_angle,pleura,FID1030,Blunted costophrenic angle,observation
+FID1010,calcified_pleural_plaque,pleura,FID1030,"Calcified pleural plaques,Pleural plaque,Pleural plaques",observation
+FID1030,pleural_abnormality,pleura,,,
+FID1040,pleural_effusion,pleura,FID1030,"Hydrothorax,Pleural fluid,Effusions",observation
+FID1060,thickening_of_pleura,pleura,FID1030,"Pleural scarring,Pleural thickening",observation
+FID1065,apical_pleuroparenchymal_scarring,pleura,FID1030,Apical scarring,observation
+FID1070,pneumothorax,pleura,FID1030,,observation
+FID1075,tension_pneumothorax,pleura,FID1070,,observation
+FID1080,pleural_nodule,pleura,FID1030,,observation
+FID1100,abnormal_aortic_contour,mediastinal,FID3930,,observation
+FID1110,abnormal_aortopulmonary_window_contour,mediastinal,FID1130,Loss of aortopulmonary window concavity,observation
+FID1120,abnormal_hilar_contour,mediastinal,FID1130,Hilar abnormality,observation
+FID1130,abnormal_mediastinal_contour,mediastinal,FID1330,,observation
+FID1140,abnormal_pulmonary_artery_contour,mediastinal,FID1130,,observation
+FID1150,calcification_of_aorta,mediastinal,FID3930,,observation
+FID1160,dilation_of_aorta,mediastinal,FID3930,Aortic dilation,observation
+FID1170,aneurysm_of_aorta,mediastinal,FID1160,,observation
+FID1180,bulging_of_aortic_arch,mediastinal,FID3930,,observation
+FID1190,cardiac_abnormality,cardiac,,,
+FID1195,heart_transplant,cardiac,FID4030,,observation
+FID1200,cardiomegaly,cardiac,FID1190,Enlarged cardiac silhouette,observation
+FID1210,dextrocardia,cardiac,FID4040,,observation
+FID1220,double_density_sign,cardiac,FID1190,,observation
+FID1230,enlargement_of_aortic_knob,mediastinal,FID3930,,observation
+FID1240,enlargement_of_left_atrium,cardiac,FID1190,,observation
+FID1250,enlargement_of_left_ventricle,cardiac,FID1190,,observation
+FID1260,enlargement_of_right_atrium,cardiac,FID1190,,observation
+FID1270,enlargement_of_right_ventricle,cardiac,FID1190,,observation
+FID1275,enlargement_of_left_heart_border,cardiac,FID1190,,observation
+FID1276,enlargement_of_right_heart_border,cardiac,FID1190,,observation
+FID1280,globular_cardiac_silhouette,cardiac,FID1190,,observation
+FID1290,hiatal_hernia,mediastinal,FID1330,Hiatus hernia,observation
+FID1300,enlargement_of_hilum,mediastinal,FID1330,"Hilar fullness,Perihilar fullness",observation
+FID1310,lymphadenopathy,mediastinal,FID1330,"Lymph node enlargement,Adenopathy",diagnosis
+FID1330,mediastinal_abnormality,mediastinal,,,
+FID1340,mediastinal_fat_pad,mediastinal,FID1330,,observation
+FID1370,mediastinal_shift,mediastinal,FID1330,,observation
+FID1380,calcification_of_mitral_annulus,cardiac,FID1190,,observation
+FID1390,calcification_of_pericardium,cardiac,FID3920,,observation
+FID1400,pericardial_effusion,cardiac,FID3920,,observation
+FID1405,pericardial_cyst,cardiac,FID3920,,observation
+FID1410,pericardial_fat_pad,mediastinal,FID4070,,observation
+FID1420,pneumomediastinum,mediastinal,FID1330,,observation
+FID1430,pneumopericardium,cardiac,FID3920,,observation
+FID1440,enlargement_of_pulmonary_artery,mediastinal,FID1330,Prominent pulmonary artery segment,observation
+FID1450,splaying_of_carina,mediastinal,FID1330,,observation
+FID1470,fullness_of_superior_mediastinum,mediastinal,FID1330,,observation
+FID1480,tortuosity_of_aorta,mediastinal,FID3930,"Aortic tortuosity,Tortuous aorta",observation
+FID1490,unfolding_of_aorta,mediastinal,FID3930,Unfolded aorta,observation
+FID1500,widening_of_mediastinum,mediastinal,FID1130,"Widened mediastinum,Mediastinal enlargement,Widened cardiomediastinal silhouette",observation
+FID1510,amelia,osseous,FID4090,,diagnosis
+FID1520,bifid_rib,osseous,FID4090,,observation
+FID1530,bone_island,osseous,FID1790,,observation
+FID1540,osseous_lesion,osseous,FID1790,Bone lesion,
+FID1550,bridging_rib,osseous,FID4090,Fused rib,observation
+FID1560,cervical_rib,osseous,FID4090,,observation
+FID1575,costochondral_calcification,osseous,FID1790,,observation
+FID1585,fracture,osseous,FID1790,,observation
+FID1600,compression_fracture,osseous,FID1585,Vertebral compression deformity,observation
+FID1610,costal_fusion,osseous,FID4090,,observation
+FID1615,degenerative_changes,osseous,FID1790,,diagnosis
+FID1630,diffuse_idiopathic_skeletal_hyperostosis,osseous,FID1790,DISH,diagnosis
+FID1640,disc_space_narrowing,osseous,FID1790,,observation
+FID1650,kyphosis,osseous,FID1790,,observation
+FID1660,fibro_osseous_lesion,osseous,FID1540,,observation
+FID1670,osseous_metastasis,osseous,FID1540,,diagnosis
+FID1690,generalized_osteosclerosis,osseous,FID1795,,observation
+FID1710,hemivertebra,osseous,FID4090,,observation
+FID1750,intrathoracic_rib,osseous,FID4090,,observation
+FID1770,malunion,osseous,FID1585,,observation
+FID1780,nonunion,osseous,FID1585,,observation
+FID1790,osseous_abnormality,osseous,,"Skeletal abnormality,Bony abnormality",
+FID1795,osteosclerosis,osseous,FID1790,Sclerosis,observation
+FID1800,sclerotic_osseous_lesion,osseous,FID1540,"Osteoblastic lesion,Sclerotic lesion",observation
+FID1810,lytic_osseous_lesion,osseous,FID1540,Osteolytic lesion,observation
+FID1820,osteopenia,osseous,FID1790,,observation
+FID1830,osteophyte_formation,osseous,FID1790,,observation
+FID1840,pectus_carinatum,osseous,FID2130,,observation
+FID1850,pectus_excavatum,osseous,FID2130,,observation
+FID1920,rib_notching,osseous,FID1790,,observation
+FID1930,rib_resection,osseous,FID4080,,observation
+FID1950,rosary_ribs,osseous,FID1790,,observation
+FID1980,scoliosis,osseous,FID2130,Levoconvex curvature,observation
+FID1990,shoulder_dislocation,osseous,FID1790,Humeral head dislocation,observation
+FID2010,sprengel_deformity,osseous,FID2130,Elevated scapula,diagnosis
+FID2040,thoracic_vertebra_plana,osseous,FID2130,,observation
+FID2050,height_loss_of_vertebral_body,osseous,FID2130,Vertebral body height loss,observation
+FID2080,wedging_of_vertebral_body,osseous,FID2130,,observation
+FID2090,vertebral_endplate_irregularity,osseous,FID1790,,observation
+FID2110,upper_limb_amputation,osseous,FID4080,,observation
+FID2120,rib_osteolysis,osseous,FID1790,"Vanishing ribs,Vanishing bone,Rib resorption,Progressive rib lysis",observation
+FID2130,osseous_deformity,osseous,FID1790,,
+FID2140,osseous_erosion,osseous,FID1790,,observation
+FID2150,osseous_destruction,osseous,FID1790,,observation
+FID2200,breast_implant,devices,FID4290,,observation
+FID2210,calcification_of_axillary_lymph_node,soft_tissue,FID2260,"Calcified axillary lymph node,Calcified axillary node",observation
+FID2220,calcified_breast_implant,devices,FID2200,,observation
+FID2240,mastectomy,soft_tissue,FID4180,,observation
+FID2250,metallic_foreign_body,devices,FID4240,,observation
+FID2260,soft_tissue_abnormality,soft_tissue,,,
+FID2270,soft_tissue_calcification,soft_tissue,FID2260,,observation
+FID2280,soft_tissue_lesion,soft_tissue,FID2260,Soft tissue mass,observation
+FID2290,soft_tissue_swelling,soft_tissue,FID2260,,observation
+FID2300,subcutaneous_emphysema,soft_tissue,FID2260,Subcutaneous gas,observation
+FID2310,surgical_clip,devices,FID4220,,
+FID2320,calcific_tendinosis,soft_tissue,FID2270,Calcific tendinitis,observation
+FID2330,thyroid_enlargement,mediastinal,FID4000,Goiter,observation
+FID2335,thyroid_nodule,mediastinal,FID4000,,observation
+FID2400,abnormal_anterior_junction_line,mediastinal,FID1130,,observation
+FID2410,abnormal_azygoesophageal_line,mediastinal,FID1130,,observation
+FID2420,abnormal_left_paraspinal_line,mediastinal,FID1130,,observation
+FID2430,abnormal_left_paratracheal_stripe,mediastinal,FID1130,,observation
+FID2440,abnormal_posterior_junction_line,mediastinal,FID1130,,observation
+FID2450,abnormal_right_paraspinal_line,mediastinal,FID1130,,observation
+FID2460,abnormal_right_paratracheal_stripe,mediastinal,FID1130,,observation
+FID2500,distension_of_bowel,abdomen,FID4210,Gas distended bowel,observation
+FID2505,dilation_of_bowel,abdomen,FID4210,Dilated bowel,observation
+FID2510,distension_of_stomach,abdomen,FID4210,Gaseous distention of the stomach,observation
+FID2520,gallstone,abdomen,FID4210,,observation
+FID2530,hepatomegaly,abdomen,FID4210,Enlarged liver,observation
+FID2540,kidney_stone,abdomen,FID4210,,observation
+FID2550,calcification_of_liver,abdomen,FID4210,,observation
+FID2560,pneumatosis,abdomen,FID4210,,observation
+FID2570,pneumobilia,abdomen,FID4210,,observation
+FID2580,pneumoperitoneum,abdomen,FID4210,"Free abdominal gas,Free air,Free intraperitoneal gas",observation
+FID2590,calcification_of_spleen,abdomen,FID4210,,observation
+FID2600,splenomegaly,abdomen,FID4210,Enlarged spleen,observation
+FID2605,abdominal_clip,devices,FID2310,Abdominal clips,observation
+FID2610,airway_stent,devices,FID4270,,observation
+FID2620,anterior_cervical_fusion_device,devices,FID4280,,observation
+FID2630,aortic_stent,devices,FID4260,Endovascular aortic repair,observation
+FID2640,axillary_clip,devices,FID2310,Axillary clips,observation
+FID2650,biceps_tenodesis_anchor,devices,FID4280,,observation
+FID2660,biliary_stent,devices,FID4270,,observation
+FID2670,breast_clip,devices,FID2310,Breast clips,observation
+FID2680,cardiac_patch_monitor,devices,FID4250,,observation
+FID2690,cardiac_valve_replacement,devices,FID4250,"Prosthetic heart valve,Prosthetic valve",
+FID2700,central_venous_catheter,devices,FID4310,,observation
+FID2710,chest_tube,devices,FID4320,"Intercostal drain,Thoracostomy tube,Pigtail chest tube,Pigtail catheter,Pleural drain,Pleural tube",observation
+FID2720,cholecystectomy_clip,devices,FID2310,Cholecystectomy clips,observation
+FID2730,clamshell_sternotomy,osseous,FID4080,Clamshell sternotomy wires,observation
+FID2740,clavicle_fixation,devices,FID4280,,observation
+FID2750,coronary_stent,devices,FID4260,,observation
+FID2760,double_balloon_esophageal_catheter,devices,FID4330,,observation
+FID2770,ecmo_catheter,devices,FID4310,,observation
+FID2780,endotracheal_tube,devices,FID4300,,observation
+FID2790,enteric_tube,devices,FID4330,"Nasogastric tube,Gastric tube,NG tube",observation
+FID2800,epicardial_pacing_wires,devices,FID4250,"Epicardial pacer wires,Temporary epicardial wires",observation
+FID2810,epidural_catheter,devices,FID4340,,observation
+FID2820,esophageal_tamponade_tube,devices,FID4330,"Sengstaken-Blakemore tube,Minnesota tube",observation
+FID2830,esophagectomy,mediastinal,FID4350,Esophagectomy with gastric pull up,observation
+FID2840,gastric_band,devices,FID4220,,observation
+FID2850,gastrostomy_tube,devices,FID4330,,observation
+FID2860,icd,devices,FID4250,Implantable cardioverter defibrillator,observation
+FID2870,icd_leads,devices,FID4250,,observation
+FID2880,impella_device,devices,FID4250,,observation
+FID2890,inferior_vena_cava_filter,devices,FID4260,IVC filter,observation
+FID2900,intra_aortic_balloon_pump,devices,FID4250,,observation
+FID2910,intravascular_line,devices,FID4310,,observation
+FID2920,leadless_pacemaker,devices,FID4250,"Leadless cardiac pacemaker,Micra",observation
+FID2930,left_ventricular_assist_device,devices,FID4250,LVAD,observation
+FID2940,loop_recorder,devices,FID4250,,observation
+FID2960,mediastinal_drain,devices,FID4320,"Jackson-Pratt drain,JP drain,Blake tube",observation
+FID2970,mediastinal_clip,devices,FID2310,"Mediastinal clips,Hilar clips,CABG clips",observation
+FID2980,metallic_marker,devices,FID4220,,observation
+FID2990,mitral_annuloplasty_ring,devices,FID4250,,observation
+FID3000,monitoring_leads,devices,FID4230,"EKG leads,ECG leads,Telemetry leads",observation
+FID3010,neck_clip,devices,FID2310,Neck clips,observation
+FID3020,nuss_bar,devices,FID4290,,observation
+FID3030,pacemaker,devices,FID4250,"Dual chamber pacemaker,Single chamber pacemaker,Cardiac pacemaker",observation
+FID3040,pacer_leads,devices,FID4250,,observation
+FID3050,pericardial_drain,devices,FID4320,,observation
+FID3060,peripherally_inserted_central_catheter,devices,FID4310,PICC,observation
+FID3070,pfo_closure_device,devices,FID4250,,observation
+FID3080,port_catheter,devices,FID4310,"Chest port,Portacath,Port-a-cath,Implanted port",observation
+FID3090,pulmonary_arterial_catheter,devices,FID4310,Swan-Ganz catheter,observation
+FID3100,retained_surgical_foreign_body,devices,FID4240,,observation
+FID3110,reverse_total_shoulder_arthroplasty,devices,FID4280,,observation
+FID3120,cerclage_wire,devices,FID4280,"Rib cerclage wires,Cerclage wires",observation
+FID3130,rib_fixation,devices,FID4280,Chest wall fixation,observation
+FID3140,rotator_cuff_anchor,devices,FID4280,,observation
+FID3150,shoulder_fixation,devices,FID4280,,observation
+FID3160,shoulder_replacement,devices,FID4280,Total shoulder arthroplasty,observation
+FID3170,spinal_catheter,devices,FID4340,,observation
+FID3180,spinal_fixation,devices,FID4280,Stabilization rods,observation
+FID3190,spinal_fusion,osseous,FID4080,,observation
+FID3200,sternal_sutures,devices,FID4280,,observation
+FID3220,subclavian_stent,devices,FID4260,,observation
+FID3230,superior_vena_cava_stent,devices,FID4260,SVC stent,observation
+FID3250,suture_anchors_in_humeral_head,devices,FID4280,,observation
+FID3260,tavr,devices,FID3320,"Transcatheter aortic valve replacement,TAVI",observation
+FID3270,temporary_pacer_wire,devices,FID4250,,observation
+FID3280,thyroid_bed_clip,devices,FID2310,Thyroid bed clips,observation
+FID3290,tracheostomy_tube,devices,FID4300,,observation
+FID3300,ventricular_shunt,devices,FID4320,,observation
+FID3310,esophageal_stent,devices,FID4270,,observation
+FID3320,aortic_valve_replacement,devices,FID2690,"Prosthetic aortic valve,Mechanical aortic valve,Bioprosthetic aortic valve,Aortic valve prosthesis",observation
+FID3330,mitral_valve_replacement,devices,FID2690,"Prosthetic mitral valve,Mechanical mitral valve,Bioprosthetic mitral valve",observation
+FID3340,feeding_tube,devices,FID2790,"Dobhoff tube,Nasoenteric tube,NJ tube,Nasojejunal tube,GJ tube,Gastrojejunostomy tube",observation
+FID3350,median_sternotomy,osseous,FID4080,"Sternotomy,Sternal wires,Median sternotomy wires",observation
+FID3360,thoracotomy,osseous,FID4080,"Lateral thoracotomy,Posterolateral thoracotomy",observation
+FID3370,vertebroplasty,osseous,FID4080,,observation
+FID3380,mitral_valve_clip,devices,FID4250,MitraClip,observation
+FID3390,left_atrial_appendage_ligation,devices,FID4250,AtriClip,observation
+FID3400,hemodialysis_catheter,devices,FID4310,"Dialysis catheter,HD catheter",observation
+FID3410,esophageal_probe,devices,FID4330,"Esophageal monitoring device,Esophageal temperature probe",observation
+FID3420,coronary_artery_bypass_graft,cardiac,FID4030,CABG,observation
+FID3430,support_device,devices,FID4230,"Support lines and tubes,Support device,Support devices",observation
+FID3440,tunneled_catheter,devices,FID4310,"Tunneled central catheter,Tunneled line",observation
+FID3450,introducer_sheath,devices,FID4260,Vascular sheath,observation
+FID3460,vascular_stent,devices,FID4260,,observation
+FID3610,clipped_costophrenic_angle,image_quality,FID4370,,observation
+FID3620,clipped_lateral_soft_tissue,image_quality,FID4370,,observation
+FID3630,clipped_lung_apex,image_quality,FID4370,,observation
+FID3640,grid_artifact,image_quality,FID4400,,observation
+FID3650,image_marker_absent,image_quality,FID4420,,observation
+FID3660,image_marker_incorrect,image_quality,FID4420,,observation
+FID3670,improper_centering,image_quality,FID4370,,observation
+FID3690,lungs_incompletely_imaged,image_quality,FID4370,,observation
+FID3700,motion_artifact,image_quality,FID4400,,observation
+FID3720,obscured_by_external_object,image_quality,FID4410,,observation
+FID3730,obscured_by_laterality_marker,image_quality,FID4410,,observation
+FID3740,obscured_by_medical_device,image_quality,FID4410,,observation
+FID3750,obscured_by_chin,image_quality,FID4410,,observation
+FID3760,overpenetration,image_quality,FID4360,"Overpenetrated,Overexposed",observation
+FID3790,rotation,image_quality,FID4380,"Rotated,Rotated image",observation
+FID3795,lordotic_positioning,image_quality,FID4380,"Lordotic projection,Lordotic view",observation
+FID3820,underpenetration,image_quality,FID4360,"Underpenetrated,Underexposed",observation
+FID3850,obscuration_of_hemidiaphragm,diaphragm,FID0315,,observation
+FID3860,calcification_of_hilar_lymph_node,mediastinal,FID1330,,observation
+FID3870,resection_of_clavicle,osseous,FID4080,,observation
+FID3880,pectus_excavatum_repair,osseous,FID4080,,observation
+FID3890,sternal_fixation,devices,FID4280,,observation
+FID3900,tricuspid_annuloplasty_ring,devices,FID4250,,observation
+FID3910,widening_of_rib_interspaces,osseous,FID1790,,observation
+FID3920,pericardial_abnormality,cardiac,FID1190,,
+FID3930,aortic_abnormality,mediastinal,FID1330,,
+FID3940,lung_anatomic_variant,lung,,,
+FID3950,lung_postsurgical_change,lung,,,
+FID3960,linear_atelectasis,lung,FID0090,"Plate-like atelectasis,Discoid atelectasis,Band atelectasis",observation
+FID3970,pulmonary_lesion,lung,FID0460,Lung lesion,
+FID3980,tracheal_abnormality,airway,FID0040,,
+FID3990,bronchial_abnormality,airway,FID0040,,
+FID4000,thyroid_abnormality,mediastinal,FID1330,,
+FID4010,bronchocele,airway,FID3990,,observation
+FID4020,saber_sheath_trachea,airway,FID3980,,observation
+FID4030,cardiac_postsurgical_change,cardiac,,,
+FID4040,cardiac_anatomic_variant,cardiac,,,
+FID4050,calcification_of_aortic_valve,cardiac,FID1190,,observation
+FID4060,calcification_of_coronary_artery,cardiac,FID1190,,observation
+FID4070,mediastinal_anatomic_variant,mediastinal,,,
+FID4080,osseous_postsurgical_change,osseous,,,
+FID4090,osseous_anatomic_variant,osseous,,,
+FID4100,periosteal_reaction,osseous,FID1790,,observation
+FID4110,pathologic_fracture,osseous,FID1585,,observation
+FID4120,paget_disease,osseous,FID1790,,diagnosis
+FID4130,osteonecrosis,osseous,FID1790,"Avascular necrosis,AVN",observation
+FID4140,bone_infarct,osseous,FID1790,,observation
+FID4150,h_shaped_vertebra,osseous,FID1790,"Fish mouth vertebra,H-shaped vertebrae",observation
+FID4160,osteomyelitis,osseous,FID1790,,diagnosis
+FID4170,soft_tissue_anatomic_variant,soft_tissue,,,
+FID4180,soft_tissue_postsurgical_change,soft_tissue,,,
+FID4190,absence_of_pectoral_muscle,soft_tissue,FID2260,,observation
+FID4200,skin_fold,soft_tissue,FID4170,,observation
+FID4210,abdominal_abnormality,abdomen,,,
+FID4220,hardware,devices,,,
+FID4230,support_apparatus,devices,,,
+FID4240,foreign_body,devices,,,
+FID4250,cardiac_hardware,devices,FID4220,,
+FID4260,endovascular_hardware,devices,FID4220,,
+FID4270,luminal_stent,devices,FID4220,,
+FID4280,orthopedic_hardware,devices,FID4220,,
+FID4290,chest_wall_hardware,devices,FID4220,,
+FID4300,airway_apparatus,devices,FID4230,,
+FID4310,vascular_access,devices,FID4230,,
+FID4320,drain,devices,FID4230,,
+FID4330,enteric_apparatus,devices,FID4230,,
+FID4340,spinal_apparatus,devices,FID4230,,
+FID4350,mediastinal_postsurgical_change,mediastinal,,,
+FID4355,image_quality_issue,image_quality,,,
+FID4360,exposure_issue,image_quality,FID4355,,
+FID4370,field_of_view_issue,image_quality,FID4355,,
+FID4380,patient_positioning_issue,image_quality,FID4355,,
+FID4400,artifact,image_quality,FID4355,,
+FID4410,obscured_anatomy,image_quality,FID4355,,
+FID4420,image_marker_issue,image_quality,FID4355,,
+FID4430,honeycombing,lung,FID0460,"Stacked cysts,Microcystic lung",observation
+FID4440,septal_line,lung,FID0460,Septal thickening line,observation
+FID4450,kerley_a_line,lung,FID4440,"Kerley A line,Kerley A lines",observation
+FID4460,kerley_b_line,lung,FID4440,"Kerley B line,Kerley B lines",observation
+FID4470,apical_cap,pleura,FID1030,Apical pleural cap,observation
+FID4480,juxtaphrenic_peak,lung,FID0460,Juxtaphrenic peak sign,observation
+FID4490,mycetoma,lung,FID3970,Fungus ball,diagnosis
+FID4500,broncholith,airway,FID3990,,observation
+FID4510,pulmonary_infarct,lung,FID0460,Pulmonary infarction,diagnosis
+FID4520,pneumatocele,lung,FID0470,,observation
+FID4530,silhouette_sign,lung,FID0460,Silhouetting,observation
+FID4540,air_crescent_sign,lung,FID0180,Air crescent,observation
+FID4550,hampton_hump,lung,FID0020,Hampton's hump,observation
+FID4560,westermark_sign,lung,FID0640,Westermark's sign,observation
+FID4570,golden_s_sign,lung,FID0090,S sign of Golden,observation
+FID4580,luftsichel_sign,lung,FID0090,Luftsichel,observation
+FID4590,deep_sulcus_sign,pleura,FID1070,Deep sulcus,observation
+FID4600,hilum_overlay_sign,mediastinal,FID1330,Hilar overlay sign,observation
+FID4610,spine_sign,lung,FID0460,,observation
+FID4620,scimitar_sign,lung,FID0305,Scimitar,observation
+FID4630,scimitar_syndrome,lung,FID0305,"Partial anomalous pulmonary venous return,PAPVR",diagnosis
+FID4640,parenchymal_band,lung,FID0420,,observation
+FID4650,pneumonitis,lung,FID0460,,diagnosis

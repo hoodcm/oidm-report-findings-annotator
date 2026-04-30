@@ -17,5 +17,7 @@ CONTEXT.md
 TODO.md
 CHANGELOG.md
 
-# Data files
+# Data files (user uploads)
 *.csv
+# But track the default taxonomy
+!data/xr-cxr-findings-taxonomy.csv

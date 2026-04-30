@@ -8,6 +8,11 @@ db.version(1).stores({
   reports: 'record_id'
 });
 
+db.version(2).stores({
+  reports: 'record_id',
+  taxonomyMeta: 'id'
+});
+
 const Storage = {
   async saveReport(report) {
     await db.reports.put(report);
@@ -59,6 +64,27 @@ const Storage = {
       await db.reports.clear();
       await db.reports.bulkPut(reports);
     });
+  },
+
+  // --- Taxonomy persistence ---
+
+  async saveTaxonomy(examType, filename, findings, isDefault) {
+    await db.taxonomyMeta.put({
+      id: 1,
+      examType,
+      sourceFilename: filename,
+      isDefault,
+      findings,
+      loadedAt: Date.now()
+    });
+  },
+
+  async loadTaxonomy() {
+    return await db.taxonomyMeta.get(1) || null;
+  },
+
+  async clearTaxonomy() {
+    await db.taxonomyMeta.clear();
   }
 };
 

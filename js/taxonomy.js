@@ -9,25 +9,16 @@ const MODIFIERS = new Set([
   'focal', 'diffuse', 'minimal', 'subtle', 'extensive',
 ]);
 
-// Normality mappings loaded at runtime from data/normality-mappings.json
-let _normalityMappings = null;
-
 const Taxonomy = {
-  /**
-   * Set normality mappings (called from app.js after fetching JSON).
-   */
-  setNormalityMappings(mappings) {
-    _normalityMappings = mappings;
-  },
   /**
    * Filter findings by search query (case-insensitive substring on name + synonyms).
    */
   searchFindings(query, findings) {
     if (!query) return findings;
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().replace(/[_ ]/g, ' ');
     return findings.filter(f =>
-      f.name.toLowerCase().includes(q) ||
-      f.synonyms.some(syn => syn.toLowerCase().includes(q))
+      f.name.toLowerCase().replace(/[_ ]/g, ' ').includes(q) ||
+      f.synonyms.some(syn => syn.toLowerCase().replace(/[_ ]/g, ' ').includes(q))
     );
   },
 
@@ -56,10 +47,7 @@ const Taxonomy = {
    * Match an extracted finding name to a taxonomy entry.
    * Level 1: Direct name match (normalize: lowercase, underscores→spaces)
    * Level 2: CSV synonym match
-   * Level 3: Normality mapping match
-   * Level 4: Fuzzy token-overlap match (Jaccard, threshold 0.5)
-   *
-   * For decomposition cases (cardiomediastinal), returns the first match.
+   * Level 3: Fuzzy token-overlap match (Jaccard, threshold 0.5)
    */
   matchFindingToTaxonomy(findingName, findings) {
     const normalized = this.normalizeName(findingName);
@@ -77,18 +65,7 @@ const Taxonomy = {
       }
     }
 
-    // Level 3: Normality mapping match
-    if (_normalityMappings && Object.hasOwn(_normalityMappings, normalized)) {
-      const mapped = _normalityMappings[normalized];
-      // mapped is either a string or an array (decomposition)
-      const targetName = Array.isArray(mapped) ? mapped[0] : mapped;
-      const targetNorm = targetName.toLowerCase();
-      for (const f of findings) {
-        if (f.name.toLowerCase() === targetNorm) return f;
-      }
-    }
-
-    // Level 4: Fuzzy match
+    // Level 3: Fuzzy match
     const result = this.fuzzyMatchFinding(findingName, findings, 0.5);
     return result ? result.finding : null;
   },
@@ -126,19 +103,6 @@ const Taxonomy = {
 
     if (bestMatch && bestScore >= threshold) {
       return { finding: bestMatch, score: bestScore };
-    }
-    return null;
-  },
-
-  /**
-   * Try normality mapping only (no fuzzy). Returns first matched finding or null.
-   */
-  matchNormality(normalized, findings) {
-    if (!_normalityMappings || !Object.hasOwn(_normalityMappings, normalized)) return null;
-    const mapped = _normalityMappings[normalized];
-    const targetName = (Array.isArray(mapped) ? mapped[0] : mapped).toLowerCase();
-    for (const f of findings) {
-      if (f.name.toLowerCase() === targetName) return f;
     }
     return null;
   }
