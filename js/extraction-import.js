@@ -2,7 +2,38 @@
  * CSV upload and import logic using PapaParse.
  */
 
+/**
+ * Input normalization helpers. These run before validation so users
+ * are not punished for cosmetic input variations (whitespace, BOM,
+ * Markdown fencing, case in column names, case in enum values).
+ *
+ * What we DO normalize: trim whitespace; strip UTF-8 BOM; strip
+ * Markdown code-fence wrappers around the file body; case-fold for
+ * enum and column-name comparisons.
+ *
+ * What we do NOT normalize: vocabulary translation (e.g. "lt" -> "left"),
+ * unit conversion, abbreviation expansion. Those remain user-facing
+ * validation errors with actionable fix messages.
+ */
+const Norm = {
+  // Trim whitespace and strip a UTF-8 BOM if present at the start of a cell.
+  cell(s) { return (s ?? '').toString().replace(/^﻿/, '').trim(); },
+  // Same as cell but also strips a leading/trailing Markdown code fence,
+  // for the case where an LLM wrapped its CSV output in ```csv ... ```
+  text(s) {
+    const stripped = (s ?? '').toString().replace(/^﻿/, '');
+    return stripped.replace(/^```[\w]*\r?\n/, '').replace(/\r?\n```\s*$/, '').trim();
+  },
+  // Lowercase + collapse whitespace, used for case-insensitive enum membership.
+  enumValue(s) { return Norm.cell(s).toLowerCase(); },
+  // Normalize a column name (case, separators) so that "Record ID", "record_id",
+  // and "record-id" all match the same target.
+  colName(s) { return Norm.cell(s).toLowerCase().replace(/[\s\-]+/g, '_'); },
+};
+
 const CsvImport = {
+  Norm,
+
   /**
    * Read file text with encoding fallback chain: UTF-8 → Latin-1 → Windows-1252.
    * Detects encoding failure by presence of U+FFFD replacement characters.
@@ -39,11 +70,21 @@ const CsvImport = {
   },
 
   /**
-   * Parse a CSV file and return { data, fields, errors }.
-   * Tries multiple encodings via fallback chain.
+   * Parse an extraction file (JSON or CSV) and return { data, fields, errors }.
+   * Format is auto-detected from extension first, then content shape.
+   * CSV path tries multiple encodings via fallback chain.
    */
   async parseFile(file) {
-    const text = await this._readFileWithEncoding(file);
+    const raw = await this._readFileWithEncoding(file);
+    const text = Norm.text(raw);
+
+    const looksLikeJson = file.name.toLowerCase().endsWith('.json')
+      || /^\s*[\[{]/.test(text);
+
+    if (looksLikeJson) {
+      return this._parseJson(text);
+    }
+
     return new Promise((resolve, reject) => {
       Papa.parse(text, {
         header: true,
@@ -63,26 +104,49 @@ const CsvImport = {
   },
 
   /**
-   * Auto-detect column mappings from field names.
+   * Parse JSON extraction output. Expects a top-level array of finding
+   * objects. Returns the same { data, fields, errors } shape as the CSV
+   * path so downstream code is format-agnostic.
+   */
+  _parseJson(text) {
+    let parsed;
+    try {
+      parsed = JSON.parse(text);
+    } catch (e) {
+      return { data: [], fields: [], errors: [{ message: `JSON parse failed: ${e.message}`, type: 'fatal' }] };
+    }
+    if (!Array.isArray(parsed)) {
+      return { data: [], fields: [], errors: [{ message: 'Expected a JSON array of finding objects.', type: 'fatal' }] };
+    }
+    const fieldSet = new Set();
+    for (const obj of parsed) {
+      if (obj && typeof obj === 'object') {
+        for (const k of Object.keys(obj)) fieldSet.add(k);
+      }
+    }
+    return { data: parsed, fields: [...fieldSet], errors: [] };
+  },
+
+  /**
+   * Auto-detect column mappings from field names. Comparison uses
+   * normalized column names (case-folded, separator-folded) so that
+   * "Record ID", "record_id", and "record-id" all match the same target.
+   * The returned column name is the original field name as it appears
+   * in the CSV header (so callers can index rows with it).
    */
   detectColumns(fields) {
     const idPatterns = ['record_id', 'id', 'report_id', 'case_id', 'accession'];
     const textPatterns = ['rad_deid_report', 'report_text', 'report', 'text', 'findings'];
 
-    let idCol = null;
-    let textCol = null;
+    const findField = (patterns) => {
+      for (const pattern of patterns) {
+        const match = fields.find(f => Norm.colName(f).includes(pattern));
+        if (match) return match;
+      }
+      return null;
+    };
 
-    for (const pattern of idPatterns) {
-      const match = fields.find(f => f.toLowerCase().includes(pattern));
-      if (match) { idCol = match; break; }
-    }
-
-    for (const pattern of textPatterns) {
-      const match = fields.find(f => f.toLowerCase().includes(pattern));
-      if (match) { textCol = match; break; }
-    }
-
-    return { idCol, textCol };
+    return { idCol: findField(idPatterns), textCol: findField(textPatterns) };
   },
 
   /**
@@ -102,8 +166,8 @@ const CsvImport = {
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      const id = (row[idCol] || '').trim();
-      const text = (row[textCol] || '').trim();
+      const id = Norm.cell(row[idCol]);
+      const text = Norm.cell(row[textCol]);
 
       if (!id) { emptyIds++; continue; }
       if (!text) { emptyTexts++; continue; }
@@ -134,8 +198,8 @@ const CsvImport = {
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
-      const recordId = (row[columnMap.record_id] || '').trim();
-      const findingName = (row[columnMap.finding_name] || '').trim();
+      const recordId = Norm.cell(row[columnMap.record_id]);
+      const findingName = Norm.cell(row[columnMap.finding_name]);
 
       if (!recordId || !findingName) {
         errors.push(`Row ${i + 2}: missing record_id or finding_name`);
@@ -149,33 +213,63 @@ const CsvImport = {
 
       const attrs = {};
       if (columnMap.presence) {
-        const p = (row[columnMap.presence] || '').trim().toLowerCase();
+        const p = Norm.enumValue(row[columnMap.presence]);
         attrs.presence = ['present', 'absent', 'indeterminate'].includes(p) ? p : 'indeterminate';
       } else {
         attrs.presence = 'indeterminate';
       }
 
-      // Map optional attribute columns
+      // Map any other column the user provided into attributes.
+      // Reserved keys (record_id, finding_name, presence, source_text, sentence_idx)
+      // are skipped — they're consumed elsewhere or intentionally ignored.
+      // Everything else is preserved: canonical attributes (laterality, severity,
+      // etc.) get assigned via their columnMap mapping, custom columns the user
+      // didn't map explicitly fall through to the all-columns sweep below.
       let sourceText = '';
+      const RESERVED = new Set(['record_id', 'finding_name', 'presence', 'sentence_idx', 'source_text']);
+      const consumedColumns = new Set([
+        columnMap.record_id, columnMap.finding_name,
+        columnMap.presence, columnMap.source_text, columnMap.sentence_idx,
+      ].filter(Boolean));
+
       for (const [attrName, colName] of Object.entries(columnMap)) {
-        if (['record_id', 'finding_name', 'presence', 'sentence_idx', 'source_text'].includes(attrName)) continue;
-        if (colName && row[colName]) {
-          const val = row[colName].trim();
-          if (!val || val.toLowerCase() === 'nan') continue;
-          if (attrName === 'features') {
-            attrs[attrName] = val.split(',').map(v => v.trim()).filter(Boolean);
-          } else {
-            attrs[attrName] = val;
-          }
+        if (RESERVED.has(attrName)) continue;
+        if (!colName) continue;
+        consumedColumns.add(colName);
+        const raw = row[colName];
+        if (raw == null) continue;
+        const val = Norm.cell(raw);
+        if (!val || val.toLowerCase() === 'nan' || val.toLowerCase() === 'null') continue;
+        if (attrName === 'features') {
+          attrs[attrName] = val.split(',').map(v => v.trim()).filter(Boolean);
+        } else {
+          attrs[attrName] = val;
         }
       }
 
-      if (columnMap.source_text && row[columnMap.source_text]) {
-        sourceText = row[columnMap.source_text].trim();
-        if (sourceText.toLowerCase() === 'nan') sourceText = '';
+      // Sweep any column the user provided but didn't explicitly map. These
+      // are auto-detected custom attributes: preserved as-is, free text. The
+      // column name (after light normalization) becomes the attribute key.
+      for (const [colName, raw] of Object.entries(row)) {
+        if (consumedColumns.has(colName)) continue;
+        if (raw == null) continue;
+        const val = Norm.cell(raw);
+        if (!val || val.toLowerCase() === 'nan' || val.toLowerCase() === 'null') continue;
+        const key = Norm.colName(colName);
+        if (RESERVED.has(key)) continue;
+        // Don't overwrite a canonical attribute the user already mapped.
+        if (attrs[key] != null) continue;
+        attrs[key] = val;
       }
 
-      const sentenceIdx = columnMap.sentence_idx ? parseInt(row[columnMap.sentence_idx], 10) || null : null;
+      if (columnMap.source_text && row[columnMap.source_text] != null) {
+        sourceText = Norm.cell(row[columnMap.source_text]);
+        if (sourceText.toLowerCase() === 'nan' || sourceText.toLowerCase() === 'null') sourceText = '';
+      }
+
+      // sentence_idx is intentionally ignored: the annotator computes
+      // sentence assignment deterministically from source_text.
+      const sentenceIdx = null;
 
       findings.push({
         record_id: recordId,
@@ -187,6 +281,155 @@ const CsvImport = {
     }
 
     return { findings, errors };
+  },
+
+  /**
+   * Aggressively validate already-parsed extraction rows. Runs BEFORE
+   * import is committed so the user sees every problem up front and
+   * never starts labeling on bad data.
+   *
+   * Each row is checked for:
+   *   - required fields (record_id, finding_name, source_text)
+   *   - record_id known in the loaded report set
+   *   - source_text matches exactly one sentence in that report
+   *     (uses Sentences.matchSourceToSentence — same matcher as runtime)
+   *   - canonical attributes pass enum validation (case-insensitive)
+   *
+   * Custom attribute columns (any column not reserved and not in
+   * attributeConfig) pass through without validation as free text.
+   *
+   * Returns:
+   *   {
+   *     valid:   [...findings ready to import],
+   *     invalid: [...findings with _validation_errors attached],
+   *     counts:  { total, ready, missingRequired, unknownRecord,
+   *                notInReport, ambiguous, badPresence, badEnum },
+   *     customAttributes: Set<string>  // column names that aren't canonical
+   *   }
+   *
+   * The Sentences module is passed in (rather than imported) to avoid a
+   * circular reference; the caller wires it from the global Sentences.
+   */
+  validateExtractionRows(parsedFindings, reportsById, attributeConfig, columnMap, fields, Sentences) {
+    const valid = [];
+    const invalid = [];
+    const counts = {
+      total: parsedFindings.length,
+      ready: 0,
+      missingRequired: 0,
+      unknownRecord: 0,
+      notInReport: 0,
+      ambiguous: 0,
+      badPresence: 0,
+      badEnum: 0,
+    };
+
+    // Identify columns the user provided that are neither reserved nor canonical.
+    // These will be preserved as custom (free-text) attributes on the finding.
+    const RESERVED = new Set(['record_id', 'finding_name', 'presence', 'sentence_idx', 'source_text']);
+    const canonical = new Set(Object.keys(attributeConfig || {}));
+    const customAttributes = new Set();
+    for (const f of (fields || [])) {
+      const norm = Norm.colName(f);
+      // Map back via columnMap: if the user mapped this field to a canonical
+      // attribute key, it's not custom. Otherwise it might be.
+      const mappedTo = Object.entries(columnMap || {}).find(([, col]) => col === f)?.[0];
+      const target = mappedTo || norm;
+      if (RESERVED.has(target)) continue;
+      if (canonical.has(target)) continue;
+      customAttributes.add(f);
+    }
+
+    const allReports = Object.values(reportsById);
+    const knownIds = new Set(Object.keys(reportsById));
+    const knownIdsSample = [...knownIds].slice(0, 3).join(', ');
+
+    for (const f of parsedFindings) {
+      const errors = [];
+
+      // 1. Required fields
+      if (!f.record_id || !f.finding_name || !f.source_text) {
+        const missing = [
+          !f.record_id ? 'record_id' : null,
+          !f.finding_name ? 'finding_name' : null,
+          !f.source_text ? 'source_text' : null,
+        ].filter(Boolean).join(', ');
+        errors.push({
+          msg: `missing required field(s): ${missing}`,
+          fix: `Every row must include record_id, finding_name, and source_text.`,
+        });
+        counts.missingRequired++;
+      }
+
+      // 2. record_id must exist in loaded reports
+      if (f.record_id && !knownIds.has(f.record_id)) {
+        errors.push({
+          msg: `record_id "${f.record_id}" not in loaded reports`,
+          fix: `Either re-import reports CSV including this record, or check for typo. Known IDs: ${knownIdsSample}${knownIds.size > 3 ? '...' : ''}.`,
+        });
+        counts.unknownRecord++;
+      }
+
+      // 3. source_text matches exactly one sentence in the named report
+      if (errors.length === 0 && f.record_id && f.source_text) {
+        const report = reportsById[f.record_id];
+        const r = Sentences.matchSourceToSentence(f.source_text, report.sentences || [], f.record_id, allReports);
+        if (r.idx) {
+          f.source_sentence_idx = r.idx;
+        } else if (r.error === 'not_in_report') {
+          const also = r.alsoMatchesIn?.length;
+          errors.push({
+            msg: `source_text not found in ${f.record_id}${also ? ` (matches ${r.alsoMatchesIn.slice(0, 3).join(', ')}${r.alsoMatchesIn.length > 3 ? '...' : ''})` : ''}`,
+            fix: also
+              ? `Likely record_id mix-up; the text appears in another report. Check whether the row's record_id is correct.`
+              : `Verify source_text is a verbatim quote from the FINDINGS section. Paraphrased or hallucinated text won't match.`,
+          });
+          counts.notInReport++;
+        } else if (r.error === 'ambiguous') {
+          errors.push({
+            msg: `source_text matches ${r.matches.length} sentences in ${f.record_id}`,
+            fix: `Add the section header to source_text to disambiguate, e.g., "Brain Parenchyma: - No mass effect."`,
+          });
+          counts.ambiguous++;
+        }
+      }
+
+      // 4. presence enum (already coerced to a known value during parseExtractionCsv;
+      //    we re-check here to detect when the original value was off-vocabulary)
+      const rawPresence = f.attributes?.presence;
+      if (rawPresence && !['present', 'absent', 'indeterminate'].includes(rawPresence)) {
+        errors.push({
+          msg: `presence value "${rawPresence}" not recognized`,
+          fix: `Allowed values: present, absent, indeterminate. Update your extraction.`,
+        });
+        counts.badPresence++;
+      }
+
+      // 5. canonical enum attributes
+      for (const [k, v] of Object.entries(f.attributes || {})) {
+        if (k === 'presence') continue;
+        const cfg = attributeConfig?.[k];
+        if (!cfg || cfg.type !== 'enum') continue;
+        const allowed = cfg.values.map(s => s.toLowerCase());
+        const got = String(v).toLowerCase();
+        if (!allowed.includes(got)) {
+          errors.push({
+            msg: `${k} value "${v}" not recognized`,
+            fix: `Allowed values: ${cfg.values.join(', ')}.`,
+          });
+          counts.badEnum++;
+        }
+      }
+
+      if (errors.length === 0) {
+        valid.push(f);
+        counts.ready++;
+      } else {
+        invalid.push({ ...f, _validation_errors: errors });
+      }
+    }
+
+    return { valid, invalid, counts, customAttributes };
   }
 };
 
