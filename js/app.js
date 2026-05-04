@@ -41,6 +41,13 @@ document.addEventListener('alpine:init', () => {
     uploadIdCol: '',
     uploadTextCol: '',
     uploadValidation: null,
+    // Set after row-level validation on confirmUpload. Each entry is
+    // { id, errors: [{msg, fix}] }. When non-empty, the user must
+    // explicitly choose to proceed (importing only valid rows) or cancel.
+    uploadInvalidRows: [],
+    // The valid rows pre-built and waiting for the user's choice.
+    // Only populated when uploadInvalidRows.length > 0.
+    _pendingValidReports: null,
 
     // Extraction import state
     extractionData: null,
@@ -49,6 +56,10 @@ document.addEventListener('alpine:init', () => {
     extractionStep: 1,
     extractionFindings: [],
     extractionErrors: [],
+    // Validation summary populated after the user clicks "Check My Data"
+    // in Step 1. Shape: { counts:{...}, invalid:[...], valid:[...], customAttributes:Set }.
+    // Null until validation has run.
+    extractionValidationSummary: null,
     extractionMatchCategories: { matched: {}, fuzzy: {}, unmatched: [] },
     fuzzyAccepted: new Set(),
     extractionReportsWithExisting: [],
@@ -98,6 +109,9 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
+      // Migrate existing data to current schema BEFORE any view loads
+      await this._runMigrationIfNeeded();
+
       // Check for existing data in IndexedDB
       const count = await Storage.getReportCount();
       if (count > 0) {
@@ -132,6 +146,56 @@ document.addEventListener('alpine:init', () => {
           this.selectSentence(urlSentence);
         }
       }
+    },
+
+    async _runMigrationIfNeeded() {
+      const SCHEMA_VERSION = 3;
+      const all = await Storage.exportAllReports();
+      const stale = all.filter(r => r.schema_version !== SCHEMA_VERSION);
+      if (!stale.length) return;
+
+      const taxMeta = await Storage.loadTaxonomy();
+      const taxonomyVersion = taxMeta ? `${taxMeta.examType}:${taxMeta.loadedAt}` : '';
+
+      // Pass 1: rebuild sentences for every stale report so that pass 2
+      // can use the new sentence text for cross-report matching diagnostics.
+      const rebuilt = stale.map(r => {
+        const ft = Sentences.parseFindingsSection(r.report_text || '');
+        const { sentences, sectionBreaks } = Sentences.splitIntoSentences(ft);
+        return { ...r, sentences, sectionBreaks };
+      });
+
+      // Pass 2: remap findings on each report against the new sentences.
+      let remapped = 0, needsReview = 0;
+      for (const report of rebuilt) {
+        for (const arr of [report.llm_extractions || [], report.validated_findings || []]) {
+          for (const f of arr) {
+            if (!f.source_text) {
+              f.source_sentence_idx = null;
+              continue;
+            }
+            const r = Sentences.matchSourceToSentence(f.source_text, report.sentences, report.record_id, rebuilt);
+            if (r.idx) {
+              f.source_sentence_idx = r.idx;
+              delete f._needsReview;
+              remapped++;
+            } else {
+              f.source_sentence_idx = null;
+              f._needsReview = true;
+              needsReview++;
+            }
+          }
+        }
+        report.taxonomyVersion = taxonomyVersion;
+        report.schema_version = SCHEMA_VERSION;
+      }
+
+      await Storage.importReports(rebuilt);
+      const tone = needsReview > 0 ? 'info' : 'success';
+      const detail = needsReview
+        ? ` ${remapped} findings remapped; ${needsReview} need review (look for the amber badge in finding cards)`
+        : ` ${remapped} findings remapped`;
+      this.showToast(`Updated ${stale.length} reports to new sentence splitter.${detail}`, tone);
     },
 
     // --- Navigation ---
@@ -280,6 +344,19 @@ document.addEventListener('alpine:init', () => {
       if (!this.report || !findingName) return;
 
       const taxMatch = isCustom ? null : Taxonomy.matchFindingToTaxonomy(findingName, this.taxonomy);
+
+      // Hard rule: a human-added finding is either a taxonomy match OR
+      // explicitly marked custom — never an undecided in-between. If we
+      // got here without isCustom and without a taxonomy match, the UI
+      // surfaces an actionable message and refuses to save.
+      if (!taxMatch && !isCustom) {
+        this.showToast(
+          `"${findingName}" doesn't match the taxonomy. → Pick a result from the search list, or use the Custom option to add it as a custom finding.`,
+          'error'
+        );
+        return;
+      }
+
       const validated = {
         finding_name: taxMatch ? taxMatch.name : findingName,
         taxonomy_id: taxMatch ? taxMatch.id : null,
@@ -296,6 +373,7 @@ document.addEventListener('alpine:init', () => {
       this.searchQuery = '';
       this.searchResults = [];
     },
+
 
     async deleteFinding(validatedIdx) {
       if (!this.report) return;
@@ -342,6 +420,22 @@ document.addEventListener('alpine:init', () => {
 
     async toggleValidation() {
       if (!this.report) return;
+
+      // Guard: every validated finding must carry a presence value before
+      // the report can be marked validated. This is one of the user-input
+      // boundaries the integrity mandate covers — we surface and block,
+      // never silently accept partial findings.
+      if (!this.report.validated) {
+        const missing = (this.report.validated_findings || []).filter(f => !f.attributes?.presence);
+        if (missing.length) {
+          this.showToast(
+            `${missing.length} finding(s) missing presence value. → Set presence (present / absent / indeterminate) on each before validating.`,
+            'error'
+          );
+          return;
+        }
+      }
+
       const wasValidated = this.report.validated;
       this.report.validated = !this.report.validated;
       this.report.validated_at = this.report.validated ? new Date().toISOString() : null;
@@ -425,15 +519,40 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      // Build reports array, then atomically replace
+      // Stamp taxonomyVersion + schema_version at ingest so new reports
+      // skip the migration path on next load.
+      const taxMeta = await Storage.loadTaxonomy();
+      const taxonomyVersion = taxMeta ? `${taxMeta.examType}:${taxMeta.loadedAt}` : '';
+
+      // Build valid reports AND collect any rows that fail per-row checks.
+      // Nothing is written to IndexedDB until the user confirms.
       const reports = [];
+      const invalidRows = [];
       for (const row of this.uploadData) {
-        const id = (row[this.uploadIdCol] || '').trim();
-        const text = (row[this.uploadTextCol] || '').trim();
+        const id = CsvImport.Norm.cell(row[this.uploadIdCol]);
+        const text = CsvImport.Norm.cell(row[this.uploadTextCol]);
         if (!id || !text) continue;
 
         const findingsText = Sentences.parseFindingsSection(text);
         const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
+
+        const rowErrors = [];
+        if (text.includes('�')) rowErrors.push({
+          msg: 'encoding error: unrecognized characters detected',
+          fix: 'Re-save the source CSV as UTF-8 and re-upload.',
+        });
+        if (!findingsText || findingsText.trim().length < 10) rowErrors.push({
+          msg: 'no parseable FINDINGS section',
+          fix: 'Reports must contain a "FINDINGS:" header followed by content. Check the report text.',
+        });
+        if (sentences.length === 0) rowErrors.push({
+          msg: 'zero sentences extracted from FINDINGS',
+          fix: 'The FINDINGS section appears empty after parsing. Confirm the report has content under FINDINGS.',
+        });
+        if (rowErrors.length) {
+          invalidRows.push({ id, errors: rowErrors });
+          continue;
+        }
 
         reports.push({
           record_id: id,
@@ -447,10 +566,40 @@ document.addEventListener('alpine:init', () => {
           custom_findings_added: [],
           extraction_model: null,
           extraction_timestamp: null,
+          taxonomyVersion,
+          schema_version: 3,
         });
       }
-      await Storage.atomicReplace(reports);
 
+      if (invalidRows.length > 0) {
+        // Halt — user must explicitly accept skipping invalid rows.
+        this.uploadInvalidRows = invalidRows;
+        this._pendingValidReports = reports;
+        this.showToast(`${invalidRows.length} report(s) need attention before import — see panel below`, 'info');
+        return;
+      }
+
+      await this._writeReportsAndStartSession(reports);
+    },
+
+    async confirmUploadProceedAfterReview() {
+      const reports = this._pendingValidReports || [];
+      this._pendingValidReports = null;
+      this.uploadInvalidRows = [];
+      if (!reports.length) {
+        this.showToast('No valid reports to import.', 'error');
+        return;
+      }
+      await this._writeReportsAndStartSession(reports);
+    },
+
+    cancelUploadAfterReview() {
+      this._pendingValidReports = null;
+      this.uploadInvalidRows = [];
+    },
+
+    async _writeReportsAndStartSession(reports) {
+      await Storage.atomicReplace(reports);
       await this._loadSession();
       this.uploadData = null;
       this.uploadFields = [];
@@ -476,6 +625,8 @@ document.addEventListener('alpine:init', () => {
       this.extractionData = result.data;
       this.extractionFields = result.fields;
       this.extractionStep = 1;
+      // Reset any prior validation state so the user starts clean.
+      this.extractionValidationSummary = null;
 
       // Auto-detect columns (matching old app's _COLUMN_GUESSES)
       const KNOWN_KEYWORDS = {
@@ -529,13 +680,53 @@ document.addEventListener('alpine:init', () => {
       requestAnimationFrame(() => { this.extractionColumnMap = map; });
     },
 
-    async processExtractionImport() {
+    /**
+     * Step 1 button: parses the CSV, runs aggressive validation, and
+     * populates extractionValidationSummary. Does NOT advance to Step 2.
+     * The UI surfaces counts and per-row issues; the user clicks
+     * "Review Matches" once they're satisfied with what will be imported.
+     */
+    async runExtractionValidation() {
+      // Parse + normalize. The validIds-set check inside parse is a coarse
+      // filter; the per-row matcher in validateExtractionRows is authoritative.
       const validIds = new Set(this.recordIds);
       const { findings, errors } = CsvImport.parseExtractionCsv(
         this.extractionData, this.extractionColumnMap, validIds
       );
-      this.extractionFindings = findings;
+
+      // Build the reports map once; the validator needs report.sentences for matching.
+      const allReports = await Storage.exportAllReports();
+      const reportsById = Object.fromEntries(allReports.map(r => [r.record_id, r]));
+
+      const summary = CsvImport.validateExtractionRows(
+        findings,
+        reportsById,
+        this.attributeConfig,
+        this.extractionColumnMap,
+        this.extractionFields,
+        Sentences
+      );
+
+      this.extractionFindings = summary.valid;
       this.extractionErrors = errors;
+      this.extractionValidationSummary = summary;
+    },
+
+    /**
+     * Step 1 -> Step 2 transition. Runs taxonomy matching on the validated
+     * findings only, then advances. Disabled in the UI until validation
+     * has been run and at least one row is ready.
+     */
+    async processExtractionImport() {
+      if (!this.extractionValidationSummary) {
+        // Defensive: button shouldn't be clickable without validation run.
+        await this.runExtractionValidation();
+      }
+      const findings = this.extractionFindings;
+      if (!findings.length) {
+        this.showToast('No valid rows to import. Check the validation panel above.', 'error');
+        return;
+      }
 
       // Taxonomy matching on unique finding names (3 categories)
       const uniqueNames = [...new Set(findings.map(f => f.finding_name))].sort();
@@ -582,6 +773,43 @@ document.addEventListener('alpine:init', () => {
       this.extractionStep = 2;
     },
 
+    /**
+     * Download a CSV of every invalid extraction row with a `_validation_error`
+     * column appended (msg + fix per error, joined by newlines). Lets the
+     * user fix issues upstream and re-upload.
+     */
+    downloadExtractionErrorCsv() {
+      const summary = this.extractionValidationSummary;
+      if (!summary || !summary.invalid?.length) {
+        this.showToast('No invalid rows to export.', 'info');
+        return;
+      }
+      const rows = summary.invalid.map(f => {
+        const flat = {
+          record_id: f.record_id || '',
+          finding_name: f.finding_name || '',
+          source_text: f.source_text || '',
+        };
+        for (const [k, v] of Object.entries(f.attributes || {})) {
+          flat[k] = Array.isArray(v) ? v.join(', ') : v;
+        }
+        flat._validation_error = (f._validation_errors || [])
+          .map(e => `${e.msg} → ${e.fix}`)
+          .join('\n');
+        return flat;
+      });
+      const csv = Papa.unparse(rows);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `extraction-errors-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
     // Helper: find by exact name or synonym (no fuzzy).
     _findByExactOrSynonym(findingName) {
       const normalized = Taxonomy.normalizeName(findingName);
@@ -620,6 +848,20 @@ document.addEventListener('alpine:init', () => {
         byRecord[f.record_id].push(f);
       }
 
+      // Hoist all reports once for cross-report matching diagnostics
+      const allReports = await Storage.exportAllReports();
+
+      // Defensive backstop: if Phase 5 validation was bypassed, this formatter
+      // produces a human-readable string for the runtime _matchError annotation.
+      const formatMatchError = (r, recordId) => {
+        if (r.error === 'not_in_report') {
+          return r.alsoMatchesIn?.length
+            ? `not in ${recordId}; matches ${r.alsoMatchesIn.join(', ')}`
+            : `not in ${recordId}`;
+        }
+        return `ambiguous: sentences ${r.matches?.join(', ')}`;
+      };
+
       let imported = 0;
       for (const [recordId, findings] of Object.entries(byRecord)) {
         const report = await Storage.loadReport(recordId);
@@ -636,18 +878,23 @@ document.addEventListener('alpine:init', () => {
             finalName = fuzzy[f.finding_name].name;
           }
 
-          // Resolve source_text → sentence index
-          let sentenceIdx = f.source_sentence_idx;
-          if (!sentenceIdx && f.source_text && report.sentences) {
-            sentenceIdx = Sentences.matchSourceToSentence(f.source_text, report.sentences);
+          // Resolve source_text → sentence index via deterministic matcher
+          let sentenceIdx = null;
+          let matchError = null;
+          if (f.source_text && report.sentences) {
+            const r = Sentences.matchSourceToSentence(f.source_text, report.sentences, recordId, allReports);
+            if (r.idx) sentenceIdx = r.idx;
+            else matchError = formatMatchError(r, recordId);
           }
 
-          newExtractions.push({
+          const ext = {
             finding_name: finalName,
             source_sentence_idx: sentenceIdx,
             source_text: f.source_text || '',
             attributes: f.attributes || { presence: 'indeterminate' },
-          });
+          };
+          if (matchError) ext._matchError = matchError;
+          newExtractions.push(ext);
           imported++;
         }
 
@@ -667,6 +914,7 @@ document.addEventListener('alpine:init', () => {
       this.extractionFields = [];
       this.extractionFindings = [];
       this.extractionErrors = [];
+      this.extractionValidationSummary = null;
       this.extractionMatchCategories = { matched: {}, fuzzy: {}, unmatched: [] };
       this.fuzzyAccepted = new Set();
       this.extractionReportsWithExisting = [];
@@ -783,7 +1031,13 @@ document.addEventListener('alpine:init', () => {
       this._downloadJson(reports, 'all-reports.json');
     },
 
-    async exportAllCsv() {
+    /**
+     * Training-data export. Stable schema: every export has the same
+     * canonical columns regardless of corpus, with custom attributes
+     * collapsed into a `custom_attributes` JSON column. See
+     * _buildFindingRows for the full column list.
+     */
+    async exportTrainingData() {
       const reports = await Storage.exportAllReports();
       const rows = [];
       for (const report of reports) {
@@ -796,7 +1050,15 @@ document.addEventListener('alpine:init', () => {
       }
 
       const csv = Papa.unparse(rows);
-      this._downloadBlob(csv, 'all-findings.csv', 'text/csv');
+      const date = new Date().toISOString().slice(0, 10);
+      this._downloadBlob(csv, `training-data-${date}.csv`, 'text/csv');
+    },
+
+    // Back-compat alias kept for the existing UI button binding; the
+    // canonical name is exportTrainingData. Remove this alias once the
+    // last caller is migrated.
+    async exportAllCsv() {
+      return this.exportTrainingData();
     },
 
     // --- Taxonomy Viewer ---
@@ -903,55 +1165,6 @@ document.addEventListener('alpine:init', () => {
       }
     },
 
-    // --- Template CSV Download ---
-
-    downloadExtractionTemplate() {
-      const attrKeys = Object.keys(this.attributeConfig).filter(a => a !== 'presence');
-      const headers = ['record_id', 'finding_name', 'presence', 'source_text', ...attrKeys];
-      const emptyAttrs = attrKeys.map(() => '');
-      const rows = [
-        ['EXAMPLE-001', 'Pleural effusion', 'present', 'Small left-sided pleural effusion', ...emptyAttrs],
-        ['EXAMPLE-001', 'Lung abnormality', 'absent', 'Lungs are clear', ...emptyAttrs],
-      ];
-      const csv = Papa.unparse({ fields: headers, data: rows });
-      this._downloadBlob(csv, 'extraction_template.csv', 'text/csv');
-    },
-
-    // --- LLM Prompt Download ---
-
-    downloadExtractionPrompt() {
-      const findingNames = this.taxonomy.map(f => `- ${f.name}`).join('\n');
-      const attrLines = Object.entries(this.attributeConfig)
-        .filter(([key]) => key !== 'presence')
-        .map(([key, cfg]) => {
-          let desc = `- ${key}: ${cfg.description}`;
-          if (cfg.type === 'enum' && cfg.values.length) {
-            desc += ` (${cfg.values.join(', ')})`;
-          }
-          return desc;
-        })
-        .join('\n');
-      const examLabel = this.examType.toLowerCase().replace(/ /g, ' ');
-      const prompt = `You are a radiology report extractor. Given a ${examLabel} radiology report, extract all findings mentioned in the FINDINGS section.
-
-For each finding, output one row in CSV format with these columns:
-- record_id: The report identifier (provided with each report)
-- finding_name: Use a name from the taxonomy list below. If no match, use a concise clinical name.
-- presence: One of: present, absent, indeterminate
-- source_text: The exact sentence or phrase from the report supporting this finding
-${attrLines}
-
-TAXONOMY (use these finding names when possible):
-${findingNames}
-
-OUTPUT FORMAT:
-Output ONLY valid CSV with the header row followed by data rows. One row per finding per report.
-Do not include any other text, explanation, or markdown formatting.
-`;
-      const filename = this.examType.toLowerCase().replace(/ /g, '_') + '_extraction_prompt.txt';
-      this._downloadBlob(prompt, filename, 'text/plain');
-    },
-
     // --- Annotation Stats ---
 
     async getAnnotationStats() {
@@ -1007,32 +1220,72 @@ Do not include any other text, explanation, or markdown formatting.
 
     // --- Internal helpers ---
 
+    /**
+     * Build the training-data export rows for a single report.
+     *
+     * Schema is STABLE across corpora — same columns in the same order,
+     * regardless of what custom attributes the user uploaded. Non-canonical
+     * attributes are serialized into a single `custom_attributes` JSON
+     * column at the end so downstream consumers parse them only when
+     * they care.
+     *
+     * Transient runtime annotations (_matchError, _needsReview,
+     * _validation_errors, _globalIdx) are stripped — they're not part
+     * of the export contract.
+     */
     _buildFindingRows(report) {
       const rows = [];
       const sentences = report.sentences || [];
+      const cfg = this.attributeConfig || {};
+      const canonicalKeys = Object.keys(cfg);
 
-      // Helper to build one row
       const makeRow = (f, status) => {
         const attrs = f.attributes || {};
         const idx = f.source_sentence_idx;
-        const sentenceText = (idx && idx > 0 && idx <= sentences.length)
+        const matchedSentenceText = (idx && idx > 0 && idx <= sentences.length)
           ? Sentences.splitSentenceHeader(sentences[idx - 1])[1]
           : '';
+
+        // Compute section header for the matched sentence by walking
+        // sectionBreaks (each entry: { before: sentencesLength, header })
+        let section = '';
+        if (idx && Array.isArray(report.sectionBreaks)) {
+          for (const sb of report.sectionBreaks) {
+            if (sb.before < idx) section = sb.header || '';
+            else break;
+          }
+        }
+
+        // Split attributes into canonical (one column each) and custom
+        // (collapsed into a single JSON column).
+        const customAttrs = {};
+        for (const [k, v] of Object.entries(attrs)) {
+          if (k === 'presence') continue;
+          if (cfg[k]) continue;
+          customAttrs[k] = v;
+        }
+
         const row = {
           record_id: report.record_id,
           status,
           finding_name: f.finding_name,
           taxonomy_id: f.taxonomy_id || '',
           source_sentence_idx: idx || '',
-          source_text: f.source_text || sentenceText || '',
+          source_text: f.source_text || matchedSentenceText || '',
+          matched_sentence_text: matchedSentenceText,
+          section,
           origin: f.origin || '',
           was_modified: f.was_modified || false,
           is_custom: f.is_custom || false,
+          taxonomy_version: report.taxonomyVersion || '',
         };
-        for (const key of Object.keys(this.attributeConfig)) {
+        for (const key of canonicalKeys) {
           const val = attrs[key];
           row[key] = Array.isArray(val) ? val.join('; ') : (val || '');
         }
+        row.custom_attributes = Object.keys(customAttrs).length
+          ? JSON.stringify(customAttrs)
+          : '{}';
         row.report_validated = report.validated || false;
         row.report_validated_at = report.validated_at || '';
         return row;

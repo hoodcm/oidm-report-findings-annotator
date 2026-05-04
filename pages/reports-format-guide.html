@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports CSV Format Guide</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<div class="max-w-4xl mx-auto px-8 py-12">
+  <a href="../index.html" class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
+    <i class="ti ti-arrow-left text-base"></i> Back to Annotator
+  </a>
+
+  <h1 class="text-2xl font-semibold text-gray-900 mb-2">Reports CSV Format Guide</h1>
+  <p class="text-gray-500 mb-8">Field definitions and constraints for the report-text CSV uploaded via "Upload Reports CSV."</p>
+
+  <!-- Contract philosophy -->
+  <section class="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-6">
+    <h2 class="text-lg font-semibold text-indigo-900 mb-2">The contract</h2>
+    <p class="text-sm text-indigo-900">
+      The annotator parses your reports into sentences deterministically and uses them as the source of truth for finding alignment. You don't pre-format reports; the splitter handles common variations natively. If a report can't be parsed, validation surfaces it before any data is committed — so you never start labeling on broken input.
+    </p>
+  </section>
+
+  <!-- Required Columns -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Required Columns</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Column</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Type</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Constraints</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 align-top">
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">record_id</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">Unique within the CSV. Auto-detected synonyms: <code class="bg-gray-100 px-1 rounded text-xs">id</code>, <code class="bg-gray-100 px-1 rounded text-xs">report_id</code>, <code class="bg-gray-100 px-1 rounded text-xs">case_id</code>, <code class="bg-gray-100 px-1 rounded text-xs">accession</code>.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">report_text</td>
+            <td class="px-3 py-2">text</td>
+            <td class="px-3 py-2">The full report text including a <code class="bg-gray-100 px-1 rounded text-xs">FINDINGS:</code> section. Auto-detected synonyms: <code class="bg-gray-100 px-1 rounded text-xs">report</code>, <code class="bg-gray-100 px-1 rounded text-xs">text</code>, <code class="bg-gray-100 px-1 rounded text-xs">findings</code>, <code class="bg-gray-100 px-1 rounded text-xs">rad_deid_report</code>.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FINDINGS Section -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">FINDINGS Section</h2>
+    <p class="text-sm text-gray-600 mb-3">
+      Annotation operates on the FINDINGS section only. Reports must contain a <code class="bg-gray-100 px-1 rounded text-xs">FINDINGS:</code> header followed by content. Anything before FINDINGS (clinical history, technique, comparison) and anything after IMPRESSION is ignored.
+    </p>
+    <p class="text-sm text-gray-600">
+      A report whose FINDINGS section can't be located or that yields zero sentences will be flagged at upload — you'll see it in the validation panel with an actionable fix message before anything is committed.
+    </p>
+  </section>
+
+  <!-- Supported Formats -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Supported Report Formats</h2>
+    <p class="text-sm text-gray-600 mb-4">
+      One splitter handles multiple report styles uniformly. You don't pick a format; the parser absorbs variation. Every sentence in a section uniformly carries that section's header as a prefix in stored form (the UI strips it for display).
+    </p>
+    <div class="space-y-4">
+
+      <div class="border-l-4 border-indigo-200 pl-4">
+        <p class="text-sm font-semibold text-gray-700">1. Prose paragraphs</p>
+        <p class="text-xs text-gray-500 mb-2">Multi-sentence paragraphs separated by blank lines. Sentences split on period + uppercase boundary.</p>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><code>FINDINGS:
+
+Intracranial structures:
+Mild patchy hypoattenuation in periventricular white matter. No acute hemorrhage. No mass effect.
+
+Osseous structures: No acute fracture.</code></pre>
+      </div>
+
+      <div class="border-l-4 border-indigo-200 pl-4">
+        <p class="text-sm font-semibold text-gray-700">2. Bulleted findings</p>
+        <p class="text-xs text-gray-500 mb-2">Each bullet on its own line, separated by blank lines. Each bullet becomes its own sentence.</p>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><code>FINDINGS:
+Brain Parenchyma:
+
+- Mild patchy hypoattenuation in periventricular white matter.
+
+- No acute hemorrhage.
+
+- No mass effect.</code></pre>
+      </div>
+
+      <div class="border-l-4 border-indigo-200 pl-4">
+        <p class="text-sm font-semibold text-gray-700">3. Numbered impressions</p>
+        <p class="text-xs text-gray-500 mb-2">Numbered lists (1., 2., …) split on the boundary between items.</p>
+        <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><code>1. Chronic small vessel ischemic changes.
+2. No acute infarct.
+3. Mild generalized atrophy.</code></pre>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section Headers -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Section Headers and Templated Reports</h2>
+    <p class="text-sm text-gray-600 mb-3">
+      The splitter recognizes section headers in two forms:
+    </p>
+    <ul class="text-sm text-gray-600 space-y-2 list-disc pl-8">
+      <li><strong>Bare header on its own line</strong> — e.g., <code class="bg-gray-100 px-1 rounded text-xs">"Brain Parenchyma:"</code> followed by content below.</li>
+      <li><strong>Inline header with content</strong> — e.g., <code class="bg-gray-100 px-1 rounded text-xs">"Brain Parenchyma: Mild patchy hypoattenuation..."</code> on one line.</li>
+    </ul>
+    <p class="text-sm text-gray-600 mt-3">
+      In both cases, every sentence within that section is stored with the header label prefixed (e.g., <code class="bg-gray-100 px-1 rounded text-xs">"Brain Parenchyma: - Mild patchy hypoattenuation..."</code>). This is the integrity guarantee that makes <strong>templated reports</strong> work: a vascular CTA whose body text repeats the same observation under multiple per-vessel sub-headers (Celiac, SMA, IMA, etc.) produces unique sentences because each carries its vessel-specific section prefix.
+    </p>
+    <p class="text-sm text-gray-600 mt-3">
+      When uploading extractions for templated reports, your <code class="bg-gray-100 px-1 rounded text-xs">source_text</code> values must include the section header to match the splitter's view. See the <a href="llm-extractions.html" class="text-indigo-600 hover:text-indigo-800 underline">LLM extractions playbook</a> for details.
+    </p>
+  </section>
+
+  <!-- Validation -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Validation Errors and Fixes</h2>
+    <p class="text-sm text-gray-600 mb-4">When the upload validation rejects rows, you'll see them inline with fix suggestions. Common cases:</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Error</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Fix</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 align-top">
+          <tr>
+            <td class="px-3 py-2 text-xs">Encoding error: unrecognized characters detected</td>
+            <td class="px-3 py-2">Re-save the source CSV as UTF-8 (Excel: Save As → CSV UTF-8).</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">No parseable FINDINGS section</td>
+            <td class="px-3 py-2">The report text doesn't contain a <code class="bg-gray-100 px-1 rounded text-xs">FINDINGS:</code> header followed by content. Confirm the report is complete.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">Zero sentences extracted from FINDINGS</td>
+            <td class="px-3 py-2">The FINDINGS section is empty after parsing. Check that the section has actual content.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">Duplicate ID</td>
+            <td class="px-3 py-2">Each <code class="bg-gray-100 px-1 rounded text-xs">record_id</code> must be unique within the CSV. Deduplicate upstream.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm text-gray-600 mt-3">
+      The upload review panel offers a <strong>"Skip N invalid and import valid reports"</strong> button so you can move forward with the clean rows while keeping a record of what failed.
+    </p>
+  </section>
+
+  <!-- Example -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Example CSV</h2>
+    <div class="overflow-x-auto">
+      <pre class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto"><code>record_id,report_text
+CASE-001,"FINDINGS:
+Intracranial structures:
+Mild patchy hypoattenuation in periventricular white matter. No acute hemorrhage. No mass effect.
+
+Osseous structures:
+No acute fracture.
+
+IMPRESSION:
+Chronic small vessel ischemic changes. No acute findings."
+CASE-002,"FINDINGS:
+Brain Parenchyma:
+
+- Mild patchy hypoattenuation in periventricular white matter.
+
+- No acute hemorrhage.
+
+IMPRESSION:
+Chronic microvascular ischemic disease."</code></pre>
+    </div>
+  </section>
+
+  <!-- Related guides -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Related Guides</h2>
+    <ul class="text-sm space-y-1">
+      <li><a href="llm-extractions.html" class="text-indigo-600 hover:text-indigo-800 underline">LLM extractions playbook</a> — get the prompt for your taxonomy, see the upload format, and find help when imports fail.</li>
+    </ul>
+  </section>
+</div>
+
+</body>
+</html>

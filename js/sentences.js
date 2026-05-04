@@ -31,14 +31,15 @@ const Sentences = {
     const sentences = [];
     const sectionBreaks = [];
     let pendingContent = '';
+    let currentHeader = '';
 
     const flush = (headerPrefix) => {
       if (!pendingContent) return;
-      const subSentences = pendingContent.split(/(?<=\.)\s+(?=[A-Z])/);
-      for (let i = 0; i < subSentences.length; i++) {
-        const st = subSentences[i].trim();
+      const subSentences = pendingContent.split(/(?<=\.)\s+(?=(?:-\s+|\d+\.\s+)?[A-Z])/);
+      for (const sub of subSentences) {
+        const st = sub.trim();
         if (st && st.toLowerCase() !== 'none') {
-          const full = (i === 0 && headerPrefix) ? `${headerPrefix} ${st}` : st;
+          const full = headerPrefix ? `${headerPrefix} ${st}` : st;
           sentences.push(full);
         }
       }
@@ -47,7 +48,7 @@ const Sentences = {
 
     for (const rawLine of lines) {
       const line = rawLine.trim();
-      if (!line) continue;
+      if (!line) { flush(currentHeader); continue; }
 
       // Header: short text ending with colon at start of line
       const headerMatch = line.match(/^([A-Za-z][\w ,/\-&]+?):\s*(.*)/);
@@ -57,14 +58,16 @@ const Sentences = {
         const afterColon = (headerMatch[2] || '').trim();
 
         if (!afterColon || /^none\.?\s*$/i.test(afterColon)) {
-          // Bare header or "Header: none" — section divider
-          flush('');
+          // Bare header or "Header: none" — section divider; subsequent sentences carry this prefix
+          flush(currentHeader);
           sectionBreaks.push({ before: sentences.length, header: headerLabel + ':' });
+          currentHeader = headerLabel + ':';
         } else {
-          // Content header — prefix onto sentences
-          flush('');
+          // Content header — prefix onto its sentence and remain in scope for continuation lines
+          flush(currentHeader);
           pendingContent = afterColon;
           flush(headerLabel + ':');
+          currentHeader = headerLabel + ':';
         }
       } else {
         // Continuation line
@@ -72,7 +75,7 @@ const Sentences = {
       }
     }
 
-    flush('');
+    flush(currentHeader);
     return { sentences, sectionBreaks };
   },
 
@@ -84,36 +87,46 @@ const Sentences = {
   },
 
   /**
-   * Match source_text to a report sentence.
-   * Returns 1-based index or null.
-   * Ported from src/routes/extraction_upload.py::_match_source_sentence().
+   * Normalize text for matching: lowercase, collapse whitespace, trim, strip optional trailing period.
    */
-  matchSourceToSentence(sourceText, sentences) {
-    if (!sourceText || !sourceText.trim()) return null;
+  _normForMatch(s) {
+    return (s || '').toString().toLowerCase().replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+  },
 
-    const normalizedSource = sourceText.toLowerCase().trim();
-    let bestIdx = null;
-    let bestOverlap = 0;
+  /**
+   * Match source_text to a sentence in the named report.
+   * Returns one of:
+   *   { idx: number }                                        — exactly one sentence matches
+   *   { error: 'not_in_report', alsoMatchesIn: string[] }    — zero matches; alsoMatchesIn lists other report ids whose text contains source_text
+   *   { error: 'ambiguous', matches: number[] }              — two or more sentences match
+   * If sourceText is empty, returns { error: 'not_in_report', alsoMatchesIn: [] }.
+   */
+  matchSourceToSentence(sourceText, sentences, recordId, allReports) {
+    const norm = this._normForMatch(sourceText);
+    if (!norm) return { error: 'not_in_report', alsoMatchesIn: [] };
 
-    for (let i = 0; i < sentences.length; i++) {
-      const normalizedSentence = sentences[i].toLowerCase().trim();
-      let overlap = 0;
+    const matches = [];
+    for (let i = 0; i < (sentences || []).length; i++) {
+      const ns = this._normForMatch(sentences[i]);
+      if (ns.includes(norm)) matches.push(i + 1);
+    }
+    if (matches.length === 1) return { idx: matches[0] };
+    if (matches.length >= 2) return { error: 'ambiguous', matches };
 
-      if (normalizedSentence.includes(normalizedSource)) {
-        overlap = normalizedSource.length;
-      } else if (normalizedSource.includes(normalizedSentence)) {
-        overlap = normalizedSentence.length;
-      } else {
-        continue;
-      }
-
-      if (overlap > bestOverlap) {
-        bestOverlap = overlap;
-        bestIdx = i + 1; // 1-based
+    // 0 matches — check other reports if provided
+    const alsoMatchesIn = [];
+    if (Array.isArray(allReports)) {
+      for (const r of allReports) {
+        if (!r || r.record_id === recordId) continue;
+        for (const sent of (r.sentences || [])) {
+          if (this._normForMatch(sent).includes(norm)) {
+            alsoMatchesIn.push(r.record_id);
+            break;
+          }
+        }
       }
     }
-
-    return bestIdx;
+    return { error: 'not_in_report', alsoMatchesIn };
   },
 
   /**
@@ -128,6 +141,20 @@ const Sentences = {
       return [prefix, content];
     }
     return ['', sentence];
+  },
+
+  /**
+   * True if sentences[idx] is the first in a run of consecutive sentences
+   * sharing the same header prefix. Used by the renderer to display the
+   * sub-section header inline once per run.
+   */
+  isFirstOfHeaderRun(sentences, idx) {
+    if (!sentences || idx < 0 || idx >= sentences.length) return false;
+    const cur = this.splitSentenceHeader(sentences[idx])[0];
+    if (!cur) return false;
+    if (idx === 0) return true;
+    const prev = this.splitSentenceHeader(sentences[idx - 1])[0];
+    return prev !== cur;
   }
 };
 

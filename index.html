@@ -45,7 +45,7 @@
   <script src="js/storage.js"></script>
   <script src="js/sentences.js"></script>
   <script src="js/taxonomy.js"></script>
-  <script src="js/csv-import.js"></script>
+  <script src="js/extraction-import.js"></script>
   <script src="js/app.js"></script>
 
   <!-- Custom styles -->
@@ -122,6 +122,10 @@
                 <p class="mt-1 text-xs text-blue-600">CSV must have an ID column and a report text column</p>
               </div>
             </label>
+            <a href="pages/reports-format-guide.html" target="_blank"
+               class="text-xs text-blue-600 hover:text-blue-800 underline mt-2 self-start">
+              Reports CSV format guide →
+            </a>
           </section>
 
           <!-- Restore saved session -->
@@ -160,28 +164,17 @@
         <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-indigo-400 p-6">
           <h3 class="text-sm font-semibold text-indigo-700 mb-1">Test Your Own Extraction Algorithm (optional)</h3>
           <p class="text-sm text-gray-500 mb-4">
-            Evaluate how well your extraction algorithm performs — LLM, rule-based, or otherwise.
-            Generate a CSV of extracted findings, then import it using "Import LLM Extractions" in the sidebar.
+            Use an LLM to extract findings from your reports, then import the result.
           </p>
           <div class="space-y-3">
-            <button @click="$store.app.downloadExtractionTemplate()"
-                    class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-              <i class="ti ti-file-download text-lg text-gray-600 mt-0.5"></i>
-              <div>
-                <span class="text-sm font-medium text-gray-800">Extraction Output Template</span>
-                <p class="text-xs text-gray-500 mt-0.5">The required CSV format your extractor should produce. Includes column definitions (record_id, finding_name, presence, source_text, and optional attribute columns) with example rows.</p>
-                <a href="pages/extraction-format-guide.html" target="_blank"
-                   class="text-xs text-indigo-600 hover:text-indigo-800 underline mt-1 inline-block">Full format specification</a>
-              </div>
-            </button>
-            <button @click="$store.app.downloadExtractionPrompt()"
-                    class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+            <a href="pages/llm-extractions.html" target="_blank"
+               class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
               <i class="ti ti-prompt text-lg text-gray-600 mt-0.5"></i>
               <div>
-                <span class="text-sm font-medium text-gray-800">Sample LLM Prompt</span>
-                <p class="text-xs text-gray-500 mt-0.5">A ready-to-use prompt you can give to any LLM to extract findings. Includes instructions for output format and the full taxonomy list.</p>
+                <span class="text-sm font-medium text-gray-800">LLM extractions playbook</span>
+                <p class="text-xs text-gray-500 mt-0.5">Get a prompt for your LLM, learn what file to upload, and find help when imports fail.</p>
               </div>
-            </button>
+            </a>
             <button @click="window.dispatchEvent(new CustomEvent('open-taxonomy'))"
                     class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
               <i class="ti ti-list-details text-lg text-gray-600 mt-0.5"></i>
@@ -277,8 +270,60 @@
             </div>
           </template>
 
+          <!-- Per-row issue panel: when some reports failed row-level checks
+               (no FINDINGS section, encoding errors, etc.) we halt the import
+               and let the user review issues before proceeding. -->
+          <template x-if="$store.app.uploadInvalidRows && $store.app.uploadInvalidRows.length > 0">
+            <div class="mt-4 border border-amber-300 bg-amber-50 rounded p-4 space-y-3">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-amber-900">
+                    <span x-text="$store.app.uploadInvalidRows.length"></span> report(s) need attention
+                  </p>
+                  <p class="text-xs text-amber-800 mt-0.5">
+                    These reports couldn't be parsed. Fix and re-upload, or skip them and import the rest.
+                  </p>
+                </div>
+                <p class="text-xs text-amber-900 whitespace-nowrap ml-4">
+                  <span class="font-semibold" x-text="$store.app._pendingValidReports?.length || 0"></span>
+                  ready to import
+                </p>
+              </div>
+              <div class="max-h-64 overflow-y-auto space-y-2 text-xs">
+                <template x-for="row in $store.app.uploadInvalidRows.slice(0, 50)" :key="row.id">
+                  <div class="bg-white border border-amber-200 rounded p-2">
+                    <p class="font-mono text-amber-900" x-text="row.id"></p>
+                    <ul class="mt-1 space-y-0.5">
+                      <template x-for="e in row.errors" :key="e.msg">
+                        <li>
+                          <span class="text-red-700" x-text="e.msg"></span>
+                          <span class="text-gray-600 ml-1">→ <span x-text="e.fix"></span></span>
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+                </template>
+                <p x-show="$store.app.uploadInvalidRows.length > 50" class="text-amber-700 italic">
+                  ... and <span x-text="$store.app.uploadInvalidRows.length - 50"></span> more
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button @click="$store.app.confirmUploadProceedAfterReview()"
+                        :disabled="!$store.app._pendingValidReports?.length"
+                        class="flex-1 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium rounded transition-colors disabled:opacity-50">
+                  Skip <span x-text="$store.app.uploadInvalidRows.length"></span>
+                  invalid and import <span x-text="$store.app._pendingValidReports?.length || 0"></span> valid reports
+                </button>
+                <button @click="$store.app.cancelUploadAfterReview()"
+                        class="px-3 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded transition-colors">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </template>
+
           <button @click="$store.app.confirmUpload()"
-                  :disabled="!$store.app.uploadIdCol || !$store.app.uploadTextCol"
+                  :disabled="!$store.app.uploadIdCol || !$store.app.uploadTextCol || ($store.app.uploadInvalidRows && $store.app.uploadInvalidRows.length > 0)"
                   class="w-full px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             Import Reports
           </button>
@@ -344,15 +389,6 @@
                   </template>
                 </select>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Sentence Index</label>
-                <select x-model="$store.app.extractionColumnMap.sentence_idx" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-                  <option value="">-- Not mapped --</option>
-                  <template x-for="f in $store.app.extractionFields" :key="f">
-                    <option :value="f" x-text="f"></option>
-                  </template>
-                </select>
-              </div>
             </div>
 
             <!-- Optional attribute columns (collapsible) -->
@@ -373,8 +409,67 @@
               </div>
             </details>
 
+            <!-- Validation panel: appears after the user runs validation.
+                 Shows row-level diagnostics so problems are surfaced before
+                 anything is committed. The Review Matches button is gated
+                 on having at least one valid row. -->
+            <div class="border-t border-gray-200 pt-4 mt-4 space-y-3">
+              <div class="flex items-center gap-3">
+                <button @click="$store.app.runExtractionValidation()"
+                        :disabled="!$store.app.extractionColumnMap.record_id || !$store.app.extractionColumnMap.finding_name"
+                        class="px-4 py-2 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  Check my data
+                </button>
+                <p class="text-xs text-gray-500">Runs every row against the loaded reports — surfaces any problems before import.</p>
+              </div>
+
+              <template x-if="$store.app.extractionValidationSummary">
+                <div class="rounded-lg border p-4 text-sm"
+                     :class="$store.app.extractionValidationSummary.counts.ready === $store.app.extractionValidationSummary.counts.total
+                              ? 'border-green-200 bg-green-50'
+                              : 'border-amber-200 bg-amber-50'">
+                  <p class="font-semibold"
+                     :class="$store.app.extractionValidationSummary.counts.ready === $store.app.extractionValidationSummary.counts.total ? 'text-green-900' : 'text-amber-900'">
+                    <span x-text="$store.app.extractionValidationSummary.counts.ready"></span> of
+                    <span x-text="$store.app.extractionValidationSummary.counts.total"></span> rows ready to import
+                  </p>
+
+                  <ul class="mt-2 ml-4 list-disc text-xs space-y-0.5"
+                      x-show="$store.app.extractionValidationSummary.counts.ready < $store.app.extractionValidationSummary.counts.total">
+                    <li x-show="$store.app.extractionValidationSummary.counts.missingRequired > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.missingRequired + ' rows: missing required field (record_id, finding_name, or source_text)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.unknownRecord > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.unknownRecord + ' rows: record_id not in loaded reports'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.notInReport > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.notInReport + ' rows: source_text not in named report (likely cross-attribution or paraphrase)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.ambiguous > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.ambiguous + ' rows: source_text matches multiple sentences (add section header to disambiguate)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.badPresence > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.badPresence + ' rows: presence value not in {present, absent, indeterminate}'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.badEnum > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.badEnum + ' rows: an attribute value is not in its allowed enum'"></li>
+                  </ul>
+
+                  <p class="text-xs text-gray-600 mt-2"
+                     x-show="$store.app.extractionValidationSummary.customAttributes.size > 0">
+                    Detected
+                    <span x-text="$store.app.extractionValidationSummary.customAttributes.size"></span>
+                    custom attribute column(s):
+                    <span class="font-mono" x-text="[...$store.app.extractionValidationSummary.customAttributes].join(', ')"></span>
+                    — preserved as free-text on each finding.
+                  </p>
+
+                  <button @click="$store.app.downloadExtractionErrorCsv()"
+                          x-show="$store.app.extractionValidationSummary.invalid.length > 0"
+                          class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
+                    Download error report (CSV) — fix upstream and re-upload
+                  </button>
+                </div>
+              </template>
+            </div>
+
             <button @click="$store.app.processExtractionImport()"
-                    :disabled="!$store.app.extractionColumnMap.record_id || !$store.app.extractionColumnMap.finding_name"
+                    :disabled="!$store.app.extractionValidationSummary || $store.app.extractionValidationSummary.counts.ready === 0"
                     class="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               Review Matches
             </button>
@@ -652,12 +747,12 @@
               <!-- Import extractions -->
               <label class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 hover:text-indigo-800 bg-indigo-100 hover:bg-indigo-200 rounded transition-colors cursor-pointer">
                 <i class="ti ti-file-import text-base"></i> Import LLM Extractions
-                <input type="file" accept=".csv" class="hidden"
+                <input type="file" accept=".json,.csv,application/json,text/csv" class="hidden"
                        @change="$store.app.handleExtractionCsvUpload($event.target.files[0]); $event.target.value = ''">
               </label>
               <p class="text-xs text-indigo-500 -mt-1">
-                <a href="pages/extraction-format-guide.html" target="_blank"
-                   class="hover:text-indigo-700 underline">Format guide</a>
+                <a href="pages/llm-extractions.html" target="_blank"
+                   class="hover:text-indigo-700 underline">LLM extractions playbook</a>
                 &middot; See Home for instructions
               </p>
 
@@ -678,8 +773,9 @@
                         class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
                   JSON
                 </button>
-                <button @click="$store.app.exportAllCsv()"
-                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                <button @click="$store.app.exportTrainingData()"
+                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
+                        title="Training-data CSV with stable schema across corpora; custom attributes collapsed into a JSON column.">
                   CSV
                 </button>
               </div>
@@ -721,15 +817,15 @@
                     </template>
 
                     <span @click="$store.app.selectSentence(sIdx + 1)" class="cursor-pointer">
-                      <!-- Vertical space before headers -->
-                      <span x-show="sIdx > 0 && Sentences.splitSentenceHeader(sentence)[0]"
+                      <!-- Every sentence carries its sub-section header as a prefix in storage
+                           (for source_text matching uniqueness). The renderer shows the prefix
+                           once per run of same-prefixed sentences. -->
+                      <span x-show="sIdx > 0 && Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
                             class="block" style="margin-top: 0.75rem;"></span>
-
-                      <!-- Header prefix -->
-                      <span x-show="Sentences.splitSentenceHeader(sentence)[0]"
+                      <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
                             class="text-stone-900 font-bold"
                             x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
-                      <span x-show="Sentences.splitSentenceHeader(sentence)[0]"> </span>
+                      <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"> </span>
 
                       <!-- Sentence content (highlighted) -->
                       <span class="rounded px-0.5 transition-all"
@@ -798,9 +894,14 @@
                       <template x-for="finding in $store.app.unassignedFindings" :key="finding._globalIdx">
                         <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-gray-200">
                           <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                               <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                               <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
+                              <span x-show="finding._needsReview"
+                                    class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
+                                    title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
+                                needs review
+                              </span>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
                               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -839,9 +940,14 @@
                       <template x-for="finding in $store.app.pendingFindings" :key="finding._globalIdx">
                         <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-amber-100">
                           <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 flex-wrap">
                               <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                               <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
+                              <span x-show="finding._needsReview"
+                                    class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
+                                    title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
+                                needs review
+                              </span>
                             </div>
                             <div class="flex items-center gap-2 mt-1">
                               <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
@@ -892,12 +998,17 @@
                         <div class="py-1.5 px-2 bg-white rounded border border-green-100">
                           <div class="flex items-center justify-between">
                             <div class="flex-1 min-w-0">
-                              <div class="flex items-center gap-2">
+                              <div class="flex items-center gap-2 flex-wrap">
                                 <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
                                 <span class="flex-shrink-0 flex items-center gap-1">
                                   <i x-show="finding.origin === 'llm'" class="ti ti-sparkles text-sm text-amber-500" title="LLM extracted"></i>
                                   <i x-show="finding.origin !== 'llm'" class="ti ti-user-filled text-sm text-blue-500" title="User added"></i>
                                   <span x-show="finding.was_modified && finding.origin === 'llm'" class="text-xs text-amber-500 whitespace-nowrap">edited</span>
+                                  <span x-show="finding._needsReview"
+                                        class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
+                                        title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
+                                    needs review
+                                  </span>
                                 </span>
                               </div>
                             </div>

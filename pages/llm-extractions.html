@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run an LLM to extract findings</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+  <script src="../js/storage.js"></script>
+  <script src="../js/extraction-prompt.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+<div class="max-w-4xl mx-auto px-8 py-12">
+  <a href="../index.html" class="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 mb-6">
+    <i class="ti ti-arrow-left text-base"></i> Back to Annotator
+  </a>
+
+  <h1 class="text-2xl font-semibold text-gray-900 mb-2">Run an LLM to extract findings</h1>
+
+  <p class="text-gray-600 mb-8">
+    Use the LLM of your choice to extract structured findings from your radiology reports. This page gives you the prompt to use, shows you what file to upload, and explains how to fix problems if the upload fails.
+  </p>
+
+  <!-- Step 1 — Copy the prompt -->
+  <section id="step-1-prompt" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 1 — Copy the extraction prompt</h2>
+    <p id="taxonomy-hint" class="text-sm text-amber-700 mb-3 hidden">
+      <i class="ti ti-info-circle"></i>
+      Load a taxonomy on the home page to see your taxonomy in this prompt.
+    </p>
+    <div class="flex items-start justify-between mb-3 gap-4">
+      <p class="text-xs text-gray-500" id="prompt-meta">Prompt below is auto-filled with your active taxonomy.</p>
+      <div class="flex gap-2 shrink-0">
+        <button id="copy-btn" class="text-xs px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors">
+          Copy prompt
+        </button>
+        <button id="download-btn" class="text-xs px-3 py-1.5 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 rounded transition-colors">
+          Download .txt
+        </button>
+      </div>
+    </div>
+    <pre id="prompt-text" class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono"></pre>
+  </section>
+
+  <!-- Step 2 — Run the prompt -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 2 — Run the prompt against your reports</h2>
+    <p class="text-sm text-gray-600">
+      Paste this prompt into your LLM. Add the text of your radiology reports below the prompt. Save the LLM's response as a <code class="bg-gray-100 px-1 rounded text-xs">.json</code> file.
+    </p>
+    <p class="text-sm text-gray-500 mt-2">
+      The reports CSV format is documented at the <a href="reports-format-guide.html" class="text-indigo-600 hover:text-indigo-800 underline">Reports CSV Format Guide</a>.
+    </p>
+  </section>
+
+  <!-- Step 3 — Upload -->
+  <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 3 — Upload the JSON file to the annotator</h2>
+    <p class="text-sm text-gray-600">
+      Open the annotator's home page. Click the <strong>Import LLM Extractions</strong> button in the sidebar and select your <code class="bg-gray-100 px-1 rounded text-xs">.json</code> file.
+    </p>
+  </section>
+
+  <!-- If something doesn't import -->
+  <details id="fixing-errors" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <summary class="text-lg font-semibold text-gray-900 cursor-pointer">If something doesn't import</summary>
+    <p class="text-sm text-gray-600 mt-3 mb-4">
+      The annotator validates every row before import and shows you what to fix. Common cases:
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Error</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Cause</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Fix</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 align-top">
+          <tr>
+            <td class="px-3 py-2 text-xs">missing required field</td>
+            <td class="px-3 py-2">A row lacks <code class="bg-gray-100 px-1 rounded text-xs">record_id</code>, <code class="bg-gray-100 px-1 rounded text-xs">finding_name</code>, or <code class="bg-gray-100 px-1 rounded text-xs">source_text</code>.</td>
+            <td class="px-3 py-2">Every row must include all three. Update your extraction.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">record_id not in loaded reports</td>
+            <td class="px-3 py-2">The row references a record that wasn't imported as a report.</td>
+            <td class="px-3 py-2">Re-import the reports CSV with this record included, or check for typos.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">source_text not in named report</td>
+            <td class="px-3 py-2">The text doesn't appear in the report's FINDINGS section. Often a sign of cross-attribution (LLM batched multiple reports with the wrong record_id) or paraphrase (the LLM didn't quote verbatim).</td>
+            <td class="px-3 py-2">Check the validation panel — if the source_text matches another loaded report, your record_id is mismatched. Otherwise verify source_text is a verbatim quote.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">source_text matches multiple sentences</td>
+            <td class="px-3 py-2">The same body text appears under multiple section headers (templated report).</td>
+            <td class="px-3 py-2">Add the section header to source_text. Example: <code class="bg-gray-100 px-1 rounded text-xs">"Celiac artery: no dissection."</code></td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">presence value not recognized</td>
+            <td class="px-3 py-2">A value other than present / absent / indeterminate.</td>
+            <td class="px-3 py-2">Update the extraction to emit one of the three allowed values.</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 text-xs">attribute value not recognized</td>
+            <td class="px-3 py-2">A canonical enum attribute (laterality, severity, etc.) has a value outside its vocabulary.</td>
+            <td class="px-3 py-2">Use the allowed values listed in the field reference below.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="text-sm text-gray-600 mt-4">
+      The validation panel offers a <strong>Download error report (CSV)</strong> button that exports every rejected row with a <code class="bg-gray-100 px-1 rounded text-xs">_validation_error</code> column appended. Use it to fix issues upstream and re-upload.
+    </p>
+  </details>
+
+  <!-- JSON field reference -->
+  <details id="json-reference" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <summary class="text-lg font-semibold text-gray-900 cursor-pointer">JSON field reference</summary>
+    <p class="text-sm text-gray-600 mt-3 mb-3">
+      Each finding is one JSON object with these fields. Required fields are checked at import; optional fields are only validated if present.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Field</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Type</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Required</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Valid Values / Constraints</th>
+            <th class="px-3 py-2 text-left font-medium text-gray-700">Example</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">record_id</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">Must match a record ID already loaded in the annotator</td>
+            <td class="px-3 py-2 text-gray-500">ARN-RSNA-CXR-0001</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">finding_name</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">A name from the active taxonomy (case-insensitive). If the term doesn't map, emit <code class="bg-gray-100 px-1 rounded text-xs">unmapped:your_term</code> — the annotator preserves it for later review.</td>
+            <td class="px-3 py-2 text-gray-500">pleural_effusion</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">presence</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">One of: <code class="bg-gray-100 px-1 rounded text-xs">present</code>, <code class="bg-gray-100 px-1 rounded text-xs">absent</code>, <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code></td>
+            <td class="px-3 py-2 text-gray-500">present</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">source_text</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
+            <td class="px-3 py-2">
+              <p>The verbatim sentence from FINDINGS supporting this finding.</p>
+              <p class="mt-1"><strong>For templated reports</strong> where the same body text repeats under different sub-headers: include the section header as a prefix in <code class="bg-gray-100 px-1 rounded text-xs">source_text</code> so each match is unique.</p>
+            </td>
+            <td class="px-3 py-2 text-gray-500">Small right pleural effusion.</td>
+          </tr>
+          <tr class="bg-gray-50">
+            <td class="px-3 py-2 font-mono text-xs font-medium" colspan="5">
+              <span class="text-gray-500 text-xs font-normal italic">Canonical optional fields below — include only when applicable</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">laterality</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2"><code class="bg-gray-100 px-1 rounded text-xs">left</code>, <code class="bg-gray-100 px-1 rounded text-xs">right</code>, <code class="bg-gray-100 px-1 rounded text-xs">bilateral</code></td>
+            <td class="px-3 py-2 text-gray-500">right</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">temporal_status</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              <code class="bg-gray-100 px-1 rounded text-xs">unchanged</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">new</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">resolved</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">larger</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">smaller</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">increased_extent</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">decreased_extent</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">more_conspicuous</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">less_conspicuous</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">increased_complexity</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">decreased_complexity</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">unchanged</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">chronicity</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              <code class="bg-gray-100 px-1 rounded text-xs">acute</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">subacute</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">chronic</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">remote</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">evolving</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">resolving</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">healing</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">healed</code>,
+              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">chronic</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">size</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Numerical measurements with units <strong>only</strong> (e.g., "7 mm", "2.3 cm"). Qualitative descriptors like "small" or "large" go in <code class="bg-gray-100 px-1 rounded text-xs">severity</code>.</td>
+            <td class="px-3 py-2 text-gray-500">7 mm</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">severity</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">
+              Intensity: <code class="bg-gray-100 px-1 rounded text-xs">mild</code>, <code class="bg-gray-100 px-1 rounded text-xs">moderate</code>, <code class="bg-gray-100 px-1 rounded text-xs">severe</code><br>
+              Extent: <code class="bg-gray-100 px-1 rounded text-xs">small</code>, <code class="bg-gray-100 px-1 rounded text-xs">medium</code>, <code class="bg-gray-100 px-1 rounded text-xs">large</code>
+            </td>
+            <td class="px-3 py-2 text-gray-500">small</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">anatomic_site</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Compound anatomic terms stay intact (e.g., "right upper lobe").</td>
+            <td class="px-3 py-2 text-gray-500">right upper lobe</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">features</td>
+            <td class="px-3 py-2">string or array</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">Descriptive properties of the finding (e.g., cavitation, loculated). Comma-separated string or JSON array.</td>
+            <td class="px-3 py-2 text-gray-500">"loculated, septated"</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">tip_location</td>
+            <td class="px-3 py-2">string</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2">For device findings (catheters, lines): where the device tip terminates.</td>
+            <td class="px-3 py-2 text-gray-500">SVC-RA junction</td>
+          </tr>
+          <tr>
+            <td class="px-3 py-2 font-mono text-xs font-medium">position_status</td>
+            <td class="px-3 py-2">enum</td>
+            <td class="px-3 py-2">Optional</td>
+            <td class="px-3 py-2"><code class="bg-gray-100 px-1 rounded text-xs">satisfactory</code>, <code class="bg-gray-100 px-1 rounded text-xs">malpositioned</code></td>
+            <td class="px-3 py-2 text-gray-500">satisfactory</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="text-sm font-semibold text-gray-900 mt-6 mb-2">Example JSON</h3>
+    <pre class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto"><code>[
+  {
+    "record_id": "ARN-RSNA-CXR-0001",
+    "finding_name": "pleural_effusion",
+    "presence": "present",
+    "source_text": "Small right pleural effusion.",
+    "laterality": "right",
+    "severity": "small"
+  },
+  {
+    "record_id": "ARN-RSNA-CXR-0001",
+    "finding_name": "cardiomegaly",
+    "presence": "present",
+    "source_text": "The heart is mildly enlarged.",
+    "severity": "mild"
+  }
+]</code></pre>
+
+    <p class="text-sm text-gray-500 mt-4">
+      Custom fields beyond the canonical set are preserved on each finding as free-text attributes. Edit, display, and export work alongside canonical fields; only canonical enums are vocabulary-checked.
+    </p>
+    <p class="text-sm text-gray-500 mt-2">
+      CSV files with these same field names as column headers also import. JSON is the recommended format because LLMs produce it more reliably than CSV.
+    </p>
+  </details>
+</div>
+
+<script>
+(async () => {
+  const tax = await Storage.loadTaxonomy();
+  const cfg = await fetch('../data/attributes.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+
+  const promptText = ExtractionPrompt.build({
+    taxonomy: tax?.findings || [],
+    attributeConfig: cfg,
+    examType: tax?.examType || '',
+  });
+  document.getElementById('prompt-text').textContent = promptText;
+
+  const meta = document.getElementById('prompt-meta');
+  if (!tax?.findings?.length) {
+    document.getElementById('taxonomy-hint').classList.remove('hidden');
+    meta.textContent = 'Prompt below — load a taxonomy on the home page to fill in the TAXONOMY section.';
+  } else {
+    meta.textContent = `Prompt below is auto-filled with your active ${tax.examType} taxonomy (${tax.findings.length} findings).`;
+  }
+
+  const promptEl = document.getElementById('prompt-text');
+  const copyBtn = document.getElementById('copy-btn');
+  copyBtn.addEventListener('click', async () => {
+    const orig = copyBtn.textContent;
+    await navigator.clipboard.writeText(promptEl.textContent);
+    copyBtn.textContent = 'Copied';
+    setTimeout(() => copyBtn.textContent = orig, 1500);
+  });
+  document.getElementById('download-btn').addEventListener('click', () => {
+    const blob = new Blob([promptEl.textContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const slug = (tax?.examType || 'extraction').toLowerCase().replace(/\s+/g, '_');
+    a.download = `${slug}_extraction_prompt.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+})();
+</script>
+
+</body>
+</html>

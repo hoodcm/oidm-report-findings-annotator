@@ -28,12 +28,12 @@ All processing happens in your browser. Reports are stored in IndexedDB locally 
 
 ## LLM-Assisted Workflow
 
-1. Download the extraction prompt from the welcome screen (includes your active taxonomy).
+1. Open the LLM extractions playbook from the welcome screen — copy or download the prompt with your active taxonomy already injected.
 2. Run it against your reports with any LLM.
-3. Import the output CSV via "Import LLM Extractions" in the sidebar.
+3. Import the output JSON (or CSV) via "Import LLM Extractions" in the sidebar.
 4. Review each extracted finding: accept, reject, or correct.
 
-See the [extraction format guide](https://hoodcm.github.io/oidm-report-findings-annotator/pages/extraction-format-guide.html) for CSV column requirements.
+See the [LLM extractions playbook](https://hoodcm.github.io/oidm-report-findings-annotator/pages/llm-extractions.html) for the prompt, the upload format, and help when imports fail.
 
 ## Keyboard Shortcuts
 
@@ -81,12 +81,15 @@ python3 -m http.server 8501
 ### Files
 
 ```
-index.html              # Alpine.js SPA
-js/app.js               # Core logic
-js/storage.js           # IndexedDB (reports + taxonomy)
-js/taxonomy.js          # Finding search/matching
-js/sentences.js         # Report text parsing
-js/csv-import.js        # CSV import
+index.html                # Alpine.js SPA
+js/app.js                 # Core logic
+js/storage.js             # IndexedDB (reports + taxonomy)
+js/taxonomy.js            # Finding search/matching
+js/sentences.js           # Report text parsing
+js/extraction-import.js   # Extraction import (JSON + CSV)
+js/extraction-prompt.js   # Prompt builder (single source of truth)
+pages/llm-extractions.html  # LLM playbook (prompt + import + reference)
+pages/reports-format-guide.html
 data/xr-cxr-findings-taxonomy.csv   # Default CXR taxonomy
 data/attributes.json                # Attribute definitions
 ```

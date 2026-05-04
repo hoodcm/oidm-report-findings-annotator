@@ -13,9 +13,20 @@ db.version(2).stores({
   taxonomyMeta: 'id'
 });
 
+/**
+ * Deep-clone for IndexedDB safety. Alpine.js wraps store data in reactive
+ * Proxies; passing a Proxy to Dexie's `put` throws DataCloneError because
+ * structuredClone can't serialize the Proxy. Stripping via JSON round-trip
+ * is fine here because all our stored shapes are plain JSON-compatible
+ * data (no Date/Map/Set in the persisted documents).
+ */
+function plain(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 const Storage = {
   async saveReport(report) {
-    await db.reports.put(report);
+    await db.reports.put(plain(report));
   },
 
   async loadReport(recordId) {
@@ -52,7 +63,7 @@ const Storage = {
   },
 
   async importReports(reports) {
-    await db.reports.bulkPut(reports);
+    await db.reports.bulkPut(reports.map(plain));
   },
 
   async getReportCount() {
@@ -60,9 +71,10 @@ const Storage = {
   },
 
   async atomicReplace(reports) {
+    const cloned = reports.map(plain);
     await db.transaction('rw', db.reports, async () => {
       await db.reports.clear();
-      await db.reports.bulkPut(reports);
+      await db.reports.bulkPut(cloned);
     });
   },
 
@@ -74,7 +86,7 @@ const Storage = {
       examType,
       sourceFilename: filename,
       isDefault,
-      findings,
+      findings: plain(findings),
       loadedAt: Date.now()
     });
   },
