@@ -90,7 +90,6 @@ js/extraction-import.js   # Extraction import (JSON + CSV)
 js/extraction-prompt.js   # Prompt builder (single source of truth)
 pages/llm-extractions.html  # LLM playbook (prompt + import + reference)
 pages/reports-format-guide.html
-data/xr-cxr-findings-taxonomy.csv   # Default CXR taxonomy
 data/attributes.json                # Attribute definitions
 ```
 

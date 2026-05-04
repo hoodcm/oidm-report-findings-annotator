@@ -14,5 +14,3 @@ CHANGELOG.md
 
 # Data files (user uploads)
 *.csv
-# But track the default taxonomy
-!data/xr-cxr-findings-taxonomy.csv

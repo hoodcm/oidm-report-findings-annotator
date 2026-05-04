@@ -20,7 +20,7 @@ document.addEventListener('alpine:init', () => {
     // Taxonomy (loaded from CSV)
     taxonomy: [],
     attributeConfig: {},
-    examType: 'XR CXR',
+    examType: '',
 
     // Progress
     validatedCount: 0,
@@ -82,23 +82,12 @@ document.addEventListener('alpine:init', () => {
       // Load preferences
       this.autoAdvance = localStorage.getItem('autoAdvance') !== 'false';
 
-      // Load taxonomy (from IndexedDB if persisted, else default CSV)
-      try {
-        const stored = await Storage.loadTaxonomy();
-        if (stored) {
-          this.taxonomy = stored.findings;
-          this.examType = stored.examType;
-        } else {
-          const csvRes = await fetch('data/xr-cxr-findings-taxonomy.csv');
-          if (!csvRes.ok) throw new Error('taxonomy');
-          const csvText = await csvRes.text();
-          this.taxonomy = this._parseTaxonomyCsv(csvText);
-          this.examType = 'XR CXR';
-          await Storage.saveTaxonomy('XR CXR', 'xr-cxr-findings-taxonomy.csv', this.taxonomy, true);
-        }
-      } catch (e) {
-        this.showToast('Failed to load taxonomy data. Check your connection and refresh.', 'error');
-        return;
+      // Load taxonomy from IndexedDB if persisted; otherwise leave empty
+      // until the user uploads one on the welcome screen.
+      const stored = await Storage.loadTaxonomy();
+      if (stored) {
+        this.taxonomy = stored.findings;
+        this.examType = stored.examType;
       }
 
       // Load attributes
@@ -1141,28 +1130,6 @@ document.addEventListener('alpine:init', () => {
       this.examType = examType;
       await Storage.saveTaxonomy(examType, file.name, findings, false);
       this.showToast(`Loaded ${findings.length} findings for ${examType}`, 'success');
-    },
-
-    async resetTaxonomyToDefault() {
-      const reportCount = await Storage.getReportCount();
-      if (reportCount > 0) {
-        if (!confirm(`Resetting taxonomy will clear all ${reportCount} loaded reports and annotations. Export your session first if needed.\n\nContinue?`)) {
-          return;
-        }
-        await this.clearAllData();
-      }
-
-      try {
-        const csvRes = await fetch('data/xr-cxr-findings-taxonomy.csv');
-        if (!csvRes.ok) throw new Error('fetch failed');
-        const csvText = await csvRes.text();
-        this.taxonomy = this._parseTaxonomyCsv(csvText);
-        this.examType = 'XR CXR';
-        await Storage.saveTaxonomy('XR CXR', 'xr-cxr-findings-taxonomy.csv', this.taxonomy, true);
-        this.showToast('Reset to default CXR taxonomy', 'success');
-      } catch (e) {
-        this.showToast('Failed to load default taxonomy', 'error');
-      }
     },
 
     // --- Annotation Stats ---
