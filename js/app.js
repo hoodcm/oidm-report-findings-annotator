@@ -254,10 +254,11 @@ document.addEventListener('alpine:init', () => {
       const url = '?idx=' + this.currentIdx + '&sentence=' + idx;
       history.replaceState({ idx: this.currentIdx }, '', url);
 
-      // Scroll selected sentence into view, then focus finding search
+      // Scroll selected sentence into view. Do NOT auto-focus the finding
+      // search input — focusing an input traps J/K keystrokes there and
+      // breaks sentence navigation. Press F to focus search explicitly.
       requestAnimationFrame(() => {
         document.querySelector('[data-sentence-idx="' + idx + '"]')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        document.getElementById('finding-search-input')?.focus();
       });
     },
 
