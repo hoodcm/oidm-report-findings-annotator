@@ -8,7 +8,7 @@ A browser-based tool for annotating radiology reports with structured findings. 
 
 Upload a CSV of radiology reports and annotate each sentence with standardized finding names from a controlled taxonomy. The tool tracks your progress, saves your work automatically, and exports structured CSV or JSON for downstream analysis.
 
-Supports multiple exam types (chest X-ray, head CT, MSK, mammography, MRI spine) through swappable taxonomy files from the [imaging-findings-workbench](https://github.com/hoodcm/imaging-findings-workbench). A chest X-ray taxonomy is included by default.
+Supports multiple exam types (chest X-ray, head CT, MSK, mammography, MRI spine) through swappable taxonomy files from the [imaging-findings-workbench](https://github.com/hoodcm/imaging-findings-workbench). Upload a taxonomy CSV for your exam type on first use.
 
 For large datasets, you can have an LLM pre-extract findings from your reports, import the extractions, and review them instead of annotating from scratch.
 
@@ -19,7 +19,7 @@ All processing happens in your browser. Reports are stored in IndexedDB locally 
 ## Getting Started
 
 1. Open the tool in any modern browser (Chrome, Firefox, Safari, Edge).
-2. Optionally upload a taxonomy CSV for your exam type. CXR loads by default.
+2. Upload a taxonomy CSV for your exam type (workbench format: `id, name, category, parent_id, synonyms, finding_type`).
 3. Upload a reports CSV with an ID column and a report text column.
 4. Click sentences to select them, search for findings, and tag each sentence.
 5. Set finding attributes (presence, laterality, severity, etc.) as needed.
@@ -78,6 +78,17 @@ python3 -m http.server 8501
 # http://localhost:8501
 ```
 
+If JavaScript edits don't appear after a reload, do a hard reload (Cmd/Ctrl+Shift+R) to bypass the browser cache.
+
+### Tests
+
+```bash
+node tests/run.js       # unit + contract tests (119, pure Node)
+npx playwright test     # E2E tests (19 across 9 specs)
+```
+
+Both layers run in CI on every PR via `.github/workflows/test.yml`.
+
 ### Files
 
 ```
@@ -88,9 +99,11 @@ js/taxonomy.js            # Finding search/matching
 js/sentences.js           # Report text parsing
 js/extraction-import.js   # Extraction import (JSON + CSV)
 js/extraction-prompt.js   # Prompt builder (single source of truth)
-pages/llm-extractions.html  # LLM playbook (prompt + import + reference)
-pages/reports-format-guide.html
-data/attributes.json                # Attribute definitions
+pages/llm-extractions.html       # LLM playbook (prompt + import + reference)
+pages/reports-format-guide.html  # Reports CSV format docs
+data/attributes.json             # Attribute definitions
+tests/                    # Unit + contract tests (Node) + browser runner
+tests/e2e/                # Playwright specs
 ```
 
 </details>

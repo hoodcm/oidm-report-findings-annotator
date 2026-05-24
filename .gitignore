@@ -19,3 +19,8 @@ CHANGELOG.md
 node_modules/
 playwright-report/
 test-results/
+
+# Local dev tooling — not part of the deployed site or the public repo.
+# The deployed site is served by GitHub Pages; serve.py is only used
+# locally when iterating on JS/CSS to avoid the browser's heuristic cache.
+scripts/
