@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Annotator Tests</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; color: #222; }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    .summary { padding: 0.75rem 1rem; border-radius: 6px; margin: 1rem 0; font-weight: 600; }
+    .summary.pass { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+    .summary.fail { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .summary.pending { background: #f3f4f6; color: #4b5563; border: 1px solid #d1d5db; }
+    .suite { margin: 1rem 0; padding: 0.75rem; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+    .suite h2 { font-size: 1rem; margin: 0 0 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; }
+    .suite-counts { font-size: 0.8rem; color: #6b7280; font-weight: normal; }
+    ul.tests { list-style: none; padding: 0; margin: 0; }
+    ul.tests li { padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.85rem; display: flex; align-items: flex-start; gap: 0.5rem; }
+    li.pass { color: #065f46; }
+    li.fail { color: #991b1b; background: #fef2f2; padding: 0.5rem; flex-direction: column; align-items: flex-start; }
+    li .marker { font-family: ui-monospace, monospace; font-weight: bold; }
+    .err { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.75rem; background: #fff; border: 1px solid #fca5a5; padding: 0.4rem; border-radius: 4px; white-space: pre-wrap; margin-top: 0.25rem; width: 100%; box-sizing: border-box; }
+    .note { color: #6b7280; font-size: 0.85rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Annotator Tests</h1>
+  <p class="note">Pure-function coverage for sentences, extraction-import, taxonomy, and merge-key behavior. Load this page in a browser to run.</p>
+
+  <div id="summary" class="summary pending">Running…</div>
+  <div id="results"></div>
+
+  <!-- Dexie (required by ../js/storage.js for contract tests) -->
+  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+
+  <!-- App modules under test (load order matters: dependencies first) -->
+  <script src="../js/sentences.js"></script>
+  <script src="../js/taxonomy.js"></script>
+  <script src="../js/extraction-import.js"></script>
+  <script src="../js/storage.js"></script>
+
+  <!-- Test fixtures -->
+  <script src="fixtures/reports.js"></script>
+
+  <!-- Test framework + test files -->
+  <script src="framework.js"></script>
+  <script src="sentences.test.js"></script>
+  <script src="extraction-import.test.js"></script>
+  <script src="taxonomy.test.js"></script>
+  <script src="contracts.test.js"></script>
+
+  <script>
+    (async () => {
+      const results = await runTests();
+      const summaryEl = document.getElementById('summary');
+      const resultsEl = document.getElementById('results');
+
+      summaryEl.className = 'summary ' + (results.failed === 0 ? 'pass' : 'fail');
+      summaryEl.textContent =
+        `${results.passed} / ${results.total} passed` +
+        (results.failed > 0 ? `  —  ${results.failed} failed` : '  —  all good');
+
+      for (const s of results.suites) {
+        const suite = document.createElement('div');
+        suite.className = 'suite';
+        const h = document.createElement('h2');
+        h.innerHTML = `${s.name} <span class="suite-counts">(${s.passed}/${s.tests.length})</span>`;
+        suite.appendChild(h);
+
+        const ul = document.createElement('ul');
+        ul.className = 'tests';
+        for (const t of s.tests) {
+          const li = document.createElement('li');
+          li.className = t.passed ? 'pass' : 'fail';
+          const marker = document.createElement('span');
+          marker.className = 'marker';
+          marker.textContent = t.passed ? '✓' : '✗';
+          const label = document.createElement('span');
+          label.textContent = t.name;
+          li.appendChild(marker);
+          li.appendChild(label);
+          if (!t.passed) {
+            const err = document.createElement('pre');
+            err.className = 'err';
+            err.textContent = t.error;
+            li.appendChild(err);
+          }
+          ul.appendChild(li);
+        }
+        suite.appendChild(ul);
+        resultsEl.appendChild(suite);
+      }
+    })();
+  </script>
+</body>
+</html>
