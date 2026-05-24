@@ -5,6 +5,11 @@
 const MAX_CSV_SIZE = 10 * 1024 * 1024;     // 10 MB
 const MAX_SESSION_SIZE = 50 * 1024 * 1024;  // 50 MB
 
+// Single source of truth for the on-disk report schema version. Bump
+// this when changes to sentence splitting, finding shape, or migration
+// logic require re-deriving stored data.
+const SCHEMA_VERSION = 4;
+
 document.addEventListener('alpine:init', () => {
 
   Alpine.store('app', {
@@ -29,6 +34,7 @@ document.addEventListener('alpine:init', () => {
 
     // Preferences
     autoAdvance: true,
+    showSentenceBoundaries: false,
 
     // Search state
     searchQuery: '',
@@ -138,7 +144,6 @@ document.addEventListener('alpine:init', () => {
     },
 
     async _runMigrationIfNeeded() {
-      const SCHEMA_VERSION = 3;
       const all = await Storage.exportAllReports();
       const stale = all.filter(r => r.schema_version !== SCHEMA_VERSION);
       if (!stale.length) return;
@@ -307,12 +312,19 @@ document.addEventListener('alpine:init', () => {
       const extraction = this.report.llm_extractions[extractionIdx];
       if (!extraction) return;
 
-      // Create validated finding from extraction
+      const sentenceIdx = this.selectedSentenceIdx || extraction.source_sentence_idx;
+      if (!sentenceIdx) {
+        this.showToast('Cannot accept: no sentence linkage. Select a sentence first or fix the extraction.', 'error');
+        return;
+      }
+
       const taxMatch = Taxonomy.matchFindingToTaxonomy(extraction.finding_name, this.taxonomy);
       const validated = {
         finding_name: taxMatch ? taxMatch.name : extraction.finding_name,
         taxonomy_id: taxMatch ? taxMatch.id : null,
-        source_sentence_idx: this.selectedSentenceIdx || extraction.source_sentence_idx,
+        source_sentence_idx: sentenceIdx,
+        source_text: extraction.source_text || '',
+        _needsReview: extraction._needsReview || false,
         is_custom: !taxMatch,
         origin: 'llm',
         was_modified: false,
@@ -347,10 +359,16 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
+      const sentenceText = this.selectedSentenceIdx
+        ? (this.report.sentences?.[this.selectedSentenceIdx - 1] || '')
+        : '';
+
       const validated = {
         finding_name: taxMatch ? taxMatch.name : findingName,
         taxonomy_id: taxMatch ? taxMatch.id : null,
         source_sentence_idx: this.selectedSentenceIdx,
+        source_text: sentenceText,
+        _needsReview: false,
         is_custom: !taxMatch,
         origin: 'human_added',
         was_modified: false,
@@ -557,7 +575,7 @@ document.addEventListener('alpine:init', () => {
           extraction_model: null,
           extraction_timestamp: null,
           taxonomyVersion,
-          schema_version: 3,
+          schema_version: SCHEMA_VERSION,
         });
       }
 
@@ -852,12 +870,29 @@ document.addEventListener('alpine:init', () => {
         return `ambiguous: sentences ${r.matches?.join(', ')}`;
       };
 
+      // Stable merge key for matching new extraction rows against existing
+      // validated findings. Uses normalized source_text + canonical finding
+      // name — both fields are stable across sentence-index recomputation,
+      // unlike (source_sentence_idx, finding_name) which shifts when the
+      // splitter changes.
+      const mergeKey = (sourceText, findingName) => Sentences.mergeKey(sourceText, findingName);
+
       let imported = 0;
+      let preserved = 0;
+      let mergedAttrs = 0;
+      let addedPending = 0;
       for (const [recordId, findings] of Object.entries(byRecord)) {
         const report = await Storage.loadReport(recordId);
         if (!report) continue;
 
+        const existingValidated = report.validated_findings || [];
+        const validatedByKey = new Map();
+        for (const vf of existingValidated) {
+          validatedByKey.set(mergeKey(vf.source_text, vf.finding_name), vf);
+        }
+
         const newExtractions = [];
+        const consumedValidatedKeys = new Set();
         for (const f of findings) {
           let finalName = f.finding_name;
 
@@ -877,6 +912,41 @@ document.addEventListener('alpine:init', () => {
             else matchError = formatMatchError(r, recordId);
           }
 
+          // Try to merge onto an existing validated finding before falling
+          // back to pending. Annotator edits are preserved: we only fill
+          // attributes that aren't already set.
+          const key = mergeKey(f.source_text, finalName);
+          const existing = validatedByKey.get(key);
+          if (existing && !consumedValidatedKeys.has(key)) {
+            consumedValidatedKeys.add(key);
+            let changed = false;
+            if (sentenceIdx && existing.source_sentence_idx !== sentenceIdx) {
+              existing.source_sentence_idx = sentenceIdx;
+              changed = true;
+            }
+            if (f.source_text && existing.source_text !== f.source_text) {
+              existing.source_text = f.source_text;
+              changed = true;
+            }
+            const incomingAttrs = f.attributes || {};
+            existing.attributes = existing.attributes || {};
+            for (const [k, v] of Object.entries(incomingAttrs)) {
+              const cur = existing.attributes[k];
+              const isEmpty = cur == null || cur === '' || (Array.isArray(cur) && cur.length === 0);
+              if (isEmpty && v != null && v !== '') {
+                existing.attributes[k] = v;
+                changed = true;
+              }
+            }
+            if (changed) {
+              existing.was_modified = true;
+              mergedAttrs++;
+            }
+            preserved++;
+            imported++;
+            continue;
+          }
+
           const ext = {
             finding_name: finalName,
             source_sentence_idx: sentenceIdx,
@@ -885,14 +955,26 @@ document.addEventListener('alpine:init', () => {
           };
           if (matchError) ext._matchError = matchError;
           newExtractions.push(ext);
+          addedPending++;
           imported++;
         }
 
-        // Replace (not append) extractions, clear validation
+        // Existing validated findings that weren't matched by this re-import
+        // are kept as-is (re-import doesn't delete annotator work).
+        report.validated_findings = existingValidated;
+
+        // Pending extractions get fully replaced: any unreviewed pending rows
+        // from a previous import are superseded by this import.
         report.llm_extractions = newExtractions;
-        report.validated_findings = [];
-        report.validated = false;
-        report.validated_at = null;
+
+        // Validated status now depends on whether there's any unreviewed
+        // pending work. If new rows were added (or were already pending),
+        // the report drops out of validated state.
+        const hasPending = newExtractions.length > 0;
+        if (hasPending && report.validated) {
+          report.validated = false;
+          report.validated_at = null;
+        }
         report.extraction_model = 'external_import';
         report.extraction_timestamp = new Date().toISOString();
         // Strip Alpine reactive proxies before IndexedDB storage
@@ -909,7 +991,16 @@ document.addEventListener('alpine:init', () => {
       this.fuzzyAccepted = new Set();
       this.extractionReportsWithExisting = [];
       this.extractionReportsWithValidated = [];
-      this.showToast(`Imported ${imported} findings into ${Object.keys(byRecord).length} reports`, 'success');
+
+      // Single outcome toast: surface the merge breakdown so the annotator
+      // knows what happened to their prior work — silent merge would feel
+      // like data loss even when it isn't.
+      const breakdown = [];
+      if (preserved > 0) breakdown.push(`${preserved} validated preserved`);
+      if (mergedAttrs > 0) breakdown.push(`${mergedAttrs} attribute merge${mergedAttrs === 1 ? '' : 's'}`);
+      if (addedPending > 0) breakdown.push(`${addedPending} new pending`);
+      const detail = breakdown.length ? ` (${breakdown.join(', ')})` : '';
+      this.showToast(`Imported ${imported} findings into ${Object.keys(byRecord).length} reports${detail}`, 'success');
     },
 
     // --- Session Export/Import ---
@@ -991,6 +1082,11 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Failed to restore session: ' + (e.message || 'unknown error'), 'error');
         return;
       }
+
+      // Restored data may predate the current schema (older sentence
+      // indices, missing sectionBreaks, etc.). Run the same migration
+      // path init uses so the session is current before it loads.
+      await this._runMigrationIfNeeded();
 
       await this._loadSession();
       let msg = `Restored ${validReports.length} reports`;

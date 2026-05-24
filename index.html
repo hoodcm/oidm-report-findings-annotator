@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Report Annotator</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
@@ -463,6 +466,33 @@
                     — preserved as free-text on each finding.
                   </p>
 
+                  <!-- Canonical-alias drift warning: columns that look like canonical attributes but weren't mapped -->
+                  <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900"
+                       x-show="(($store.app.extractionValidationSummary.canonicalAliasWarnings || []).length) > 0">
+                    <p class="font-medium mb-1">Columns may need explicit mapping:</p>
+                    <ul class="list-disc pl-5 space-y-0.5">
+                      <template x-for="w in ($store.app.extractionValidationSummary.canonicalAliasWarnings || [])" :key="w.column">
+                        <li>
+                          Column <span class="font-mono" x-text="w.column"></span>
+                          looks like canonical attribute
+                          <span class="font-mono" x-text="w.suggestedKey"></span>
+                          — currently imported as custom. Map it in Step 1 to preserve canonical schema.
+                        </li>
+                      </template>
+                    </ul>
+                  </div>
+
+                  <!-- Missing canonical-column warning: CSV looks like a tool-export but is missing expected columns -->
+                  <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900"
+                       x-show="(($store.app.extractionValidationSummary.missingCanonicalColumns || []).length) > 0">
+                    <p class="font-medium mb-1">Round-trip column(s) missing from this export:</p>
+                    <p>
+                      Expected canonical attribute columns:
+                      <span class="font-mono" x-text="($store.app.extractionValidationSummary.missingCanonicalColumns || []).join(', ')"></span>.
+                      Re-exporting from a recent version of the tool should include them.
+                    </p>
+                  </div>
+
                   <button @click="$store.app.downloadExtractionErrorCsv()"
                           x-show="$store.app.extractionValidationSummary.invalid.length > 0"
                           class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
@@ -709,15 +739,21 @@
 
           <!-- Report info -->
           <template x-if="$store.app.report">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-xs font-medium text-gray-900" x-text="$store.app.report.record_id"></p>
-                <p class="text-xs text-gray-400 mt-0.5" x-text="($store.app.report.sentences || []).length + ' sentences'"></p>
+            <div>
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-xs font-medium text-gray-900" x-text="$store.app.report.record_id"></p>
+                  <p class="text-xs text-gray-400 mt-0.5" x-text="($store.app.report.sentences || []).length + ' sentences'"></p>
+                </div>
+                <span x-show="$store.app.report.validated" x-cloak
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                  Validated
+                </span>
               </div>
-              <span x-show="$store.app.report.validated" x-cloak
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                Validated
-              </span>
+              <label class="flex items-center gap-1.5 mt-1 text-xs text-gray-500 cursor-pointer select-none">
+                <input type="checkbox" x-model="$store.app.showSentenceBoundaries" class="h-3 w-3">
+                <span>Show sentence boundaries</span>
+              </label>
             </div>
           </template>
 
@@ -830,6 +866,11 @@
                             class="text-stone-900 font-bold"
                             x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
                       <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"> </span>
+
+                      <!-- Boundary index pill (debug toggle) -->
+                      <sup x-show="$store.app.showSentenceBoundaries"
+                           class="text-[10px] text-gray-400 font-mono mr-0.5"
+                           x-text="'[' + (sIdx + 1) + ']'"></sup>
 
                       <!-- Sentence content (highlighted) -->
                       <span class="rounded px-0.5 transition-all"
@@ -962,6 +1003,11 @@
                                     }"
                                     x-text="(finding.attributes||{}).presence || 'indeterminate'"></span>
                             </div>
+                            <!-- Source text quote -->
+                            <template x-if="finding.source_text">
+                              <p class="text-xs italic text-gray-500 mt-1 border-l-2 border-gray-200 pl-2"
+                                 x-text="finding.source_text"></p>
+                            </template>
                             <!-- Extracted attributes preview -->
                             <template x-if="finding.attributes">
                               <div class="text-xs text-gray-500 mt-1 space-y-0.5">
@@ -1075,7 +1121,9 @@
                                     </template>
                                   </select>
                                   <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type === 'enum'">
-                                    <select x-model="newAttrValue" class="flex-1 border rounded px-1 h-6 text-xs">
+                                    <select x-model="newAttrValue"
+                                            @change="const v = $event.target.value; if (newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
+                                            class="flex-1 border rounded px-1 h-6 text-xs">
                                       <option value="">--</option>
                                       <template x-for="opt in $store.app.attributeConfig[newAttrKey]?.values || []" :key="opt">
                                         <option :value="opt" x-text="opt"></option>
@@ -1084,7 +1132,8 @@
                                   </template>
                                   <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type !== 'enum'">
                                     <input type="text" x-model="newAttrValue" placeholder="value"
-                                           @keydown.enter.prevent="if(newAttrKey && newAttrValue) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, newAttrValue); newAttrKey = ''; newAttrValue = '' }"
+                                           @keydown.enter.prevent="const v = $event.target.value; if(newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
+                                           @blur="const v = $event.target.value; if(newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
                                            class="flex-1 border rounded px-1 h-6 text-xs">
                                   </template>
                                   <button x-show="newAttrKey && newAttrValue"

@@ -138,9 +138,15 @@ const CsvImport = {
     const idPatterns = ['record_id', 'id', 'report_id', 'case_id', 'accession'];
     const textPatterns = ['rad_deid_report', 'report_text', 'report', 'text', 'findings'];
 
+    // Two-pass match: exact first, then token-boundary. Avoids bare substring
+    // false positives like `id` matching `side`, `wide`, `evidence`, `midline`.
     const findField = (patterns) => {
       for (const pattern of patterns) {
-        const match = fields.find(f => Norm.colName(f).includes(pattern));
+        const match = fields.find(f => Norm.colName(f) === pattern);
+        if (match) return match;
+      }
+      for (const pattern of patterns) {
+        const match = fields.find(f => Norm.colName(f).split('_').includes(pattern));
         if (match) return match;
       }
       return null;
@@ -214,7 +220,10 @@ const CsvImport = {
       const attrs = {};
       if (columnMap.presence) {
         const p = Norm.enumValue(row[columnMap.presence]);
-        attrs.presence = ['present', 'absent', 'indeterminate'].includes(p) ? p : 'indeterminate';
+        // Preserve the raw (lowercased) value so the validator can flag
+        // off-vocabulary values. Default to 'indeterminate' only when the
+        // cell is truly empty.
+        attrs.presence = p || 'indeterminate';
       } else {
         attrs.presence = 'indeterminate';
       }
@@ -394,8 +403,8 @@ const CsvImport = {
         }
       }
 
-      // 4. presence enum (already coerced to a known value during parseExtractionCsv;
-      //    we re-check here to detect when the original value was off-vocabulary)
+      // 4. presence enum — raw value is preserved through parsing, so
+      //    off-vocabulary values surface here as actionable errors.
       const rawPresence = f.attributes?.presence;
       if (rawPresence && !['present', 'absent', 'indeterminate'].includes(rawPresence)) {
         errors.push({
@@ -429,7 +438,54 @@ const CsvImport = {
       }
     }
 
-    return { valid, invalid, counts, customAttributes };
+    // Detect canonical-vs-custom attribute drift: CSV columns that look like
+    // they should map to a canonical attribute (laterality, temporal_status,
+    // chronicity, etc.) but were swept in as free-text custom attributes.
+    // Catches the " case" where the CSV had attribute data under
+    // slightly off-spec column names and rows imported with the wrong schema.
+    const ALIAS_TABLE = {
+      laterality: ['lat', 'side', 'lateral'],
+      temporal_status: ['temporal', 'change', 'comparison'],
+      chronicity: ['chronic', 'acuity', 'duration', 'age'],
+      severity: ['degree', 'grade', 'extent'],
+      size: ['measurement', 'dimension', 'measures'],
+      anatomic_site: ['site', 'location', 'anatomy', 'region'],
+      tip_location: ['tip', 'terminus'],
+      position_status: ['position', 'placement', 'malposition'],
+      features: ['feature', 'descriptor', 'modifier'],
+      multiple: ['plural', 'count', 'instances'],
+    };
+    const canonicalAliasWarnings = [];
+    for (const colName of customAttributes) {
+      const norm = Norm.colName(colName);
+      const tokens = norm.split('_').filter(Boolean);
+      for (const [canonical, aliases] of Object.entries(ALIAS_TABLE)) {
+        if (!canonical || canonical in (attributeConfig || {}) === false) continue;
+        const hit = aliases.some(a => tokens.includes(a) || norm === a || norm.includes(a));
+        if (hit) {
+          canonicalAliasWarnings.push({ column: colName, suggestedKey: canonical });
+          break;
+        }
+      }
+    }
+
+    // Detect tool-export round-trip with missing canonical attribute columns.
+    // If the CSV looks like it came from this tool (record_id + finding_name +
+    // source_text + taxonomy_id all present), then every canonical attribute
+    // key in attributeConfig is expected to be a column; missing ones likely
+    // indicate a round-trip regression.
+    const normalizedFields = (fields || []).map(f => Norm.colName(f));
+    const isToolExport = ['record_id', 'finding_name', 'source_text', 'taxonomy_id']
+      .every(req => normalizedFields.includes(req));
+    const missingCanonicalColumns = [];
+    if (isToolExport) {
+      for (const key of Object.keys(attributeConfig || {})) {
+        if (key === 'presence') continue;
+        if (!normalizedFields.includes(key)) missingCanonicalColumns.push(key);
+      }
+    }
+
+    return { valid, invalid, counts, customAttributes, canonicalAliasWarnings, missingCanonicalColumns };
   }
 };
 

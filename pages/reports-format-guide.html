@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>Reports CSV Format Guide</title>
   <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -86,7 +89,7 @@ Osseous structures: No acute fracture.</code></pre>
 
       <div class="border-l-4 border-indigo-200 pl-4">
         <p class="text-sm font-semibold text-gray-700">2. Bulleted findings</p>
-        <p class="text-xs text-gray-500 mb-2">Each bullet on its own line, separated by blank lines. Each bullet becomes its own sentence.</p>
+        <p class="text-xs text-gray-500 mb-2">Each bullet on its own line, separated by blank lines. Each bullet becomes its own sentence. Both <code class="bg-gray-100 px-1 rounded">-</code> and <code class="bg-gray-100 px-1 rounded">*</code> bullet markers are supported.</p>
         <pre class="text-xs bg-gray-50 rounded p-3 overflow-x-auto"><code>FINDINGS:
 Brain Parenchyma:
 
@@ -105,6 +108,18 @@ Brain Parenchyma:
 3. Mild generalized atrophy.</code></pre>
       </div>
 
+    </div>
+
+    <div class="mt-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+      <p class="text-sm font-semibold text-gray-700 mb-2">Exact splitting rules</p>
+      <ul class="text-xs text-gray-600 space-y-1 list-disc pl-5">
+        <li>A new sentence starts on: <strong>period + space</strong>, followed optionally by a bullet marker (<code>-</code>, <code>*</code>, or <code>N.</code>) and a space, followed by a <strong>capital letter</strong>.</li>
+        <li><strong>Blank lines</strong> flush the current section run; they don't insert mid-content splits.</li>
+        <li><strong>Continuation lines</strong> (a non-blank line that isn't a header and doesn't start a new sentence) are joined to the previous line with a single space.</li>
+        <li><strong>Section headers</strong>: colon-terminated text at the start of a line, max 60 characters of label. Either bare on its own line, or inline with content following the colon.</li>
+        <li><strong>Not supported</strong>: <code>+</code> bullets, sentences that begin with a lowercase letter after a bullet marker, or multiple distinct paragraphs glued together without a blank line between them.</li>
+        <li>Toggle <em>Show sentence boundaries</em> in the sidebar to see exactly which sentences the splitter produced from the current report.</li>
+      </ul>
     </div>
   </section>
 

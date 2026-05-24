@@ -35,7 +35,7 @@ const Sentences = {
 
     const flush = (headerPrefix) => {
       if (!pendingContent) return;
-      const subSentences = pendingContent.split(/(?<=\.)\s+(?=(?:-\s+|\d+\.\s+)?[A-Z])/);
+      const subSentences = pendingContent.split(/(?<=\.)\s+(?=(?:[-*]\s+|\d+\.\s+)?[A-Z])/);
       for (const sub of subSentences) {
         const st = sub.trim();
         if (st && st.toLowerCase() !== 'none') {
@@ -91,6 +91,19 @@ const Sentences = {
    */
   _normForMatch(s) {
     return (s || '').toString().toLowerCase().replace(/\s+/g, ' ').trim().replace(/\.$/, '');
+  },
+
+  /**
+   * Stable identity key for finding-level merge across re-imports.
+   * Combines normalized source_text with case-folded finding_name so that
+   * re-imports with the same extractor span and canonical finding can be
+   * merged onto the existing validated finding regardless of whitespace
+   * or case drift in either field.
+   */
+  mergeKey(sourceText, findingName) {
+    const s = this._normForMatch(sourceText);
+    const n = (findingName || '').toString().toLowerCase().trim();
+    return `${s}::${n}`;
   },
 
   /**
