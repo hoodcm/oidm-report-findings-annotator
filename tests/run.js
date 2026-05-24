@@ -26,6 +26,7 @@ require('./sentences.test.js');
 require('./extraction-import.test.js');
 require('./taxonomy.test.js');
 require('./contracts.test.js');
+require('./storage.test.js');
 
 (async () => {
   const r = await runTests();

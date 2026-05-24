@@ -176,3 +176,47 @@ describe('Sentences.splitSentenceHeader', () => {
     assertEqual(c, 'Just a sentence.');
   });
 });
+
+describe('Sentences.splitIntoSentences — templated-none edge cases', () => {
+  it('skips "Header:none" with no space after the colon', () => {
+    const { sentences } = Sentences.splitIntoSentences('Hemorrhage:none');
+    assertEqual(sentences.length, 0);
+  });
+
+  it('skips "Header: None." with trailing period', () => {
+    const { sentences } = Sentences.splitIntoSentences('Hemorrhage: None.');
+    assertEqual(sentences.length, 0);
+  });
+});
+
+describe('Sentences.isFirstOfHeaderRun — v1.3.0 header-rendering fix', () => {
+  // Pins the boundary-keyed predicate that drives sub-section header rendering.
+  // The bug it replaced suppressed headers across most reports because the gate
+  // fired only when a sectionBreaks entry coincided with the sentence index.
+  it('returns true at the first sentence of each same-prefix run', () => {
+    const text = 'Brain Parenchyma:\n- A.\n- B.\nVentricular System:\n- C.';
+    const { sentences } = Sentences.splitIntoSentences(text);
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 0), true);
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 1), false);
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 2), true);
+  });
+
+  it('returns false for sentences with no header prefix', () => {
+    const sentences = ['Just a sentence.', 'Another sentence.'];
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 0), false);
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 1), false);
+  });
+
+  it('returns false for out-of-range indices', () => {
+    const sentences = ['Brain: A.'];
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, -1), false);
+    assertEqual(Sentences.isFirstOfHeaderRun(sentences, 5), false);
+  });
+});
+
+// Intentionally NOT tested: abbreviation handling (e.g. "Dr. Smith reported X.").
+// The splitter currently fires on every `. CapitalLetter` boundary regardless
+// of whether the preceding token is an abbreviation. This is a known limitation
+// in the same class as the packed-numbered-impressions case above. Tests would
+// either pin broken behavior or fail until the splitter learns abbreviations —
+// neither is a useful regression signal today.

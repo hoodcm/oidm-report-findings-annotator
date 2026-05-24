@@ -15,6 +15,86 @@ const ATTR_CONFIG = {
   position_status: { type: 'enum', values: ['satisfactory', 'malpositioned'] },
 };
 
+describe('CsvImport.Norm — input normalization', () => {
+  it('Norm.cell strips a leading UTF-8 BOM', () => {
+    assertEqual(CsvImport.Norm.cell('﻿hello'), 'hello');
+  });
+
+  it('Norm.cell does NOT strip a BOM in the middle of a cell', () => {
+    // Only leading BOM is removed; embedded ones are user-visible data.
+    assertEqual(CsvImport.Norm.cell('hello﻿world'), 'hello﻿world');
+  });
+
+  it('Norm.cell handles null/undefined gracefully', () => {
+    assertEqual(CsvImport.Norm.cell(null), '');
+    assertEqual(CsvImport.Norm.cell(undefined), '');
+  });
+
+  it('Norm.text strips a Markdown code-fence wrapper around the body', () => {
+    const text = '```csv\nrecord_id,name\nr1,thing\n```';
+    assertEqual(CsvImport.Norm.text(text), 'record_id,name\nr1,thing');
+  });
+
+  it('Norm.text leaves an un-fenced body intact (modulo BOM + trim)', () => {
+    assertEqual(CsvImport.Norm.text('record_id,name\nr1,thing\n'), 'record_id,name\nr1,thing');
+  });
+
+  it('Norm.colName folds case and separators (space, hyphen, underscore)', () => {
+    assertEqual(CsvImport.Norm.colName('Record ID'), 'record_id');
+    assertEqual(CsvImport.Norm.colName('record-id'), 'record_id');
+    assertEqual(CsvImport.Norm.colName('RECORD_ID'), 'record_id');
+  });
+});
+
+describe('CsvImport.parseExtractionCsv — source_text sentinel values', () => {
+  const map = {
+    record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text',
+  };
+
+  it('treats source_text = "nan" (case-insensitive) as empty', () => {
+    const rows = [{ record_id: 'r1', finding_name: 'thing', source_text: 'nan' }];
+    const { findings } = CsvImport.parseExtractionCsv(rows, map);
+    assertEqual(findings[0].source_text, '');
+  });
+
+  it('treats source_text = "NULL" (case-insensitive) as empty', () => {
+    const rows = [{ record_id: 'r1', finding_name: 'thing', source_text: 'NULL' }];
+    const { findings } = CsvImport.parseExtractionCsv(rows, map);
+    assertEqual(findings[0].source_text, '');
+  });
+});
+
+describe('CsvImport._parseJson — JSON path returns standard shape', () => {
+  it('parses a top-level JSON array into { data, fields, errors }', () => {
+    const text = JSON.stringify([
+      { record_id: 'r1', finding_name: 'A', source_text: 'x' },
+      { record_id: 'r2', finding_name: 'B', source_text: 'y', laterality: 'left' },
+    ]);
+    const out = CsvImport._parseJson(text);
+    assertEqual(out.data.length, 2);
+    assertEqual(out.errors.length, 0);
+    // Field union across rows.
+    assertIncludes(out.fields, 'record_id');
+    assertIncludes(out.fields, 'finding_name');
+    assertIncludes(out.fields, 'source_text');
+    assertIncludes(out.fields, 'laterality');
+  });
+
+  it('flags malformed JSON as a fatal error (does not throw)', () => {
+    const out = CsvImport._parseJson('{not valid json');
+    assertEqual(out.data.length, 0);
+    assertEqual(out.errors.length, 1);
+    assertEqual(out.errors[0].type, 'fatal');
+  });
+
+  it('flags non-array JSON (e.g. a top-level object) as a fatal error', () => {
+    const out = CsvImport._parseJson('{"record_id":"r1"}');
+    assertEqual(out.data.length, 0);
+    assertEqual(out.errors.length, 1);
+    assertEqual(out.errors[0].type, 'fatal');
+  });
+});
+
 describe('CsvImport.detectColumns — P4: two-pass match (no bare substring)', () => {
   it('exact match takes precedence', () => {
     const { idCol } = CsvImport.detectColumns(['record_id', 'finding_name', 'source_text']);

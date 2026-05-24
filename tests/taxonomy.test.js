@@ -69,3 +69,45 @@ describe('Taxonomy.searchFindings', () => {
     assertEqual(r[0].id, 'HID001');
   });
 });
+
+describe('Taxonomy.matchFindingToTaxonomy — null on unmatched', () => {
+  it('returns null cleanly for a name with no canonical, synonym, or fuzzy match', () => {
+    const m = Taxonomy.matchFindingToTaxonomy('not a real radiology term', SAMPLE_TAXONOMY);
+    assertEqual(m, null);
+  });
+
+  it('returns null when input has only modifier tokens (filtered to empty set)', () => {
+    // 'left right' contains only MODIFIERS tokens; fuzzyMatchFinding short-circuits.
+    const m = Taxonomy.matchFindingToTaxonomy('left right', SAMPLE_TAXONOMY);
+    assertEqual(m, null);
+  });
+});
+
+describe('Taxonomy.fuzzyMatchFinding — Jaccard threshold boundary', () => {
+  // Pin that the default threshold is 0.5 inclusive. A future tightening to
+  // 0.6 or a loosening to 0.4 would silently shift which extraction rows
+  // auto-map onto the taxonomy.
+  const tax = [
+    { id: 'X1', name: 'subdural hemorrhage', synonyms: [], category: 'h', parent_id: null, finding_type: 'observation' },
+  ];
+
+  it('score 0.5 exactly matches (boundary is inclusive)', () => {
+    // tokens: input ['subdural'], tax ['subdural', 'hemorrhage'] → 1/2 = 0.5
+    const r = Taxonomy.fuzzyMatchFinding('subdural', tax);
+    assert(r && r.finding.id === 'X1', 'expected match at the 0.5 boundary');
+    assertEqual(r.score, 0.5);
+  });
+
+  it('score below threshold returns null', () => {
+    // tokens: input ['subdural', 'mass'], tax ['subdural', 'hemorrhage'] → 1/3 ≈ 0.33
+    const r = Taxonomy.fuzzyMatchFinding('subdural mass', tax);
+    assertEqual(r, null);
+  });
+});
+
+// Intentionally NOT tested: laterality / MODIFIERS-strip discrimination
+// ('left edema' vs 'right edema' vs generic 'edema'). The current behavior
+// collapses left/right onto the generic entry via the MODIFIERS strip, and
+// the product decision is deferred — see TODO.md ("Partial-match search
+// shortcut"). When that decision lands, encode it as a paired
+// should-fire / shouldn't-fire test pinning the chosen behavior.
