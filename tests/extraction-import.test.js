@@ -154,17 +154,17 @@ describe('CsvImport.parseExtractionCsv — P2: presence not coerced', () => {
     assertEqual(findings[0].attributes.presence, 'present');
   });
 
-  it('defaults to indeterminate when presence cell is empty', () => {
+  it('leaves presence null when the cell is empty so the validator can reject the row', () => {
     const rows = [{ record_id: 'r1', finding_name: 'thing', presence: '', source_text: 'src' }];
     const { findings } = CsvImport.parseExtractionCsv(rows, baseColumnMap);
-    assertEqual(findings[0].attributes.presence, 'indeterminate');
+    assertEqual(findings[0].attributes.presence, null);
   });
 
-  it('defaults to indeterminate when no presence column mapped', () => {
+  it('leaves presence null when no presence column is mapped so the validator can reject the row', () => {
     const map = { record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text' };
     const rows = [{ record_id: 'r1', finding_name: 'thing', source_text: 'src' }];
     const { findings } = CsvImport.parseExtractionCsv(rows, map);
-    assertEqual(findings[0].attributes.presence, 'indeterminate');
+    assertEqual(findings[0].attributes.presence, null);
   });
 });
 
@@ -264,6 +264,123 @@ describe('CsvImport.validateExtractionRows — P2: bad presence surfaces', () =>
     );
     assertEqual(summary.counts.badPresence, 0);
     assertEqual(summary.valid.length, 1);
+  });
+});
+
+describe('CsvImport.validateExtractionRows — missing presence', () => {
+  const reportsById = {
+    r1: { record_id: 'r1', sentences: ['Brain: Some finding here.'] },
+  };
+  const columnMap = { record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text', presence: 'presence' };
+  const fields = ['record_id', 'finding_name', 'source_text', 'presence'];
+
+  it('rejects row where presence is null (cell was empty at parse time)', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'Some finding here',
+      attributes: { presence: null },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.missingRequired, 1);
+    assertEqual(summary.counts.ready, 0);
+    assertEqual(summary.invalid.length, 1);
+    assertIncludes(summary.invalid[0]._validation_errors[0].msg, 'presence');
+  });
+
+  it('rejects row where presence attribute is absent entirely', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'Some finding here',
+      attributes: {},
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.missingRequired, 1);
+    assertEqual(summary.counts.ready, 0);
+    assertIncludes(summary.invalid[0]._validation_errors[0].msg, 'presence');
+  });
+
+  it('accepts row with explicit presence=indeterminate', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'Some finding here',
+      attributes: { presence: 'indeterminate' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.missingRequired, 0);
+    assertEqual(summary.counts.ready, 1);
+    assertEqual(summary.valid.length, 1);
+  });
+});
+
+describe('CsvImport.validateExtractionRows — cross-attribution split', () => {
+  const reportsById = {
+    r1: { record_id: 'r1', sentences: ['Brain: Cardiomegaly.'] },
+    r2: { record_id: 'r2', sentences: ['Brain: Pleural effusion.'] },
+    r3: { record_id: 'r3', sentences: ['Brain: Cardiomegaly.'] },
+  };
+  const columnMap = { record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text', presence: 'presence' };
+  const fields = ['record_id', 'finding_name', 'source_text', 'presence'];
+
+  it('empty source_text is caught by missingRequired, no cross-attribution check runs', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: '',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.missingRequired, 1);
+    assertEqual(summary.counts.notInReport, 0);
+    assertEqual(summary.counts.crossAttributed, 0);
+  });
+
+  it('text not found in any loaded report counts as notInReport, not crossAttributed', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'Hallucinated text',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.notInReport, 1);
+    assertEqual(summary.counts.crossAttributed, 0);
+  });
+
+  it('text found only in a different loaded report counts as crossAttributed', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'effusion', source_text: 'Pleural effusion',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.crossAttributed, 1);
+    assertEqual(summary.counts.notInReport, 0);
+    assertIncludes(summary.invalid[0]._validation_errors[0].msg, 'r2');
+  });
+
+  it('text found in the named report only passes validation cleanly, no warning', () => {
+    const parsed = [{
+      record_id: 'r2', finding_name: 'effusion', source_text: 'Pleural effusion',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.ready, 1);
+    assertEqual(summary.counts.ambiguousAcrossReports, 0);
+  });
+
+  it('text in named report plus other loaded reports passes but flags ambiguousAcrossReports warning', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'cardio', source_text: 'Cardiomegaly',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.ready, 1);
+    assertEqual(summary.counts.ambiguousAcrossReports, 1);
+    assertEqual(summary.ambiguousAcrossReportsSamples.length, 1);
+    assertEqual(summary.ambiguousAcrossReportsSamples[0].record_id, 'r1');
+    assertDeepEqual(summary.ambiguousAcrossReportsSamples[0].alsoIn, ['r3']);
+  });
+
+  it('two reports with identical text and row attributed to one passes but flags ambiguousAcrossReports', () => {
+    const parsed = [{
+      record_id: 'r3', finding_name: 'cardio', source_text: 'Cardiomegaly',
+      attributes: { presence: 'present' },
+    }];
+    const summary = CsvImport.validateExtractionRows(parsed, reportsById, ATTR_CONFIG, columnMap, fields, Sentences);
+    assertEqual(summary.counts.ready, 1);
+    assertEqual(summary.counts.ambiguousAcrossReports, 1);
   });
 });
 

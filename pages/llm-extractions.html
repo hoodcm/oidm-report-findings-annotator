@@ -21,11 +21,32 @@
     <i class="ti ti-arrow-left text-base"></i> Back to Annotator
   </a>
 
+  <div class="bg-amber-50 border-l-4 border-amber-400 text-amber-900 p-4 mb-6 rounded-r">
+    <p class="font-semibold mb-2">The AI will make mistakes — review every finding it imports.</p>
+    <p class="text-sm leading-relaxed">
+      AI tools sometimes mix up which report a finding came from, add details the report doesn't say, or skip findings in longer sentences. The prompt below reduces these errors but can't catch all of them.
+    </p>
+  </div>
+
   <h1 class="text-2xl font-semibold text-gray-900 mb-2">Run an LLM to extract findings</h1>
 
-  <p class="text-gray-600 mb-8">
+  <p class="text-gray-600 mb-6">
     Use the LLM of your choice to extract structured findings from your radiology reports. This page gives you the prompt to use, shows you what file to upload, and explains how to fix problems if the upload fails.
   </p>
+
+  <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-8 text-sm">
+    <p class="text-gray-800">
+      <span class="font-semibold">Every finding object must include these four fields:</span>
+      <code class="font-mono text-indigo-700 ml-1">record_id</code>
+      <span class="text-gray-400">·</span>
+      <code class="font-mono text-indigo-700">finding_name</code>
+      <span class="text-gray-400">·</span>
+      <code class="font-mono text-indigo-700">presence</code>
+      <span class="text-gray-400">·</span>
+      <code class="font-mono text-indigo-700">source_text</code>
+    </p>
+    <p class="text-gray-600 text-xs mt-1">Everything else is optional. See the JSON field reference below for the full spec.</p>
+  </div>
 
   <!-- Step 1 — Copy the prompt -->
   <section id="step-1-prompt" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -45,7 +66,10 @@
         </button>
       </div>
     </div>
-    <pre id="prompt-text" class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono"></pre>
+    <details>
+      <summary class="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer select-none">Show prompt</summary>
+      <pre id="prompt-text" class="mt-3 text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono"></pre>
+    </details>
   </section>
 
   <!-- Step 2 — Run the prompt -->
@@ -122,7 +146,7 @@
   </details>
 
   <!-- JSON field reference -->
-  <details id="json-reference" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+  <details id="json-reference" open class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
     <summary class="text-lg font-semibold text-gray-900 cursor-pointer">JSON field reference</summary>
     <p class="text-sm text-gray-600 mt-3 mb-3">
       Each finding is one JSON object with these fields. Required fields are checked at import; optional fields are only validated if present.

@@ -2,6 +2,33 @@
  * Tests for js/sentences.js — splitter, source-text matcher, merge key.
  */
 
+describe('Sentences.parseFindingsSection — section boundary detection', () => {
+  it('captures FINDINGS body up to IMPRESSION header', () => {
+    const text = 'FINDINGS: a. b.\nIMPRESSION: c.';
+    assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
+  });
+
+  it('does not truncate on lowercase "impression" inside body (regression: was "mild")', () => {
+    const text = 'FINDINGS: mild impression on the thecal sac.\nIMPRESSION: see above.';
+    assertEqual(Sentences.parseFindingsSection(text), 'mild impression on the thecal sac.');
+  });
+
+  it('does not truncate on uppercase "IMPRESSIONABLE" inside body', () => {
+    const text = 'FINDINGS: IMPRESSIONABLE finding here.\nIMPRESSION: above.';
+    assertEqual(Sentences.parseFindingsSection(text), 'IMPRESSIONABLE finding here.');
+  });
+
+  it('returns the rest when no IMPRESSION header is present', () => {
+    const text = 'FINDINGS: a. b.';
+    assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
+  });
+
+  it('accepts lowercase "Impression:" header on its own line', () => {
+    const text = 'FINDINGS: a. b.\nImpression: c.';
+    assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
+  });
+});
+
 describe('Sentences.splitIntoSentences — period + uppercase splits', () => {
   it('splits two sentences in a single line on period + space + capital', () => {
     const { sentences } = Sentences.splitIntoSentences('No acute hemorrhage. No mass effect.');

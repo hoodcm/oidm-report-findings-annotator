@@ -76,4 +76,9 @@ test.describe('Keyboard shortcuts survive consecutive presses', () => {
     await page.keyboard.press('f');
     await expect(page.locator('#finding-search-input')).toBeFocused();
   });
+
+  test('Add Finding header shows the f keyboard hint', async ({ page }) => {
+    const header = page.locator('h3', { hasText: 'Add Finding' });
+    await expect(header.locator('kbd')).toHaveText('f');
+  });
 });

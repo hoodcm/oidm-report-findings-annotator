@@ -221,11 +221,12 @@ const CsvImport = {
       if (columnMap.presence) {
         const p = Norm.enumValue(row[columnMap.presence]);
         // Preserve the raw (lowercased) value so the validator can flag
-        // off-vocabulary values. Default to 'indeterminate' only when the
-        // cell is truly empty.
-        attrs.presence = p || 'indeterminate';
+        // off-vocabulary values. Leave null when the cell is empty so the
+        // validator can reject the row as missing-required-field; presence
+        // is part of the contract, not auto-filled.
+        attrs.presence = p || null;
       } else {
-        attrs.presence = 'indeterminate';
+        attrs.presence = null;
       }
 
       // Map any other column the user provided into attributes.
@@ -328,10 +329,15 @@ const CsvImport = {
       missingRequired: 0,
       unknownRecord: 0,
       notInReport: 0,
+      crossAttributed: 0,
       ambiguous: 0,
+      ambiguousAcrossReports: 0,
       badPresence: 0,
       badEnum: 0,
     };
+    // Sample up to 3 rows for the ambiguousAcrossReports warning so the
+    // panel can show concrete record_id pairs that need verification.
+    const ambiguousAcrossReportsSamples = [];
 
     // Identify columns the user provided that are neither reserved nor canonical.
     // These will be preserved as custom (free-text) attributes on the finding.
@@ -356,16 +362,21 @@ const CsvImport = {
     for (const f of parsedFindings) {
       const errors = [];
 
-      // 1. Required fields
-      if (!f.record_id || !f.finding_name || !f.source_text) {
+      // 1. Required fields. Presence joins record_id / finding_name /
+      //    source_text as a hard required field; the parser leaves it null
+      //    when missing so this check rejects the row instead of silently
+      //    defaulting to 'indeterminate'.
+      const presenceMissing = !f.attributes?.presence;
+      if (!f.record_id || !f.finding_name || !f.source_text || presenceMissing) {
         const missing = [
           !f.record_id ? 'record_id' : null,
           !f.finding_name ? 'finding_name' : null,
           !f.source_text ? 'source_text' : null,
+          presenceMissing ? 'presence' : null,
         ].filter(Boolean).join(', ');
         errors.push({
           msg: `missing required field(s): ${missing}`,
-          fix: `Every row must include record_id, finding_name, and source_text.`,
+          fix: `Every row must include record_id, finding_name, source_text, and presence (present | absent | indeterminate).`,
         });
         counts.missingRequired++;
       }
@@ -379,21 +390,43 @@ const CsvImport = {
         counts.unknownRecord++;
       }
 
-      // 3. source_text matches exactly one sentence in the named report
+      // 3. source_text matches exactly one sentence in the named report.
+      //    Cross-attribution (text not in named report but IS in another
+      //    loaded report) gets its own bucket: it's a strong record_id
+      //    mix-up signal, qualitatively different from a paraphrase miss.
+      //    When the named report matches AND the text also exists in
+      //    other reports, the row passes validation but increments the
+      //    non-blocking ambiguousAcrossReports warning bucket.
       if (errors.length === 0 && f.record_id && f.source_text) {
         const report = reportsById[f.record_id];
         const r = Sentences.matchSourceToSentence(f.source_text, report.sentences || [], f.record_id, allReports);
         if (r.idx) {
           f.source_sentence_idx = r.idx;
+          if (r.alsoMatchesIn && r.alsoMatchesIn.length > 0) {
+            counts.ambiguousAcrossReports++;
+            if (ambiguousAcrossReportsSamples.length < 3) {
+              ambiguousAcrossReportsSamples.push({
+                record_id: f.record_id,
+                finding_name: f.finding_name,
+                alsoIn: r.alsoMatchesIn.slice(0, 3),
+              });
+            }
+          }
         } else if (r.error === 'not_in_report') {
-          const also = r.alsoMatchesIn?.length;
-          errors.push({
-            msg: `source_text not found in ${f.record_id}${also ? ` (matches ${r.alsoMatchesIn.slice(0, 3).join(', ')}${r.alsoMatchesIn.length > 3 ? '...' : ''})` : ''}`,
-            fix: also
-              ? `Likely record_id mix-up; the text appears in another report. Check whether the row's record_id is correct.`
-              : `Verify source_text is a verbatim quote from the FINDINGS section. Paraphrased or hallucinated text won't match.`,
-          });
-          counts.notInReport++;
+          const alsoCount = r.alsoMatchesIn?.length || 0;
+          if (alsoCount > 0) {
+            errors.push({
+              msg: `source_text not in ${f.record_id} but found in ${r.alsoMatchesIn.slice(0, 3).join(', ')}${alsoCount > 3 ? '...' : ''}`,
+              fix: `Likely record_id mix-up; the text appears in another loaded report. Verify whether this row's record_id is correct.`,
+            });
+            counts.crossAttributed++;
+          } else {
+            errors.push({
+              msg: `source_text not found in ${f.record_id}`,
+              fix: `Verify source_text is a verbatim quote from the FINDINGS section. Paraphrased or hallucinated text won't match.`,
+            });
+            counts.notInReport++;
+          }
         } else if (r.error === 'ambiguous') {
           errors.push({
             msg: `source_text matches ${r.matches.length} sentences in ${f.record_id}`,
@@ -485,7 +518,7 @@ const CsvImport = {
       }
     }
 
-    return { valid, invalid, counts, customAttributes, canonicalAliasWarnings, missingCanonicalColumns };
+    return { valid, invalid, counts, customAttributes, canonicalAliasWarnings, missingCanonicalColumns, ambiguousAcrossReportsSamples };
   }
 };
 

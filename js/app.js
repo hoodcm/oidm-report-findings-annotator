@@ -683,6 +683,15 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Could not parse CSV file', 'error');
         return;
       }
+      const fatal = (result.errors || []).find(e => e.type === 'fatal');
+      if (fatal) {
+        this.showToast(fatal.message, 'error');
+        return;
+      }
+      if (!result.data || result.data.length === 0) {
+        this.showToast('No rows found in the uploaded file', 'error');
+        return;
+      }
       this.extractionData = result.data;
       this.extractionFields = result.fields;
       this.extractionStep = 1;
@@ -1239,15 +1248,6 @@ document.addEventListener('alpine:init', () => {
       })).filter(f => f.id && f.name);
     },
 
-    _deriveExamType(filename) {
-      return filename
-        .replace(/\.csv$/i, '')
-        .replace(/-findings-taxonomy$/i, '')
-        .split('-')
-        .map(s => s.toUpperCase() === s ? s : s.charAt(0).toUpperCase() + s.slice(1))
-        .join(' ');
-    },
-
     humanizeName(name) {
       if (!name) return '';
       return name.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
@@ -1275,7 +1275,7 @@ document.addEventListener('alpine:init', () => {
         await this.clearAllData();
       }
 
-      const examType = this._deriveExamType(file.name);
+      const examType = deriveExamType(file.name);
       this.taxonomy = findings;
       this.examType = examType;
       await Storage.saveTaxonomy(examType, file.name, findings, false);
@@ -1421,7 +1421,12 @@ document.addEventListener('alpine:init', () => {
       if (!this.report) return;
       // Strip Alpine reactive proxies before IndexedDB storage
       const plain = JSON.parse(JSON.stringify(this.report));
-      await Storage.saveReport(plain);
+      try {
+        await Storage.saveReport(plain);
+      } catch (e) {
+        this.showToast(`Could not save changes: ${e?.name || 'error'}. Export your session to preserve edits.`, 'error');
+        return;
+      }
       this.hasUnsavedChanges = true;
     },
 

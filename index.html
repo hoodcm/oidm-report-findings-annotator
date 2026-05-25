@@ -49,6 +49,7 @@
   <script src="js/sentences.js"></script>
   <script src="js/taxonomy.js"></script>
   <script src="js/extraction-import.js"></script>
+  <script src="js/exam-type.js"></script>
   <script src="js/app.js"></script>
 
   <!-- Custom styles -->
@@ -381,24 +382,25 @@
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Presence</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Presence *</label>
                 <select x-model="$store.app.extractionColumnMap.presence" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-                  <option value="">-- Not mapped --</option>
+                  <option value="">-- Select --</option>
                   <template x-for="f in $store.app.extractionFields" :key="f">
                     <option :value="f" x-text="f"></option>
                   </template>
                 </select>
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Source Text</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Source Text *</label>
                 <select x-model="$store.app.extractionColumnMap.source_text" class="w-full border border-gray-300 rounded px-3 py-2 text-sm">
-                  <option value="">-- Not mapped --</option>
+                  <option value="">-- Select --</option>
                   <template x-for="f in $store.app.extractionFields" :key="f">
                     <option :value="f" x-text="f"></option>
                   </template>
                 </select>
               </div>
             </div>
+            <p class="text-xs text-gray-500">* required: every imported row must include all four. See the <a href="pages/llm-extractions.html" class="text-indigo-600 hover:text-indigo-800 underline">LLM extractions playbook</a> for the full field reference.</p>
 
             <!-- Optional attribute columns (collapsible) -->
             <details class="text-sm">
@@ -425,7 +427,7 @@
             <div class="border-t border-gray-200 pt-4 mt-4 space-y-3">
               <div class="flex items-center gap-3">
                 <button @click="$store.app.runExtractionValidation()"
-                        :disabled="!$store.app.extractionColumnMap.record_id || !$store.app.extractionColumnMap.finding_name"
+                        :disabled="!$store.app.extractionColumnMap.record_id || !$store.app.extractionColumnMap.finding_name || !$store.app.extractionColumnMap.presence || !$store.app.extractionColumnMap.source_text"
                         class="px-4 py-2 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 text-sm font-medium rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                   Check my data
                 </button>
@@ -446,11 +448,13 @@
                   <ul class="mt-2 ml-4 list-disc text-xs space-y-0.5"
                       x-show="$store.app.extractionValidationSummary.counts.ready < $store.app.extractionValidationSummary.counts.total">
                     <li x-show="$store.app.extractionValidationSummary.counts.missingRequired > 0"
-                        x-text="$store.app.extractionValidationSummary.counts.missingRequired + ' rows: missing required field (record_id, finding_name, or source_text)'"></li>
+                        x-text="$store.app.extractionValidationSummary.counts.missingRequired + ' rows: missing required field (record_id, finding_name, source_text, or presence)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.unknownRecord > 0"
                         x-text="$store.app.extractionValidationSummary.counts.unknownRecord + ' rows: record_id not in loaded reports'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.notInReport > 0"
-                        x-text="$store.app.extractionValidationSummary.counts.notInReport + ' rows: source_text not in named report (likely cross-attribution or paraphrase)'"></li>
+                        x-text="$store.app.extractionValidationSummary.counts.notInReport + ' rows: source_text not in named report and not in any other loaded report (likely paraphrase or hallucination)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.crossAttributed > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.crossAttributed + ' rows: source_text not in named report but found in another loaded report (likely record_id mix-up)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.ambiguous > 0"
                         x-text="$store.app.extractionValidationSummary.counts.ambiguous + ' rows: source_text matches multiple sentences (add section header to disambiguate)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.badPresence > 0"
@@ -495,6 +499,30 @@
                     </p>
                   </div>
 
+                  <!-- Ambiguous-across-reports warning: source_text matched named report but same text exists in others (record_id mix-up possible) -->
+                  <div class="mt-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-900"
+                       x-show="$store.app.extractionValidationSummary.counts.ambiguousAcrossReports > 0">
+                    <p class="font-medium mb-1">
+                      <span x-text="$store.app.extractionValidationSummary.counts.ambiguousAcrossReports"></span>
+                      row(s): source_text matched the named report but is also a substring of other loaded reports
+                    </p>
+                    <p>
+                      These rows passed validation, but the duplicated text means the row could have come from either report. Verify the record_id is correct before relying on these annotations.
+                      <template x-if="($store.app.extractionValidationSummary.ambiguousAcrossReportsSamples || []).length > 0">
+                        <span>
+                          Examples:
+                          <template x-for="(s, i) in ($store.app.extractionValidationSummary.ambiguousAcrossReportsSamples || [])" :key="i">
+                            <span class="font-mono">
+                              <span x-text="s.record_id"></span> /
+                              <span x-text="s.finding_name"></span>
+                              (also in <span x-text="s.alsoIn.join(', ')"></span>)<span x-show="i < ($store.app.extractionValidationSummary.ambiguousAcrossReportsSamples.length - 1)">; </span>
+                            </span>
+                          </template>
+                        </span>
+                      </template>
+                    </p>
+                  </div>
+
                   <button @click="$store.app.downloadExtractionErrorCsv()"
                           x-show="$store.app.extractionValidationSummary.invalid.length > 0"
                           class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
@@ -502,6 +530,15 @@
                   </button>
                 </div>
               </template>
+
+              <!-- Partial-import confirmation copy: visible when there are invalid rows
+                   that will be silently skipped if the user proceeds. -->
+              <div class="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded p-2"
+                   x-show="$store.app.extractionValidationSummary && $store.app.extractionValidationSummary.invalid.length > 0 && $store.app.extractionValidationSummary.counts.ready > 0">
+                Proceeding will import
+                <strong x-text="$store.app.extractionValidationSummary.counts.ready"></strong> valid rows and skip
+                <strong x-text="$store.app.extractionValidationSummary.invalid.length"></strong> invalid rows. Download the error CSV above first if you want to fix them upstream.
+              </div>
             </div>
 
             <button @click="$store.app.processExtractionImport()"
@@ -1233,6 +1270,7 @@
                      class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-3">
                   <h3 class="text-sm font-medium text-gray-700 flex items-center gap-2">
                     <i class="ti ti-plus text-base"></i> Add Finding
+                    <kbd class="ml-1 px-1 bg-gray-200 rounded text-xs">f</kbd>
                   </h3>
                   <div class="relative" x-data="{ showCustom: false }">
                     <div class="relative">
@@ -1608,6 +1646,18 @@
 const TaxonomyViewer = {
   _tree: null,
 
+  // Taxonomy CSV values and search input are untrusted — a colleague-shared
+  // taxonomy could contain markup in finding names/ids/synonyms. Every
+  // interpolation into the innerHTML strings below must pass through this.
+  _esc(s) {
+    return String(s ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  },
+
   render() {
     const app = Alpine.store('app');
     this._tree = app.getTaxonomyTree();
@@ -1638,7 +1688,7 @@ const TaxonomyViewer = {
       if (catHtml) {
         const label = cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         html += `<div class="mb-4">`;
-        html += `<div class="text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 inline-block px-2 py-0.5 rounded mb-2">${label} <span class="font-normal text-gray-400">(${catCount})</span></div>`;
+        html += `<div class="text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 inline-block px-2 py-0.5 rounded mb-2">${this._esc(label)} <span class="font-normal text-gray-400">(${catCount})</span></div>`;
         html += catHtml;
         html += `</div>`;
         matchCount += catCount;
@@ -1646,7 +1696,7 @@ const TaxonomyViewer = {
     }
 
     if (query && matchCount === 0) {
-      html = `<div class="text-center py-8 text-gray-400"><p class="text-sm">No findings match "${query}"</p></div>`;
+      html = `<div class="text-center py-8 text-gray-400"><p class="text-sm">No findings match "${this._esc(query)}"</p></div>`;
     }
 
     const total = query ? matchCount : app.taxonomy.length;
@@ -1702,17 +1752,18 @@ const TaxonomyViewer = {
     let html = `<div style="padding-left:${indent}px">`;
     html += `<div class="flex items-center gap-2 py-1 group ${isHighlighted ? 'bg-yellow-50 -mx-1 px-1 rounded' : ''}">`;
 
+    const safeId = this._esc(node.id);
     if (hasChildren) {
-      html += `<span data-tax-toggle="${node.id}" class="flex-none w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer">`;
-      html += `<i class="ti ti-chevron-right text-xs tax-chevron" data-chev="${node.id}"></i></span>`;
+      html += `<span data-tax-toggle="${safeId}" class="flex-none w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer">`;
+      html += `<i class="ti ti-chevron-right text-xs tax-chevron" data-chev="${safeId}"></i></span>`;
     } else {
       html += `<span class="flex-none w-4"></span>`;
     }
 
     const nameWeight = hasChildren && !node.finding_type ? 'font-semibold text-gray-800' : 'text-gray-700';
-    const clickAttr = hasChildren ? `data-tax-toggle="${node.id}"` : '';
+    const clickAttr = hasChildren ? `data-tax-toggle="${safeId}"` : '';
     const cursor = hasChildren ? 'cursor-pointer' : '';
-    html += `<span class="${nameWeight} text-sm ${cursor} select-none" ${clickAttr}>${app.humanizeName(node.name)}</span>`;
+    html += `<span class="${nameWeight} text-sm ${cursor} select-none" ${clickAttr}>${this._esc(app.humanizeName(node.name))}</span>`;
 
     if (node.finding_type === 'observation') {
       html += `<span class="text-[10px] font-medium text-blue-600 bg-blue-50 px-1 rounded">obs</span>`;
@@ -1720,10 +1771,10 @@ const TaxonomyViewer = {
       html += `<span class="text-[10px] font-medium text-amber-600 bg-amber-50 px-1 rounded">dx</span>`;
     }
 
-    html += `<span class="text-[10px] text-gray-400 font-mono opacity-0 group-hover:opacity-100 transition-opacity">${node.id}</span>`;
+    html += `<span class="text-[10px] text-gray-400 font-mono opacity-0 group-hover:opacity-100 transition-opacity">${safeId}</span>`;
 
     if (node.synonyms && node.synonyms.length > 0) {
-      const synList = node.synonyms.slice(0, 4).join(', ');
+      const synList = node.synonyms.slice(0, 4).map(s => this._esc(s)).join(', ');
       const more = node.synonyms.length > 4 ? '...' : '';
       html += `<span class="text-[10px] text-gray-400 italic opacity-0 group-hover:opacity-100 transition-opacity truncate max-w-[250px]">${synList}${more}</span>`;
     }
@@ -1731,7 +1782,7 @@ const TaxonomyViewer = {
     html += `</div>`;
 
     if (hasChildren && childResults.length > 0) {
-      html += `<div class="tax-children" data-children="${node.id}"><div>`;
+      html += `<div class="tax-children" data-children="${safeId}"><div>`;
       for (const r of childResults) html += r.html;
       html += `</div></div>`;
     }

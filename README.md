@@ -33,7 +33,7 @@ All processing happens in your browser. Reports are stored in IndexedDB locally 
 3. Import the output JSON (or CSV) via "Import LLM Extractions" in the sidebar.
 4. Review each extracted finding: accept, reject, or correct.
 
-See the [LLM extractions playbook](https://hoodcm.github.io/oidm-report-findings-annotator/pages/llm-extractions.html) for the prompt, the upload format, and help when imports fail.
+See the [LLM extractions playbook](https://hoodcm.github.io/oidm-report-findings-annotator/pages/llm-extractions.html) for the prompt, the upload format, and help when imports fail. The prompt is an example, not a production extraction pipeline. Review every imported finding.
 
 ## Keyboard Shortcuts
 
@@ -85,8 +85,8 @@ If JavaScript edits don't appear after a reload, do a hard reload (Cmd/Ctrl+Shif
 ### Tests
 
 ```bash
-node tests/run.js       # unit + contract tests (119, pure Node)
-npx playwright test     # E2E tests (30 across 11 specs)
+node tests/run.js       # unit + contract tests (172, pure Node)
+npx playwright test     # E2E tests (36 across 12 specs)
 ```
 
 Both layers run in CI on every PR via `.github/workflows/test.yml`.
@@ -99,6 +99,7 @@ js/app.js                 # Core logic
 js/storage.js             # IndexedDB (reports + taxonomy)
 js/taxonomy.js            # Finding search/matching
 js/sentences.js           # Report text parsing
+js/exam-type.js           # Exam-type label deriver (modality-acronym aware)
 js/extraction-import.js   # Extraction import (JSON + CSV)
 js/extraction-prompt.js   # Prompt builder (single source of truth)
 pages/llm-extractions.html       # LLM playbook (prompt + import + reference)

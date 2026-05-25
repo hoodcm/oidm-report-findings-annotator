@@ -67,4 +67,40 @@ test.describe('Upload error paths surface actionable toasts', () => {
     expect(state.toast).toMatch(/invalid json/i);
     expect(state.count).toBe(0);
   });
+
+  test('extraction upload malformed JSON: error toast, extractionData not populated', async ({ page }) => {
+    await page.evaluate(async () => {
+      const bad = new File(['{not valid json'], 'extractions.json', { type: 'application/json' });
+      await Alpine.store('app').handleExtractionCsvUpload(bad);
+    });
+
+    const state = await page.evaluate(() => ({
+      toast: Alpine.store('app').toastMessage,
+      toastType: Alpine.store('app').toastType,
+      data: Alpine.store('app').extractionData,
+      fields: Alpine.store('app').extractionFields,
+    }));
+    expect(state.toastType).toBe('error');
+    expect(state.toast).toMatch(/json parse failed/i);
+    expect(state.data).toBeNull();
+    expect(state.fields).toEqual([]);
+  });
+
+  test('extraction upload non-array JSON: error toast, extractionData not populated', async ({ page }) => {
+    await page.evaluate(async () => {
+      const bad = new File(['{"record_id":"r1"}'], 'extractions.json', { type: 'application/json' });
+      await Alpine.store('app').handleExtractionCsvUpload(bad);
+    });
+
+    const state = await page.evaluate(() => ({
+      toast: Alpine.store('app').toastMessage,
+      toastType: Alpine.store('app').toastType,
+      data: Alpine.store('app').extractionData,
+      fields: Alpine.store('app').extractionFields,
+    }));
+    expect(state.toastType).toBe('error');
+    expect(state.toast).toMatch(/array/i);
+    expect(state.data).toBeNull();
+    expect(state.fields).toEqual([]);
+  });
 });

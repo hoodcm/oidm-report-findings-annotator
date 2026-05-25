@@ -134,6 +134,32 @@ describe('Contract: Storage.saveTaxonomy accepts Alpine-Proxy-wrapped findings (
   });
 });
 
+describe('Contract: loadTaxonomy re-derives examType from sourceFilename', () => {
+  // Regression for CHANGELOG [Unreleased] "Modality acronyms ... render uppercase".
+  // Existing users had records written by the old derivation pass that stored
+  // "Ct Head" / "Msk Xr". Load must re-derive so every display surface
+  // (sidebar, top header, taxonomy viewer modal) gets the corrected label
+  // without requiring the user to re-upload the CSV.
+  it('stale "Ct Head" stored examType is rewritten to "CT Head" on load', async () => {
+    await resetStorage();
+    await Storage.saveTaxonomy('Ct Head', 'ct-head-findings-taxonomy.csv', [
+      { id: 'A', name: 'a', synonyms: [], category: 'c', parent_id: null, finding_type: 'observation' },
+    ], false);
+    const loaded = await Storage.loadTaxonomy();
+    assertEqual(loaded.examType, 'CT Head');
+    assertEqual(loaded.sourceFilename, 'ct-head-findings-taxonomy.csv');
+  });
+
+  it('stale "Msk Xr" stored examType is rewritten to "MSK XR" on load', async () => {
+    await resetStorage();
+    await Storage.saveTaxonomy('Msk Xr', 'msk-xr-findings-taxonomy.csv', [
+      { id: 'A', name: 'a', synonyms: [], category: 'c', parent_id: null, finding_type: 'observation' },
+    ], false);
+    const loaded = await Storage.loadTaxonomy();
+    assertEqual(loaded.examType, 'MSK XR');
+  });
+});
+
 describe('Contract: Storage.saveReport accepts Alpine-Proxy-wrapped input (secondary plain() coverage)', () => {
   it('proxied report survives save+load and deep-equals plain shape', async () => {
     await resetStorage();

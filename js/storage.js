@@ -92,7 +92,16 @@ const Storage = {
   },
 
   async loadTaxonomy() {
-    return await db.taxonomyMeta.get(1) || null;
+    const rec = await db.taxonomyMeta.get(1);
+    if (!rec) return null;
+    // Re-derive examType from sourceFilename on every read so the display
+    // label stays in sync with the deriveExamType allowlist (e.g. records
+    // saved under an older derivation that produced "Ct Head" now surface
+    // as "CT Head" without forcing the user to re-upload the CSV).
+    if (rec.sourceFilename && typeof deriveExamType === 'function') {
+      rec.examType = deriveExamType(rec.sourceFilename);
+    }
+    return rec;
   },
 
   async clearTaxonomy() {

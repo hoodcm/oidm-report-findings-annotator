@@ -11,7 +11,7 @@ const Sentences = {
    * Extract the FINDINGS section from a report.
    */
   parseFindingsSection(reportText) {
-    const match = reportText.match(/FINDINGS:?\s+([\s\S]*?)(?=IMPRESSION|$)/i);
+    const match = reportText.match(/FINDINGS:?\s+([\s\S]*?)(?=IMPRESSION:|$)/i);
     if (match) return match[1].trim();
     const upper = reportText.toUpperCase();
     const idx = upper.indexOf('FINDINGS');
@@ -107,11 +107,33 @@ const Sentences = {
   },
 
   /**
+   * Scan other loaded reports for any whose text contains the normalized
+   * source_text. Used by matchSourceToSentence on both the success and
+   * not-in-report paths so the validator can flag cross-report ambiguity
+   * (record_id-mix-up signal) regardless of whether the named report
+   * matched.
+   */
+  _otherReportsContaining(norm, recordId, allReports) {
+    if (!Array.isArray(allReports)) return [];
+    const hits = [];
+    for (const r of allReports) {
+      if (!r || r.record_id === recordId) continue;
+      for (const sent of (r.sentences || [])) {
+        if (this._normForMatch(sent).includes(norm)) {
+          hits.push(r.record_id);
+          break;
+        }
+      }
+    }
+    return hits;
+  },
+
+  /**
    * Match source_text to a sentence in the named report.
    * Returns one of:
-   *   { idx: number }                                        — exactly one sentence matches
-   *   { error: 'not_in_report', alsoMatchesIn: string[] }    — zero matches; alsoMatchesIn lists other report ids whose text contains source_text
-   *   { error: 'ambiguous', matches: number[] }              — two or more sentences match
+   *   { idx: number, alsoMatchesIn: string[] }                — exactly one sentence matches; alsoMatchesIn lists other reports whose text also contains source_text (warning signal for record_id mix-up)
+   *   { error: 'not_in_report', alsoMatchesIn: string[] }    — zero matches in named report; alsoMatchesIn names the reports where the text DOES appear (strong record_id mix-up signal)
+   *   { error: 'ambiguous', matches: number[], alsoMatchesIn: string[] } — two or more sentences match in the named report
    * If sourceText is empty, returns { error: 'not_in_report', alsoMatchesIn: [] }.
    */
   matchSourceToSentence(sourceText, sentences, recordId, allReports) {
@@ -123,22 +145,9 @@ const Sentences = {
       const ns = this._normForMatch(sentences[i]);
       if (ns.includes(norm)) matches.push(i + 1);
     }
-    if (matches.length === 1) return { idx: matches[0] };
-    if (matches.length >= 2) return { error: 'ambiguous', matches };
-
-    // 0 matches — check other reports if provided
-    const alsoMatchesIn = [];
-    if (Array.isArray(allReports)) {
-      for (const r of allReports) {
-        if (!r || r.record_id === recordId) continue;
-        for (const sent of (r.sentences || [])) {
-          if (this._normForMatch(sent).includes(norm)) {
-            alsoMatchesIn.push(r.record_id);
-            break;
-          }
-        }
-      }
-    }
+    const alsoMatchesIn = this._otherReportsContaining(norm, recordId, allReports);
+    if (matches.length === 1) return { idx: matches[0], alsoMatchesIn };
+    if (matches.length >= 2) return { error: 'ambiguous', matches, alsoMatchesIn };
     return { error: 'not_in_report', alsoMatchesIn };
   },
 
