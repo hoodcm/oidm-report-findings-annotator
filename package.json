@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "description": "Browser-based radiology report annotation tool. Pure-static SPA; devDeps are test-only.",
+  "license": "Apache-2.0",
+  "author": {
+    "name": "Michael Hood",
+    "url": "https://orcid.org/0009-0005-8708-1118"
+  },
   "scripts": {
     "test": "node tests/run.js",
     "test:e2e": "playwright test"

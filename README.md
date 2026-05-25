@@ -48,6 +48,8 @@ See the [LLM extractions playbook](https://hoodcm.github.io/oidm-report-findings
 | `n` | Next unvalidated report |
 | `?` | Show all shortcuts |
 
+The sidebar also has a `?` **annotation guidelines** button — a quick reference for presence semantics, taxonomy-match vs. custom, the "needs review" badge, sentence highlight colors, and when to mark a report Validated.
+
 ## FAQ
 
 **Where is my data stored?**
@@ -84,7 +86,7 @@ If JavaScript edits don't appear after a reload, do a hard reload (Cmd/Ctrl+Shif
 
 ```bash
 node tests/run.js       # unit + contract tests (119, pure Node)
-npx playwright test     # E2E tests (19 across 9 specs)
+npx playwright test     # E2E tests (30 across 11 specs)
 ```
 
 Both layers run in CI on every PR via `.github/workflows/test.yml`.
@@ -110,8 +112,10 @@ tests/e2e/                # Playwright specs
 
 ## Author
 
-[Michael Hood, MD](https://github.com/hoodcm) · [OIDM](https://openimagingdata.org) ·  · 
+[Michael Hood, MD](https://github.com/hoodcm) ([ORCID 0009-0005-8708-1118](https://orcid.org/0009-0005-8708-1118)) · [OIDM](https://openimagingdata.org) ·  · 
 
 ## License
 
-MIT
+Copyright 2026 Michael Hood (ORCID: 0009-0005-8708-1118)
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for the full text, or <https://www.apache.org/licenses/LICENSE-2.0>.

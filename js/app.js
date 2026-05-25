@@ -239,7 +239,13 @@ document.addEventListener('alpine:init', () => {
           return;
         }
       }
-      this.showToast('All reports validated!', 'success');
+      // No other unvalidated reports. Distinguish "current is the only one left"
+      // from "everything is validated" — the old code falsely claimed the latter.
+      if (this.recordIds.length && !this.validatedIds.has(this.recordIds[this.currentIdx])) {
+        this.showToast('No other unvalidated reports', 'info');
+      } else {
+        this.showToast('All reports validated!', 'success');
+      }
     },
 
     async jumpToReport(num) {
@@ -290,6 +296,21 @@ document.addEventListener('alpine:init', () => {
         .filter(f => !f.source_sentence_idx);
     },
 
+    // Validated findings with no usable sentence linkage. Surfaces data
+    // damaged by the old addFinding bug (saved with source_sentence_idx
+    // null on empty reports / before a sentence was selected) so the
+    // user can delete and re-add. Uses Number.isInteger to also catch
+    // string/float restored shapes — same predicate as
+    // annotatedSentenceCount, kept consistent so a finding either
+    // counts in the sidebar progress OR shows up here, never both/
+    // neither.
+    get unassignedValidatedFindings() {
+      if (!this.report) return [];
+      return (this.report.validated_findings || [])
+        .map((f, i) => ({ ...f, _globalIdx: i }))
+        .filter(f => !Number.isInteger(f.source_sentence_idx));
+    },
+
     get allValidatedFindings() {
       if (!this.report) return [];
       return this.report.validated_findings || [];
@@ -303,6 +324,23 @@ document.addEventListener('alpine:init', () => {
       const pending = (this.report.llm_extractions || [])
         .filter(f => f.source_sentence_idx === sentenceIdx).length;
       return { validated, pending };
+    },
+
+    // Distinct sentence count with at least one validated finding.
+    // Drives the "X/Y sentences with findings" sidebar progress label.
+    // Number.isInteger guards against restored-data shapes where
+    // source_sentence_idx might be a string or float — JS coercion in a
+    // bare `>= 1 && <= max` would let "1" and 1 count as separate entries
+    // (inflating the numerator above the denominator).
+    annotatedSentenceCount() {
+      if (!this.report) return 0;
+      const max = (this.report.sentences || []).length;
+      const idxs = new Set();
+      for (const f of this.report.validated_findings || []) {
+        const i = f.source_sentence_idx;
+        if (Number.isInteger(i) && i >= 1 && i <= max) idxs.add(i);
+      }
+      return idxs.size;
     },
 
     // --- Finding operations ---
@@ -345,6 +383,23 @@ document.addEventListener('alpine:init', () => {
     async addFinding(findingName, isCustom) {
       if (!this.report || !findingName) return;
 
+      // Hard rule: every validated finding must be anchored to a sentence.
+      // Without this guard, a null source_sentence_idx silently writes a
+      // finding that no panel can render (all groups key off
+      // selectedSentenceIdx). Two distinguishable failure modes:
+      //   - report parsed to zero sentences (data problem upstream)
+      //   - user hasn't clicked a sentence yet (workflow problem)
+      if (!this.selectedSentenceIdx) {
+        const noSentences = (this.report.sentences || []).length === 0;
+        this.showToast(
+          noSentences
+            ? 'Cannot add: this report has no annotatable sentences. → Fix the source CSV\'s findings column for this record.'
+            : 'Cannot add: no sentence selected. → Click a sentence in the report first.',
+          'error'
+        );
+        return;
+      }
+
       const taxMatch = isCustom ? null : Taxonomy.matchFindingToTaxonomy(findingName, this.taxonomy);
 
       // Hard rule: a human-added finding is either a taxonomy match OR
@@ -359,9 +414,7 @@ document.addEventListener('alpine:init', () => {
         return;
       }
 
-      const sentenceText = this.selectedSentenceIdx
-        ? (this.report.sentences?.[this.selectedSentenceIdx - 1] || '')
-        : '';
+      const sentenceText = this.report.sentences?.[this.selectedSentenceIdx - 1] || '';
 
       const validated = {
         finding_name: taxMatch ? taxMatch.name : findingName,
