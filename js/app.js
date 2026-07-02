@@ -367,6 +367,11 @@ document.addEventListener('alpine:init', () => {
         origin: 'llm',
         was_modified: false,
         attributes: { ...extraction.attributes },
+        // A hedged pending extraction stays hedged once accepted. (Flag fields
+        // are annotator-added on the validated finding, not carried from LLM
+        // extractions, so acceptFinding doesn't copy flagged/flag_reason.)
+        ...(extraction.confidence && Object.keys(extraction.confidence).length
+          ? { confidence: { ...extraction.confidence } } : {}),
       };
 
       this.report.validated_findings.push(validated);
@@ -459,12 +464,25 @@ document.addEventListener('alpine:init', () => {
       if (!finding.attributes) finding.attributes = {};
 
       if (value === '' || value === null) {
-        delete finding.attributes[attrName];
+        // Add-then-choose semantics: an empty value means "row present, no
+        // value chosen yet" (renders — in the editor), NOT "delete the
+        // attribute". Deletion is exclusively removeAttribute's job. Keeping
+        // the empty key is what lets a just-added or cleared row stay visible.
+        finding.attributes[attrName] = '';
+        // A cleared row must not stay hedged: a hedge only ever accompanies a
+        // real attribute value (the confidence invariant).
+        this._clearConfidence(finding, attrName);
       } else {
         // Handle array type
         const config = this.attributeConfig[attrName];
         if (config && config.type === 'array') {
-          finding.attributes[attrName] = value.split(',').map(v => v.trim()).filter(Boolean);
+          const arr = value.split(',').map(v => v.trim()).filter(Boolean);
+          finding.attributes[attrName] = arr;
+          // A comma/whitespace-only input collapses to []: logically empty, so
+          // it must drop any hedge too (the confidence invariant — a hedge only
+          // ever accompanies a real value). Without this, an array attribute
+          // emptied this way keeps a dangling confidence[axis]='hedged'.
+          if (arr.length === 0) this._clearConfidence(finding, attrName);
         } else {
           finding.attributes[attrName] = value;
         }
@@ -473,8 +491,133 @@ document.addEventListener('alpine:init', () => {
       await this._saveCurrentReport();
     },
 
+    // Sole deletion path for an attribute row. Removes the attribute AND any
+    // hedge pointing at it, so removing a hedged attribute can't leave a stale
+    // confidence key referencing a now-absent axis.
     async removeAttribute(validatedIdx, attrName) {
-      await this.updateAttribute(validatedIdx, attrName, '');
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      if (finding.attributes) delete finding.attributes[attrName];
+      this._clearConfidence(finding, attrName);
+      if (finding.origin === 'llm') finding.was_modified = true;
+      await this._saveCurrentReport();
+    },
+
+    // --- Hedge / confidence ---
+
+    // Delete finding.confidence[attrName] and drop the whole confidence object
+    // when it becomes empty (canonical shape: a fully-definite finding carries
+    // no confidence key). Pure helper — callers save.
+    _clearConfidence(finding, attrName) {
+      if (finding.confidence && attrName in finding.confidence) {
+        delete finding.confidence[attrName];
+        if (Object.keys(finding.confidence).length === 0) delete finding.confidence;
+      }
+    },
+
+    // The cycle list for a hybrid enum/boolean control. Enums cycle their
+    // declared values; booleans (values: [] in attributes.json) cycle a
+    // synthetic ['false','true'] pair; free-text/array attrs don't cycle.
+    _enumValues(config) {
+      if (!config) return [];
+      if (config.type === 'enum') return config.values || [];
+      if (config.type === 'boolean') return ['false', 'true'];
+      return [];
+    },
+
+    // Toggle the per-axis hedge. presence is never hedgeable; hedging an
+    // empty/absent attribute value is a no-op (the confidence invariant —
+    // can't hedge a — row).
+    async toggleHedge(validatedIdx, attrName) {
+      if (attrName === 'presence') return;
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      const attrs = finding.attributes || {};
+      const isHedged = !!(finding.confidence && finding.confidence[attrName] === 'hedged');
+      if (isHedged) {
+        this._clearConfidence(finding, attrName);
+      } else {
+        const cur = attrs[attrName];
+        const hasValue = cur != null && cur !== '' && !(Array.isArray(cur) && cur.length === 0);
+        if (!hasValue) return; // no-op: can't hedge a — row (no save)
+        finding.confidence = finding.confidence || {};
+        finding.confidence[attrName] = 'hedged';
+      }
+      if (finding.origin === 'llm') finding.was_modified = true;
+      await this._saveCurrentReport();
+    },
+
+    // Advance an enum/boolean attribute to its next allowed value. Not presence
+    // (dropdown-only), not free-text/array.
+    async cycleAttribute(validatedIdx, attrName) {
+      if (attrName === 'presence') return;
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      const values = this._enumValues(this.attributeConfig[attrName]);
+      if (!values.length) return;
+      if (!finding.attributes) finding.attributes = {};
+      const i = values.indexOf(finding.attributes[attrName]);
+      finding.attributes[attrName] = values[(i + 1) % values.length];
+      if (finding.origin === 'llm') finding.was_modified = true;
+      await this._saveCurrentReport();
+    },
+
+    // Add-then-choose: insert an empty row (renders —) and wait for the user to
+    // pick a value via the row's dropdown. No silent default.
+    async addAttribute(validatedIdx, attrName) {
+      if (!this.report || !attrName) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      if (!finding.attributes) finding.attributes = {};
+      if (attrName in finding.attributes) return; // no double-add
+      finding.attributes[attrName] = '';
+      await this._saveCurrentReport();
+    },
+
+    // --- Per-finding flag ---
+
+    async toggleFindingFlag(validatedIdx) {
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      finding.flagged = !finding.flagged;
+      if (!finding.flagged) finding.flag_reason = '';
+      await this._saveCurrentReport();
+    },
+
+    async setFindingFlagReason(validatedIdx, text) {
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      finding.flag_reason = text || '';
+      await this._saveCurrentReport();
+    },
+
+    async removeFindingFlag(validatedIdx) {
+      if (!this.report) return;
+      const finding = this.report.validated_findings[validatedIdx];
+      if (!finding) return;
+      finding.flagged = false;
+      finding.flag_reason = '';
+      await this._saveCurrentReport();
+    },
+
+    // --- Whole-exam flag ---
+
+    async toggleExamFlag() {
+      if (!this.report) return;
+      this.report.flagged = !this.report.flagged;
+      if (!this.report.flagged) this.report.flag_reason = '';
+      await this._saveCurrentReport();
+    },
+
+    async setExamFlagReason(text) {
+      if (!this.report) return;
+      this.report.flag_reason = text || '';
+      await this._saveCurrentReport();
     },
 
     // --- Validation ---
@@ -629,6 +772,11 @@ document.addEventListener('alpine:init', () => {
           extraction_timestamp: null,
           taxonomyVersion,
           schema_version: SCHEMA_VERSION,
+          // Whole-exam flag (annotator signal that this exam is a problem —
+          // wrong heading, un-annotatable mapping, etc.). Non-indexed, so old
+          // sessions lacking these read defensively (report.flagged || false).
+          flagged: false,
+          flag_reason: '',
         });
       }
 
@@ -721,9 +869,19 @@ document.addEventListener('alpine:init', () => {
       }
       const map = {};
       const claimed = new Set();
+      // Exclude confidence columns from auto-detection FIRST (the earliest
+      // consumer). Otherwise Pass 2's substring match (`fl.includes(kw)`) maps
+      // a `chronicity_confidence` field to the canonical `chronicity` attribute
+      // when no exact `chronicity` column exists — stealing the mapping and
+      // feeding 'hedged' into an enum column. These are consumed instead by the
+      // confidence path in parseExtractionCsv.
+      const mappableFields = result.fields.filter(f => {
+        const n = f.toLowerCase().replace(/[\s\-]+/g, '_');
+        return n !== 'confidence' && !/_confidence$/.test(n);
+      });
       // Pass 1: exact matches only (field name === keyword)
       for (const [target, keywords] of Object.entries(guessMap)) {
-        for (const f of result.fields) {
+        for (const f of mappableFields) {
           const fl = f.toLowerCase();
           if (!claimed.has(f) && keywords.some(kw => fl === kw)) {
             map[target] = f;
@@ -735,7 +893,7 @@ document.addEventListener('alpine:init', () => {
       // Pass 2: substring matches for any targets still unmapped
       for (const [target, keywords] of Object.entries(guessMap)) {
         if (map[target]) continue;
-        for (const f of result.fields) {
+        for (const f of mappableFields) {
           const fl = f.toLowerCase();
           if (!claimed.has(f) && keywords.some(kw => fl.includes(kw))) {
             map[target] = f;
@@ -760,8 +918,8 @@ document.addEventListener('alpine:init', () => {
       // Parse + normalize. The validIds-set check inside parse is a coarse
       // filter; the per-row matcher in validateExtractionRows is authoritative.
       const validIds = new Set(this.recordIds);
-      const { findings, errors } = CsvImport.parseExtractionCsv(
-        this.extractionData, this.extractionColumnMap, validIds
+      const { findings, errors, warnings } = CsvImport.parseExtractionCsv(
+        this.extractionData, this.extractionColumnMap, validIds, this.attributeConfig
       );
 
       // Build the reports map once; the validator needs report.sentences for matching.
@@ -777,6 +935,9 @@ document.addEventListener('alpine:init', () => {
         Sentences
       );
 
+      // Carry the non-fatal confidence/boolean notes onto the summary so the
+      // import panel can surface them and tests can assert on them.
+      summary.confidenceNotes = warnings || [];
       this.extractionFindings = summary.valid;
       this.extractionErrors = errors;
       this.extractionValidationSummary = summary;
@@ -992,11 +1153,26 @@ document.addEventListener('alpine:init', () => {
             }
             const incomingAttrs = f.attributes || {};
             existing.attributes = existing.attributes || {};
+            const newlyFilledAxes = [];
             for (const [k, v] of Object.entries(incomingAttrs)) {
               const cur = existing.attributes[k];
               const isEmpty = cur == null || cur === '' || (Array.isArray(cur) && cur.length === 0);
               if (isEmpty && v != null && v !== '') {
                 existing.attributes[k] = v;
+                newlyFilledAxes.push(k);
+                changed = true;
+              }
+            }
+            // Carry incoming hedges, but ONLY for axes this merge actually
+            // filled — a hedge only ever accompanies a value the merge accepted.
+            // Never hedge an axis the annotator already had a value for (that
+            // would silently turn a definite local annotation into a hedged one
+            // on re-import).
+            const incomingConf = f.confidence || {};
+            for (const axis of newlyFilledAxes) {
+              if (incomingConf[axis] === 'hedged') {
+                existing.confidence = existing.confidence || {};
+                existing.confidence[axis] = 'hedged';
                 changed = true;
               }
             }
@@ -1015,6 +1191,9 @@ document.addEventListener('alpine:init', () => {
             source_text: f.source_text || '',
             attributes: f.attributes || { presence: 'indeterminate' },
           };
+          // Carry the hedge map onto the pending extraction (only when non-empty),
+          // mirroring how attributes are carried, so it survives to acceptFinding.
+          if (f.confidence && Object.keys(f.confidence).length) ext.confidence = f.confidence;
           if (matchError) ext._matchError = matchError;
           newExtractions.push(ext);
           addedPending++;
@@ -1403,8 +1582,16 @@ document.addEventListener('alpine:init', () => {
         row.custom_attributes = Object.keys(customAttrs).length
           ? JSON.stringify(customAttrs)
           : '{}';
+        // Per-finding hedge map (single JSON column, mirrors custom_attributes:
+        // '{}' when no axis is hedged) + per-finding flag.
+        row.confidence = Object.keys(f.confidence || {}).length ? JSON.stringify(f.confidence) : '{}';
+        row.flagged = f.flagged || false;
+        row.flag_reason = f.flag_reason || '';
         row.report_validated = report.validated || false;
         row.report_validated_at = report.validated_at || '';
+        // Whole-exam flag, repeated per row (like report_validated).
+        row.report_flagged = report.flagged || false;
+        row.report_flag_reason = report.flag_reason || '';
         return row;
       };
 
@@ -1413,6 +1600,21 @@ document.addEventListener('alpine:init', () => {
       }
       for (const f of (report.llm_extractions || [])) {
         rows.push(makeRow(f, 'pending'));
+      }
+
+      // Flagged report with zero findings — sentinel row. An annotator flags an
+      // exam precisely because it was un-annotatable (wrong heading, mismap),
+      // which commonly means no validated findings; without this the exam flag
+      // would silently drop from the training CSV for exactly those exams. Emit
+      // one row carrying the report-level fields, all finding columns blank, so
+      // the CSV schema stays stable and the flag survives.
+      if (rows.length === 0 && report.flagged) {
+        // makeRow with an empty finding blanks every finding column and derives
+        // custom_attributes/confidence/flagged and the report-level fields from
+        // report.flagged (true here) — so the sentinel stays in lockstep with the
+        // row schema instead of re-listing every column by hand. finding_name is
+        // the one field makeRow doesn't default, so pass it explicitly blank.
+        rows.push(makeRow({ finding_name: '' }, 'report_flagged'));
       }
       return rows;
     },
@@ -1456,23 +1658,71 @@ document.addEventListener('alpine:init', () => {
 
     // --- Attribute helpers ---
 
+    // Attribute rows to render (presence is rendered separately as row 1).
+    // Includes empty-valued keys so a just-added or cleared row stays visible
+    // (removal is only via removeAttribute), sorted into canonical order
+    // (attributeConfig key order), with the per-axis hedge state attached.
     getSetAttributes(finding) {
       const attrs = finding.attributes || {};
-      return Object.entries(attrs)
-        .filter(([k, v]) => k !== 'presence' && v !== null && v !== undefined && v !== '')
-        .map(([k, v]) => ({ key: k, value: v }));
+      const order = Object.keys(this.attributeConfig);
+      const rank = k => { const i = order.indexOf(k); return i === -1 ? order.length : i; };
+      return Object.keys(attrs)
+        .filter(k => k !== 'presence')
+        .sort((a, b) => rank(a) - rank(b))
+        .map(k => ({
+          key: k,
+          value: attrs[k],
+          hedged: !!(finding.confidence && finding.confidence[k] === 'hedged'),
+        }));
     },
 
+    // The "+ attribute" picker lists only attributes not already present.
+    // Filter by KEY PRESENCE (`k in attrs`), not truthiness — otherwise a
+    // just-added empty-valued row would still appear here and the same
+    // attribute could be added twice.
     getAvailableAttributes(finding) {
       const attrs = finding.attributes || {};
       return Object.entries(this.attributeConfig)
-        .filter(([k]) => k !== 'presence' && !attrs[k])
+        .filter(([k]) => k !== 'presence' && !(k in attrs))
         .map(([k, config]) => ({ key: k, ...config }));
     },
 
     formatAttrValue(value) {
       if (Array.isArray(value)) return value.join(', ');
       return String(value);
+    },
+
+    // The cycle/dropdown value list for an attribute's hybrid control. Non-empty
+    // for enum + boolean attributes (which get the cycle+▾ control), empty for
+    // free-text/array attributes (which get a plain <input>). Presence has its
+    // own dropdown-only control and isn't routed through here.
+    attrCycleValues(key) {
+      return this._enumValues(this.attributeConfig[key]);
+    },
+
+    // Presence-driven color classes, reused from the existing indeterminate
+    // presence-badge palette (green/orange/indigo). Fall back to gray for an
+    // unset/unknown presence.
+    presenceCellClass(p) {
+      return ({
+        present: 'bg-green-100 text-green-800 border-green-200',
+        absent: 'bg-orange-100 text-orange-800 border-orange-200',
+        indeterminate: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      })[p] || 'bg-gray-100 text-gray-700 border-gray-200';
+    },
+    headerTintClass(p) {
+      return ({
+        present: 'bg-green-50 border-green-100',
+        absent: 'bg-orange-50 border-orange-100',
+        indeterminate: 'bg-indigo-50 border-indigo-100',
+      })[p] || 'bg-gray-50 border-gray-100';
+    },
+    cardBorderClass(p) {
+      return ({
+        present: 'border-green-200',
+        absent: 'border-orange-200',
+        indeterminate: 'border-indigo-200',
+      })[p] || 'border-gray-200';
     },
   });
 });

@@ -12,6 +12,10 @@ CONTEXT.md
 TODO.md
 CHANGELOG.md
 
+# Planning docs — internal scaffolding (colleague names, meeting notes, local
+# paths); never publish to the public repo.
+docs/plans/
+
 # Data files (user uploads)
 *.csv
 

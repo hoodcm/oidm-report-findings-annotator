@@ -22,9 +22,10 @@ All processing happens in your browser. Reports are stored in IndexedDB locally 
 2. Upload a taxonomy CSV for your exam type (workbench format: `id, name, category, parent_id, synonyms, finding_type`).
 3. Upload a reports CSV with an ID column and a report text column.
 4. Click sentences to select them, search for findings, and tag each sentence.
-5. Set finding attributes (presence, laterality, severity, etc.) as needed.
-6. Mark each report as validated when done.
-7. Export your annotations as CSV or JSON.
+5. Set finding attributes (presence, laterality, severity, etc.) as needed. Mark any single attribute as *hedged* (uncertain) with the eye icon on its row.
+6. Flag a problem finding or a problem exam (wrong heading, un-annotatable) with the flag icon, and add an optional note — the flag rides along in your exports.
+7. Mark each report as validated when done.
+8. Export your annotations as CSV or JSON.
 
 ## LLM-Assisted Workflow
 

@@ -526,3 +526,153 @@ describe('CsvImport.validateExtractionRows — required fields and source_text m
     assertEqual(summary.valid[0].source_sentence_idx, 1, 'should be 1-based');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Confidence (hedge) import + normalization + boolean coercion
+// Plan: docs/plans/2026-07-01-attribute-hedge-and-flagging-plan.md (Step 7).
+// ---------------------------------------------------------------------------
+
+describe('CsvImport.normalizeConfidence — shape/value/invariant enforcement', () => {
+  const attrs = { presence: 'present', chronicity: 'acute', laterality: 'left' };
+
+  it('keeps only hedged, non-presence axes that have a backing attribute value', () => {
+    const { confidence } = CsvImport.normalizeConfidence(
+      { chronicity: 'hedged', laterality: 'hedged' }, attrs);
+    assertDeepEqual(confidence, { chronicity: 'hedged', laterality: 'hedged' });
+  });
+
+  it('drops a presence hedge with a note', () => {
+    const { confidence, notes } = CsvImport.normalizeConfidence({ presence: 'hedged' }, attrs);
+    assertDeepEqual(confidence, {});
+    assert(notes.some(n => /presence/i.test(n)), 'note should mention presence');
+  });
+
+  it('drops a non-"hedged" value with a note', () => {
+    const { confidence, notes } = CsvImport.normalizeConfidence({ chronicity: 'probable' }, attrs);
+    assertDeepEqual(confidence, {});
+    assert(notes.length === 1, 'one note');
+  });
+
+  it('drops a hedge whose axis has no attribute value (the confidence invariant)', () => {
+    const { confidence, notes } = CsvImport.normalizeConfidence(
+      { chronicity: 'hedged' }, { presence: 'present' }); // no chronicity value
+    assertDeepEqual(confidence, {});
+    assert(notes.some(n => /no value/i.test(n)), 'note should explain the missing value');
+  });
+
+  it('degrades a wrong-typed value (array / bare string) to {} with a note', () => {
+    const a = CsvImport.normalizeConfidence(['chronicity'], attrs);
+    assertDeepEqual(a.confidence, {});
+    assert(a.notes.length === 1);
+    const s = CsvImport.normalizeConfidence('hedged', attrs);
+    assertDeepEqual(s.confidence, {});
+    assert(s.notes.length === 1);
+  });
+
+  it('a null/empty raw yields {} with no note (no confidence provided)', () => {
+    assertDeepEqual(CsvImport.normalizeConfidence(null, attrs), { confidence: {}, notes: [] });
+    assertDeepEqual(CsvImport.normalizeConfidence({}, attrs), { confidence: {}, notes: [] });
+  });
+});
+
+describe('CsvImport.parseExtractionCsv — confidence column', () => {
+  const map = {
+    record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text',
+    presence: 'presence', chronicity: 'chronicity',
+  };
+
+  it('maps a valid confidence JSON column onto finding.confidence', () => {
+    const rows = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'x', presence: 'present',
+      chronicity: 'acute', confidence: '{"chronicity":"hedged"}',
+    }];
+    const { findings, warnings } = CsvImport.parseExtractionCsv(rows, map, null, ATTR_CONFIG);
+    assertEqual(findings[0].confidence.chronicity, 'hedged');
+    assertEqual(warnings.length, 0);
+  });
+
+  it('degrades a malformed (unparseable) confidence cell to no-confidence + a warning', () => {
+    const rows = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'x', presence: 'present',
+      chronicity: 'acute', confidence: '{not json',
+    }];
+    const { findings, warnings } = CsvImport.parseExtractionCsv(rows, map, null, ATTR_CONFIG);
+    assertEqual(findings[0].confidence, undefined);
+    assert(warnings.length === 1, 'one warning');
+    assert(/Row 2:/.test(warnings[0]), 'warning carries row context');
+  });
+
+  it('drops a hedge whose backing attribute has no value (invariant), with a warning', () => {
+    // confidence hedges chronicity, but the row has no chronicity value.
+    const rows = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'x', presence: 'present',
+      confidence: '{"chronicity":"hedged"}',
+    }];
+    const { findings, warnings } = CsvImport.parseExtractionCsv(rows, map, null, ATTR_CONFIG);
+    assertEqual(findings[0].confidence, undefined);
+    assert(warnings.some(w => /no value/i.test(w)));
+  });
+
+  it('accepts <axis>_confidence=hedged columns as an alternative to the JSON column', () => {
+    const rows = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'x', presence: 'present',
+      chronicity: 'acute', chronicity_confidence: 'hedged',
+    }];
+    const m2 = { ...map }; // chronicity_confidence is NOT mapped (consumed by confidence path)
+    const { findings } = CsvImport.parseExtractionCsv(rows, m2, null, ATTR_CONFIG);
+    assertEqual(findings[0].confidence.chronicity, 'hedged');
+  });
+
+  it('does not sweep the confidence column in as a custom attribute', () => {
+    const rows = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'x', presence: 'present',
+      chronicity: 'acute', confidence: '{"chronicity":"hedged"}',
+    }];
+    const { findings } = CsvImport.parseExtractionCsv(rows, map, null, ATTR_CONFIG);
+    assertEqual(findings[0].attributes.confidence, undefined);
+    assertEqual(findings[0].attributes.chronicity_confidence, undefined);
+  });
+});
+
+describe('CsvImport.parseExtractionCsv — boolean attribute coercion', () => {
+  const map = {
+    record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text',
+    presence: 'presence', multiple: 'multiple',
+  };
+  const cfg = { ...ATTR_CONFIG, multiple: { type: 'boolean', values: [] } };
+
+  it('coerces multiple=TRUE to the lowercase string "true"', () => {
+    const rows = [{ record_id: 'r1', finding_name: 't', source_text: 'x', presence: 'present', multiple: 'TRUE' }];
+    const { findings } = CsvImport.parseExtractionCsv(rows, map, null, cfg);
+    assertEqual(findings[0].attributes.multiple, 'true');
+  });
+
+  it('drops a non-boolean multiple value with a plain-language warning', () => {
+    const rows = [{ record_id: 'r1', finding_name: 't', source_text: 'x', presence: 'present', multiple: 'yes' }];
+    const { findings, warnings } = CsvImport.parseExtractionCsv(rows, map, null, cfg);
+    assertEqual(findings[0].attributes.multiple, undefined);
+    assert(warnings.some(w => /yes/.test(w) && /multiple/.test(w)));
+  });
+});
+
+describe('CsvImport.validateExtractionRows — confidence columns reserved', () => {
+  const reportsById = {
+    r1: { record_id: 'r1', sentences: ['Some finding here.'] },
+  };
+  it('confidence + <axis>_confidence never appear in customAttributes nor the alias suggestions', () => {
+    const parsed = [{
+      record_id: 'r1', finding_name: 'thing', source_text: 'Some finding here',
+      attributes: { presence: 'present', chronicity: 'acute' },
+    }];
+    const fields = ['record_id', 'finding_name', 'source_text', 'presence', 'chronicity', 'confidence', 'chronicity_confidence'];
+    const summary = CsvImport.validateExtractionRows(
+      parsed, reportsById, ATTR_CONFIG,
+      { record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text', presence: 'presence', chronicity: 'chronicity' },
+      fields, Sentences
+    );
+    assert(![...summary.customAttributes].includes('confidence'), 'confidence not custom');
+    assert(![...summary.customAttributes].includes('chronicity_confidence'), 'chronicity_confidence not custom');
+    assert(!summary.canonicalAliasWarnings.some(w => w.column === 'chronicity_confidence'),
+      'chronicity_confidence not suggested as the chronicity alias');
+  });
+});

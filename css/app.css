@@ -163,3 +163,52 @@ details[open] summary::before {
   border-color: #3b82f6 !important;
   background-color: #eff6ff !important;
 }
+
+/* ---- Unified Rows attribute editor: control type + icon tooltips ---- */
+/* Standardized 12px control type across value cells, "+ attribute", and
+   tooltips (matches the finding-card mockup). --tipdelay defers the tooltip
+   ~300ms so it doesn't flash on cursor pass-through. */
+:root { --ctl-fs: 12px; --tipdelay: .3s; }
+
+.ctl {
+  font-size: var(--ctl-fs);
+  font-weight: 400;
+  font-family: inherit;
+  color: #374151;
+}
+
+/* CSS-only tooltip: any element with data-tip shows its text on hover.
+   Rendered ABOVE the icon by default. */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-bottom: 5px;
+  white-space: nowrap;
+  background: #111827;
+  color: #fff;
+  font-size: var(--ctl-fs);
+  font-weight: 400;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+  animation: tipIn .08s ease forwards;
+  animation-delay: var(--tipdelay);
+}
+
+/* Header-row icons render the tip BELOW, so it doesn't collide with the
+   report content sitting above the card. */
+.tipbelow[data-tip]:hover::after {
+  bottom: auto;
+  top: 100%;
+  margin-bottom: 0;
+  margin-top: 5px;
+}
+
+@keyframes tipIn { to { opacity: 1; } }

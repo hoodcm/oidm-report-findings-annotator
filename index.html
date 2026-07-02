@@ -888,7 +888,25 @@
           <template x-if="$store.app.report">
             <div>
               <div class="mb-4">
-                <h2 class="text-lg font-semibold text-gray-900" x-text="$store.app.report.record_id"></h2>
+                <div class="flex items-center gap-3">
+                  <h2 class="text-lg font-semibold text-gray-900" x-text="$store.app.report.record_id"></h2>
+                  <!-- Whole-exam flag: signals in the exported extractions that
+                       this exam is a problem (wrong heading, un-annotatable). -->
+                  <button @click="$store.app.toggleExamFlag()"
+                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-colors"
+                          :class="$store.app.report.flagged
+                            ? 'bg-red-50 text-red-600 border-red-200'
+                            : 'text-gray-400 border-gray-200 hover:text-red-500 hover:border-red-200'"
+                          :title="$store.app.report.flagged ? 'Exam flagged — click to unflag' : 'Flag this exam as a problem'">
+                    <i class="ti text-sm" :class="$store.app.report.flagged ? 'ti-flag-filled' : 'ti-flag'"></i>
+                    <span x-text="$store.app.report.flagged ? 'Exam flagged' : 'Flag exam'"></span>
+                  </button>
+                </div>
+                <input x-show="$store.app.report.flagged" x-cloak type="text"
+                       :value="$store.app.report.flag_reason"
+                       @change="$store.app.setExamFlagReason($event.target.value)"
+                       placeholder="why is this exam a problem? (optional)"
+                       class="mt-2 w-full max-w-md text-sm border border-red-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-400">
                 <p x-show="($store.app.report.sentences || []).length > 0"
                    class="text-sm text-gray-500 mt-1">Click highlighted text to view and edit findings</p>
               </div>
@@ -1148,107 +1166,163 @@
                       <span x-text="'Validated (' + $store.app.validatedFindings.length + ')'"></span>
                     </h3>
                     <div class="space-y-2">
+                      <!-- Unified Rows finding card. Presence tints the header
+                           and card border; each attribute is a hybrid
+                           cycle+dropdown control with a hover-reveal hedge (eye)
+                           and delete (×). See docs/plans/…-mockup.html. -->
                       <template x-for="finding in $store.app.validatedFindings" :key="finding._globalIdx">
-                        <div class="py-1.5 px-2 bg-white rounded border border-green-100">
-                          <div class="flex items-center justify-between">
-                            <div class="flex-1 min-w-0">
-                              <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
-                                <span class="flex-shrink-0 flex items-center gap-1">
-                                  <i x-show="finding.origin === 'llm'" class="ti ti-sparkles text-sm text-amber-500" title="LLM extracted"></i>
-                                  <i x-show="finding.origin !== 'llm'" class="ti ti-user-filled text-sm text-blue-500" title="User added"></i>
-                                  <span x-show="finding.was_modified && finding.origin === 'llm'" class="text-xs text-amber-500 whitespace-nowrap">edited</span>
-                                  <span x-show="finding._needsReview"
-                                        class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
-                                        title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
-                                    needs review
-                                  </span>
-                                </span>
+                        <div class="group/card relative py-1.5 px-2 bg-white rounded border"
+                             :class="[$store.app.cardBorderClass((finding.attributes||{}).presence), finding.flagged ? 'ring-1 ring-red-200' : '']">
+
+                          <!-- Header: presence-tinted, muted meta, flag + delete cluster -->
+                          <div class="relative flex items-center gap-1.5 flex-wrap -mx-2 -mt-1.5 px-2 pt-1.5 pb-1 rounded-t border-b"
+                               :class="$store.app.headerTintClass((finding.attributes||{}).presence)">
+                            <span class="text-sm font-medium text-gray-900" x-text="$store.app.humanizeName(finding.finding_name)"></span>
+                            <span class="flex items-center gap-1">
+                              <span class="inline-flex items-center tipbelow"
+                                    :data-tip="finding.origin === 'llm' ? 'LLM-extracted' : 'User-added'">
+                                <i class="ti text-sm text-gray-400" :class="finding.origin === 'llm' ? 'ti-sparkles' : 'ti-user-filled'"></i>
+                              </span>
+                              <span x-show="finding.was_modified && finding.origin === 'llm'"
+                                    class="inline-flex items-center tipbelow text-[10px] text-gray-400"
+                                    data-tip="You edited the LLM value">edited</span>
+                              <span x-show="finding._needsReview"
+                                    class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
+                                    data-tip="Assignment unconfirmed — review">needs review</span>
+                              <span x-show="finding.is_custom"
+                                    class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
+                                    data-tip="Not a taxonomy match">custom</span>
+                            </span>
+                            <span class="ml-auto flex items-center gap-0.5">
+                              <!-- Flag + reason popover -->
+                              <div class="relative" x-data="{ popOpen: false }" @click.outside="popOpen = false">
+                                <button class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded"
+                                        :class="finding.flagged ? 'bg-red-50 text-red-600' : 'text-gray-300 hover:text-red-500'"
+                                        :data-tip="finding.flagged ? 'Flagged — click to view/edit' : 'Flag this finding'"
+                                        @click="finding.flagged ? (popOpen = !popOpen) : ($store.app.toggleFindingFlag(finding._globalIdx), popOpen = true)">
+                                  <i class="ti text-sm" :class="finding.flagged ? 'ti-flag-filled' : 'ti-flag'"></i>
+                                </button>
+                                <!-- dot iff a reason is present (never the reason text) -->
+                                <span x-show="finding.flagged && finding.flag_reason"
+                                      class="absolute top-0 right-0 inline-flex h-1.5 w-1.5 rounded-full bg-red-500 tipbelow"
+                                      data-tip="Has a reason note"></span>
+                                <template x-if="popOpen">
+                                  <div class="reason-pop absolute right-0 top-8 z-10 w-60 p-2 bg-white rounded-lg border border-gray-300 shadow-lg">
+                                    <div class="flex items-center justify-between mb-1">
+                                      <span class="text-xs font-medium text-gray-700">Flag reason (optional)</span>
+                                      <button @click="popOpen = false" data-tip="Close" class="text-gray-400 hover:text-gray-600"><i class="ti ti-x text-sm"></i></button>
+                                    </div>
+                                    <textarea rows="2" placeholder="why is this finding a problem?"
+                                              :value="finding.flag_reason"
+                                              @change="$store.app.setFindingFlagReason(finding._globalIdx, $event.target.value)"
+                                              class="w-full ctl px-2 py-1 rounded border border-gray-300 resize-none"></textarea>
+                                    <button @click="$store.app.removeFindingFlag(finding._globalIdx); popOpen = false"
+                                            class="mt-1 text-[11px] text-red-600 hover:text-red-700 flex items-center gap-1">
+                                      <i class="ti ti-flag-off text-xs"></i> Remove flag
+                                    </button>
+                                  </div>
+                                </template>
                               </div>
-                            </div>
-                            <div class="flex items-center gap-2 ml-2 flex-shrink-0">
-                              <!-- Presence dropdown -->
-                              <select @change="$store.app.updatePresence(finding._globalIdx, $event.target.value)"
-                                      :value="(finding.attributes||{}).presence || 'present'"
-                                      class="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="present">Present</option>
-                                <option value="absent">Absent</option>
-                                <option value="indeterminate">Indeterminate</option>
-                              </select>
-                              <!-- Delete button -->
-                              <button @click="if(confirm('Delete this finding?')) $store.app.deleteFinding(finding._globalIdx)"
-                                      class="p-1 text-red-400 hover:text-red-600 transition-colors" title="Delete finding">
+                              <button data-tip="Delete finding"
+                                      @click="if(confirm('Delete this finding?')) $store.app.deleteFinding(finding._globalIdx)"
+                                      class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-600">
                                 <i class="ti ti-trash text-base"></i>
                               </button>
-                            </div>
+                            </span>
                           </div>
 
-                          <!-- Attributes (collapsible) -->
-                          <details class="mt-2 text-xs">
-                            <summary class="cursor-pointer text-gray-500 hover:text-gray-700 flex items-center gap-1"
-                                     x-text="$store.app.getSetAttributes(finding).length + ' attribute' + ($store.app.getSetAttributes(finding).length !== 1 ? 's' : '')">
-                            </summary>
-                            <div class="mt-1 space-y-1 pl-2 border-l-2 border-gray-200">
-                              <!-- Existing attributes -->
-                              <template x-for="attr in $store.app.getSetAttributes(finding)" :key="attr.key">
-                                <div class="flex items-center gap-2">
-                                  <span class="font-semibold text-gray-600 w-28 flex-shrink-0 text-right" x-text="attr.key.replace(/_/g, ' ') + ':'"></span>
-                                  <template x-if="$store.app.attributeConfig[attr.key]?.type === 'enum' && $store.app.attributeConfig[attr.key]?.values?.length > 0">
-                                    <select @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
-                                            class="flex-1 border rounded px-1 h-6 text-xs">
-                                      <option value="">--</option>
-                                      <template x-for="opt in $store.app.attributeConfig[attr.key].values" :key="opt">
-                                        <option :value="opt" :selected="attr.value === opt" x-text="opt"></option>
-                                      </template>
+                          <!-- Rows -->
+                          <div class="mt-1.5">
+                            <!-- Presence: row 1, dropdown-only (no cycle, no hedge) -->
+                            <div class="group grid grid-cols-[74px_150px_auto] items-center gap-2 py-0.5 pl-2 border-t border-t-gray-100 border-l-2 border-l-transparent">
+                              <span class="text-[11px] uppercase tracking-wide text-gray-400">presence</span>
+                              <div class="min-w-0">
+                                <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border"
+                                     :class="$store.app.presenceCellClass((finding.attributes||{}).presence)">
+                                  <span class="flex-1 flex items-center min-w-0 ctl px-1" data-tip="Presence — pick from list">
+                                    <span class="truncate" x-text="(finding.attributes||{}).presence || '—'"></span>
+                                  </span>
+                                  <div class="relative w-5 flex items-center justify-center border-l border-black/5" data-tip="Pick from list">
+                                    <i class="ti ti-chevron-down text-[10px] text-gray-400 pointer-events-none"></i>
+                                    <select class="absolute inset-0 opacity-0 cursor-pointer"
+                                            @change="$store.app.updatePresence(finding._globalIdx, $event.target.value)">
+                                      <option value="present" :selected="((finding.attributes||{}).presence) === 'present'">present</option>
+                                      <option value="absent" :selected="((finding.attributes||{}).presence) === 'absent'">absent</option>
+                                      <option value="indeterminate" :selected="((finding.attributes||{}).presence) === 'indeterminate'">indeterminate</option>
                                     </select>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="justify-self-end flex items-center"></div>
+                            </div>
+
+                            <!-- Attribute rows: canonical order, hybrid control, hedge + delete -->
+                            <template x-for="attr in $store.app.getSetAttributes(finding)" :key="attr.key">
+                              <div class="group grid grid-cols-[74px_150px_auto] items-center gap-2 py-0.5 pl-2 border-t border-t-gray-100 border-l-2"
+                                   :class="attr.hedged ? 'border-l-indigo-400' : 'border-l-transparent'">
+                                <span class="text-[11px] uppercase tracking-wide text-gray-400" x-text="attr.key.replace(/_/g, ' ')"></span>
+                                <div class="min-w-0">
+                                  <!-- enum/boolean → hybrid cycle body + ▾ dropdown -->
+                                  <template x-if="$store.app.attrCycleValues(attr.key).length > 0">
+                                    <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border border-gray-200" style="background:#fcfdfe">
+                                      <button data-tip="Click to advance"
+                                              @click="$store.app.cycleAttribute(finding._globalIdx, attr.key)"
+                                              class="flex-1 flex items-center min-w-0 ctl px-1"
+                                              :class="attr.hedged ? 'text-indigo-700' : (attr.value === '' ? 'text-gray-300' : '')">
+                                        <span class="truncate" x-text="attr.value === '' ? '—' : attr.value"></span>
+                                      </button>
+                                      <div class="relative w-5 flex items-center justify-center border-l border-black/5" data-tip="Pick from list">
+                                        <i class="ti ti-chevron-down text-[10px] text-gray-400 pointer-events-none"></i>
+                                        <select class="absolute inset-0 opacity-0 cursor-pointer"
+                                                @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)">
+                                          <option value="" :selected="attr.value === ''">—</option>
+                                          <template x-for="opt in $store.app.attrCycleValues(attr.key)" :key="opt">
+                                            <option :value="opt" :selected="attr.value === opt" x-text="opt"></option>
+                                          </template>
+                                        </select>
+                                      </div>
+                                    </div>
                                   </template>
-                                  <template x-if="!($store.app.attributeConfig[attr.key]?.type === 'enum' && $store.app.attributeConfig[attr.key]?.values?.length > 0)">
-                                    <input type="text" :value="$store.app.formatAttrValue(attr.value)"
+                                  <!-- text/array → free-text input (no cycle) -->
+                                  <template x-if="$store.app.attrCycleValues(attr.key).length === 0">
+                                    <input type="text" :value="$store.app.formatAttrValue(attr.value)" placeholder="type…"
+                                           style="background:#fcfdfe"
                                            @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
                                            @keydown.enter="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value); $event.target.blur()"
-                                           class="flex-1 border rounded px-1 h-6 text-xs">
+                                           class="w-full h-6 leading-6 ctl px-1 rounded border border-gray-200"
+                                           :class="attr.hedged ? '!text-indigo-700' : ''">
                                   </template>
+                                </div>
+                                <div class="justify-self-end flex items-center">
+                                  <button @click="$store.app.toggleHedge(finding._globalIdx, attr.key)"
+                                          :data-tip="attr.hedged ? 'Hedged — click to clear' : 'Mark hedged'"
+                                          class="inline-flex items-center justify-center h-6 w-6 rounded"
+                                          :class="attr.hedged ? 'bg-indigo-50 text-indigo-700' : 'text-gray-300 opacity-0 group-hover:opacity-100 hover:text-indigo-600'">
+                                    <i class="ti ti-eye-question text-base"></i>
+                                  </button>
                                   <button @click="$store.app.removeAttribute(finding._globalIdx, attr.key)"
-                                          class="flex items-center justify-center w-6 h-6 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0" title="Remove">
+                                          data-tip="Remove attribute"
+                                          class="inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
                                     <i class="ti ti-x text-sm"></i>
                                   </button>
                                 </div>
-                              </template>
+                              </div>
+                            </template>
 
-                              <!-- Add attribute -->
-                              <template x-if="$store.app.getAvailableAttributes(finding).length > 0">
-                                <div class="flex items-center gap-2 mt-1" x-data="{ newAttrKey: '', newAttrValue: '' }">
-                                  <select x-model="newAttrKey" class="w-28 flex-shrink-0 border rounded px-1 h-6 text-xs text-gray-500">
-                                    <option value="">+ attribute</option>
-                                    <template x-for="avail in $store.app.getAvailableAttributes(finding)" :key="avail.key">
-                                      <option :value="avail.key" x-text="avail.key.replace(/_/g, ' ')"></option>
-                                    </template>
-                                  </select>
-                                  <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type === 'enum'">
-                                    <select x-model="newAttrValue"
-                                            @change="const v = $event.target.value; if (newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
-                                            class="flex-1 border rounded px-1 h-6 text-xs">
-                                      <option value="">--</option>
-                                      <template x-for="opt in $store.app.attributeConfig[newAttrKey]?.values || []" :key="opt">
-                                        <option :value="opt" x-text="opt"></option>
-                                      </template>
-                                    </select>
+                            <!-- Add-then-choose "+ attribute" (lists only unset attributes) -->
+                            <template x-if="$store.app.getAvailableAttributes(finding).length > 0">
+                              <div class="pl-2 mt-1">
+                                <select data-tip="Add an attribute"
+                                        @change="if($event.target.value){ $store.app.addAttribute(finding._globalIdx, $event.target.value); $event.target.value = ''; }"
+                                        class="ctl text-gray-500 bg-transparent border border-dashed border-gray-300 rounded px-1 h-6 hover:border-gray-400">
+                                  <option value="">+ attribute</option>
+                                  <template x-for="avail in $store.app.getAvailableAttributes(finding)" :key="avail.key">
+                                    <option :value="avail.key" x-text="avail.key.replace(/_/g, ' ')"></option>
                                   </template>
-                                  <template x-if="newAttrKey && $store.app.attributeConfig[newAttrKey]?.type !== 'enum'">
-                                    <input type="text" x-model="newAttrValue" placeholder="value"
-                                           @keydown.enter.prevent="const v = $event.target.value; if(newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
-                                           @blur="const v = $event.target.value; if(newAttrKey && v) { $store.app.updateAttribute(finding._globalIdx, newAttrKey, v); newAttrKey = ''; newAttrValue = '' }"
-                                           class="flex-1 border rounded px-1 h-6 text-xs">
-                                  </template>
-                                  <button x-show="newAttrKey && newAttrValue"
-                                          @click="$store.app.updateAttribute(finding._globalIdx, newAttrKey, newAttrValue); newAttrKey = ''; newAttrValue = ''"
-                                          class="flex items-center justify-center w-6 h-6 text-green-600 hover:text-green-800" title="Add">
-                                    <i class="ti ti-plus text-sm"></i>
-                                  </button>
-                                </div>
-                              </template>
-                            </div>
-                          </details>
+                                </select>
+                              </div>
+                            </template>
+                          </div>
                         </div>
                       </template>
                     </div>

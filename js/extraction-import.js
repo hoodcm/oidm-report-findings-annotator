@@ -198,9 +198,13 @@ const CsvImport = {
    * @param {Set} [validRecordIds] - Optional set of valid record IDs for validation
    * Returns { findings: [{record_id, finding_name, source_text, attributes}], errors }.
    */
-  parseExtractionCsv(data, columnMap, validRecordIds) {
+  parseExtractionCsv(data, columnMap, validRecordIds, attributeConfig = {}) {
     const findings = [];
     const errors = [];
+    // Non-fatal notes (malformed/dropped confidence entries, boolean
+    // coercions). Same "Row N: <plain message>" shape as errors, but these do
+    // NOT reject the row. Plain-language for the radiologist audience.
+    const warnings = [];
 
     for (let i = 0; i < data.length; i++) {
       const row = data[i];
@@ -267,6 +271,10 @@ const CsvImport = {
         if (!val || val.toLowerCase() === 'nan' || val.toLowerCase() === 'null') continue;
         const key = Norm.colName(colName);
         if (RESERVED.has(key)) continue;
+        // Confidence columns (the `confidence` JSON map and any `<axis>_confidence`
+        // column) are consumed by the confidence path below, never swept in as
+        // custom attributes.
+        if (key === 'confidence' || /_confidence$/.test(key)) continue;
         // Don't overwrite a canonical attribute the user already mapped.
         if (attrs[key] != null) continue;
         attrs[key] = val;
@@ -277,20 +285,114 @@ const CsvImport = {
         if (sourceText.toLowerCase() === 'nan' || sourceText.toLowerCase() === 'null') sourceText = '';
       }
 
+      // Boolean-attribute coercion (currently only `multiple`): true/false →
+      // the lowercase strings; any other value is NOT stored as free text —
+      // it's dropped with a non-fatal note, so a malformed boolean never
+      // reaches the canonical CSV column. (Mirrors the enum-validation
+      // discipline in validateExtractionRows.)
+      for (const key of Object.keys(attrs)) {
+        if (attributeConfig[key] && attributeConfig[key].type === 'boolean') {
+          const raw = String(attrs[key]).trim().toLowerCase();
+          if (raw === 'true' || raw === 'false') {
+            attrs[key] = raw;
+          } else {
+            warnings.push(`Row ${i + 2}: '${attrs[key]}' isn't a yes/no value for '${key}' — left blank`);
+            delete attrs[key];
+          }
+        }
+      }
+
+      // Confidence: assemble a raw map from an optional `confidence` JSON column
+      // and/or any `<axis>_confidence` columns, then normalize against this
+      // row's attributes (a user-uploaded system boundary — shape isn't assumed).
+      let rawConfidence = {};
+      for (const [colName, cellVal] of Object.entries(row)) {
+        const norm = Norm.colName(colName);
+        if (norm === 'confidence') {
+          const s = Norm.cell(cellVal);
+          if (!s || s === '{}' || s.toLowerCase() === 'nan' || s.toLowerCase() === 'null') continue;
+          let parsed;
+          try {
+            parsed = JSON.parse(s);
+          } catch {
+            warnings.push(`Row ${i + 2}: skipped the hedge information for this row because it couldn't be read`);
+            continue;
+          }
+          if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            Object.assign(rawConfidence, parsed);
+          } else {
+            warnings.push(`Row ${i + 2}: skipped the hedge information for this row because it wasn't in the expected form`);
+          }
+        } else if (/_confidence$/.test(norm)) {
+          const axis = norm.replace(/_confidence$/, '');
+          const v = Norm.cell(cellVal);
+          if (v && v.toLowerCase() !== 'nan' && v.toLowerCase() !== 'null') rawConfidence[axis] = v;
+        }
+      }
+      const { confidence, notes } = this.normalizeConfidence(rawConfidence, attrs);
+      for (const n of notes) warnings.push(`Row ${i + 2}: ${n}`);
+
       // sentence_idx is intentionally ignored: the annotator computes
       // sentence assignment deterministically from source_text.
       const sentenceIdx = null;
 
-      findings.push({
+      const finding = {
         record_id: recordId,
         finding_name: findingName,
         source_text: sourceText,
         source_sentence_idx: sentenceIdx,
         attributes: attrs,
-      });
+      };
+      // Omit confidence entirely when empty (canonical shape).
+      if (Object.keys(confidence).length) finding.confidence = confidence;
+      findings.push(finding);
     }
 
-    return { findings, errors };
+    return { findings, errors, warnings };
+  },
+
+  /**
+   * Normalize a raw confidence map against a finding's assembled attributes.
+   * Keeps only entries whose key !== 'presence', whose value normalizes to the
+   * string 'hedged', AND whose axis has a present, non-empty attribute value
+   * (the confidence invariant). Everything else is dropped with a plain-language
+   * note; a wholly wrong-typed value (array/string/number) → {} + one note.
+   * Never throws — the CSV is a user-uploaded boundary.
+   *
+   * @returns {{ confidence: Object, notes: string[] }} notes are message
+   *   fragments (no "Row N:" prefix — the caller adds row context).
+   */
+  normalizeConfidence(raw, attributes) {
+    const confidence = {};
+    const notes = [];
+    const attrs = attributes || {};
+    const hasValue = (k) => {
+      const v = attrs[k];
+      return v != null && v !== '' && !(Array.isArray(v) && v.length === 0);
+    };
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      if (raw !== null && raw !== undefined && raw !== '') {
+        notes.push(`the hedge information for this row wasn't in the expected form, so it was skipped`);
+      }
+      return { confidence, notes };
+    }
+    for (const [k, v] of Object.entries(raw)) {
+      const val = String(v == null ? '' : v).trim().toLowerCase();
+      if (k === 'presence') {
+        notes.push(`ignored a hedge on 'presence' (presence can't be hedged here)`);
+        continue;
+      }
+      if (val !== 'hedged') {
+        notes.push(`ignored a '${v}' confidence on '${k}' (only 'hedged' is recognized)`);
+        continue;
+      }
+      if (!hasValue(k)) {
+        notes.push(`ignored a hedge on '${k}' because that attribute has no value`);
+        continue;
+      }
+      confidence[k] = 'hedged';
+    }
+    return { confidence, notes };
   },
 
   /**
@@ -346,6 +448,11 @@ const CsvImport = {
     const customAttributes = new Set();
     for (const f of (fields || [])) {
       const norm = Norm.colName(f);
+      // Reserve the confidence column and the `<axis>_confidence` suffix family
+      // BEFORE the set is built, so they never reach the validation panel's
+      // custom-attribute listing NOR the downstream canonical-alias pass (which
+      // would otherwise mis-suggest `chronicity_confidence` → `chronicity`).
+      if (norm === 'confidence' || /_confidence$/.test(norm)) continue;
       // Map back via columnMap: if the user mapped this field to a canonical
       // attribute key, it's not custom. Otherwise it might be.
       const mappedTo = Object.entries(columnMap || {}).find(([, col]) => col === f)?.[0];
