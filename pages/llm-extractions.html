@@ -8,11 +8,13 @@
   <meta http-equiv="Expires" content="0">
   <title>Run an LLM to extract findings</title>
   <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
-  <script src="../js/storage.js"></script>
-  <script src="../js/extraction-prompt.js"></script>
+  <link rel="stylesheet" href="../css/tailwind.css">
+  <link rel="stylesheet" href="../vendor/tabler/tabler-icons.min.css">
+  <script defer src="../vendor/dexie.min.js"></script>
+  <script defer src="../js/storage.js"></script>
+  <script defer src="../js/schema.js"></script>
+  <script defer src="../js/extraction-example.js"></script>
+  <script defer src="../js/extraction-prompt.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-900">
 
@@ -26,12 +28,15 @@
     <p class="text-sm leading-relaxed">
       AI tools sometimes mix up which report a finding came from, add details the report doesn't say, or skip findings in longer sentences. The prompt below reduces these errors but can't catch all of them.
     </p>
+    <p class="text-sm leading-relaxed mt-2 pt-2 border-t border-amber-200">
+      <strong>Before you paste or attach anything:</strong> report text leaves your machine when you send it to an AI tool. Make sure your reports are de-identified first, per your institution's policy.
+    </p>
   </div>
 
   <h1 class="text-2xl font-semibold text-gray-900 mb-2">Run an LLM to extract findings</h1>
 
   <p class="text-gray-600 mb-6">
-    Use the LLM of your choice to extract structured findings from your radiology reports. This page gives you the prompt to use, shows you what file to upload, and explains how to fix problems if the upload fails.
+    Use the AI chat tool of your choice to pre-extract structured findings from your radiology reports. This page gives you the prompt to use, shows you what to attach, and explains how to fix problems if something doesn't import.
   </p>
 
   <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-8 text-sm">
@@ -70,25 +75,51 @@
       <summary class="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer select-none">Show prompt</summary>
       <pre id="prompt-text" class="mt-3 text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap font-mono"></pre>
     </details>
+
+    <details class="mt-3">
+      <summary class="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer select-none">Why is the prompt so long?</summary>
+      <p class="mt-2 text-xs text-gray-600 leading-relaxed">
+        The prompt includes your full finding list so the AI uses <em>your</em> finding
+        names from the start, instead of inventing its own wording that has to be
+        cleaned up later. Don't worry about the length: even with several hundred
+        findings, this prompt is roughly a 10–20 page document, and today's AI
+        tools reliably read hundreds of pages in one message. Pasting it works
+        better than attaching it as a file — pasted text is always fully in the
+        AI's view, while attached files are sometimes only skimmed or searched.
+        Expect a strong starting point, not perfection: you'll review every finding
+        in the annotator.
+      </p>
+    </details>
   </section>
 
   <!-- Step 2 — Run the prompt -->
   <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 2 — Run the prompt against your reports</h2>
     <p class="text-sm text-gray-600">
-      Paste this prompt into your LLM. Add the text of your radiology reports below the prompt. Save the LLM's response as a <code class="bg-gray-100 px-1 rounded text-xs">.json</code> file.
+      Paste the prompt into your AI chat, then <strong>attach the same reports CSV</strong> you plan to load into the annotator, in the same message. Attaching the same file the annotator already knows about is what lets the AI copy record IDs correctly.
     </p>
-    <p class="text-sm text-gray-500 mt-2">
+    <p class="text-sm text-gray-600 mt-2">
+      If your reports file is large, the AI may reply in a few messages instead of one — that's expected and the annotator's import handles it fine; just repeat Step 3 for each reply.
+    </p>
+    <div class="mt-3 p-3 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
+      <p class="font-medium text-gray-700 mb-1">Can't attach a file in your chat?</p>
+      <p>Paste your reports directly into the chat instead, in labeled batches — write <code class="bg-white px-1 rounded">Report &lt;record_id&gt;:</code> before each report's text. The same de-identification reminder above still applies.</p>
+    </div>
+    <p class="text-sm text-gray-500 mt-3">
       The reports CSV format is documented at the <a href="reports-format-guide.html" class="text-indigo-600 hover:text-indigo-800 underline">Reports CSV Format Guide</a>.
     </p>
   </section>
 
-  <!-- Step 3 — Upload -->
+  <!-- Step 3 — Import the result -->
   <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 3 — Upload the JSON file to the annotator</h2>
+    <h2 class="text-lg font-semibold text-gray-900 mb-3">Step 3 — Import the AI's reply into the annotator</h2>
     <p class="text-sm text-gray-600">
-      Open the annotator's home page. Click the <strong>Import LLM Extractions</strong> button in the sidebar and select your <code class="bg-gray-100 px-1 rounded text-xs">.json</code> file.
+      Open the annotator, open <strong>Import &amp; add data</strong> in the sidebar, and either:
     </p>
+    <ul class="list-disc pl-5 mt-2 text-sm text-gray-600 space-y-1">
+      <li><strong>Paste the reply directly</strong> — use the "Or paste the AI's reply instead" box. This is the simplest path: no file to save, and nothing for a word processor to mangle.</li>
+      <li><strong>Save it as a file first</strong>, if you'd rather keep a copy — use a plain-text editor (not a word processor's default rich-text mode, which can silently swap in curly "smart quotes" that break the file) or your AI tool's own "download" option when it has one. Then drop the file on the same import area.</li>
+    </ul>
   </section>
 
   <!-- If something doesn't import -->
@@ -109,8 +140,8 @@
         <tbody class="divide-y divide-gray-100 align-top">
           <tr>
             <td class="px-3 py-2 text-xs">missing required field</td>
-            <td class="px-3 py-2">A row lacks <code class="bg-gray-100 px-1 rounded text-xs">record_id</code>, <code class="bg-gray-100 px-1 rounded text-xs">finding_name</code>, or <code class="bg-gray-100 px-1 rounded text-xs">source_text</code>.</td>
-            <td class="px-3 py-2">Every row must include all three. Update your extraction.</td>
+            <td class="px-3 py-2">A row lacks <code class="bg-gray-100 px-1 rounded text-xs">record_id</code>, <code class="bg-gray-100 px-1 rounded text-xs">finding_name</code>, <code class="bg-gray-100 px-1 rounded text-xs">presence</code>, or <code class="bg-gray-100 px-1 rounded text-xs">source_text</code>.</td>
+            <td class="px-3 py-2">Every row must include all four. Update your extraction.</td>
           </tr>
           <tr>
             <td class="px-3 py-2 text-xs">record_id not in loaded reports</td>
@@ -119,8 +150,8 @@
           </tr>
           <tr>
             <td class="px-3 py-2 text-xs">source_text not in named report</td>
-            <td class="px-3 py-2">The text doesn't appear in the report's FINDINGS section. Often a sign of cross-attribution (LLM batched multiple reports with the wrong record_id) or paraphrase (the LLM didn't quote verbatim).</td>
-            <td class="px-3 py-2">Check the validation panel — if the source_text matches another loaded report, your record_id is mismatched. Otherwise verify source_text is a verbatim quote.</td>
+            <td class="px-3 py-2">The text doesn't appear in the report's FINDINGS section. Often a sign of cross-attribution (the AI batched multiple reports with the wrong record_id) or paraphrase (it didn't quote verbatim).</td>
+            <td class="px-3 py-2">Check the validation panel — if the source_text matches another loaded report, your record_id is mismatched. If a close match was found in the right report instead, click <strong>Use this sentence</strong> to fix it in one click.</td>
           </tr>
           <tr>
             <td class="px-3 py-2 text-xs">source_text matches multiple sentences</td>
@@ -129,8 +160,8 @@
           </tr>
           <tr>
             <td class="px-3 py-2 text-xs">presence value not recognized</td>
-            <td class="px-3 py-2">A value other than present / absent / indeterminate.</td>
-            <td class="px-3 py-2">Update the extraction to emit one of the three allowed values.</td>
+            <td class="px-3 py-2">A value other than the ones listed in the field reference below.</td>
+            <td class="px-3 py-2">Update the extraction to emit one of the allowed values.</td>
           </tr>
           <tr>
             <td class="px-3 py-2 text-xs">attribute value not recognized</td>
@@ -141,7 +172,10 @@
       </table>
     </div>
     <p class="text-sm text-gray-600 mt-4">
-      The validation panel offers a <strong>Download error report (CSV)</strong> button that exports every rejected row with a <code class="bg-gray-100 px-1 rounded text-xs">_validation_error</code> column appended. Use it to fix issues upstream and re-upload.
+      Still have rejected rows after fixing what you can? The validation panel's <strong>Copy fix-it prompt for the rejected rows</strong> button packages everything a fresh AI chat needs — the rejected rows, their errors, and the report text — so you can paste it into a new chat and get corrected rows back. Re-importing the reply adds to what you already have; it won't wipe out the findings that already imported cleanly.
+    </p>
+    <p class="text-sm text-gray-600 mt-2">
+      The validation panel also offers a <strong>Download error report (CSV)</strong> button that exports every rejected row with a <code class="bg-gray-100 px-1 rounded text-xs">_validation_error</code> column appended, if you'd rather work from a spreadsheet.
     </p>
   </details>
 
@@ -149,7 +183,7 @@
   <details id="json-reference" open class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
     <summary class="text-lg font-semibold text-gray-900 cursor-pointer">JSON field reference</summary>
     <p class="text-sm text-gray-600 mt-3 mb-3">
-      Each finding is one JSON object with these fields. Required fields are checked at import; optional fields are only validated if present.
+      Each finding is one JSON object with these fields. Required fields are checked at import; optional fields are only validated if present. This table reflects <strong>your currently loaded taxonomy's</strong> field set.
     </p>
     <div class="overflow-x-auto">
       <table class="w-full text-sm">
@@ -159,176 +193,72 @@
             <th class="px-3 py-2 text-left font-medium text-gray-700">Type</th>
             <th class="px-3 py-2 text-left font-medium text-gray-700">Required</th>
             <th class="px-3 py-2 text-left font-medium text-gray-700">Valid Values / Constraints</th>
-            <th class="px-3 py-2 text-left font-medium text-gray-700">Example</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-100">
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">record_id</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
-            <td class="px-3 py-2">Must match a record ID already loaded in the annotator</td>
-            <td class="px-3 py-2 text-gray-500">ARN-RSNA-CXR-0001</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">finding_name</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
-            <td class="px-3 py-2">A name from the active taxonomy (case-insensitive). If the term doesn't map, emit <code class="bg-gray-100 px-1 rounded text-xs">unmapped:your_term</code> — the annotator preserves it for later review.</td>
-            <td class="px-3 py-2 text-gray-500">pleural_effusion</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">presence</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
-            <td class="px-3 py-2">One of: <code class="bg-gray-100 px-1 rounded text-xs">present</code>, <code class="bg-gray-100 px-1 rounded text-xs">absent</code>, <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code></td>
-            <td class="px-3 py-2 text-gray-500">present</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">source_text</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2"><span class="text-red-600 font-medium">Required</span></td>
-            <td class="px-3 py-2">
-              <p>The verbatim sentence from FINDINGS supporting this finding.</p>
-              <p class="mt-1"><strong>For templated reports</strong> where the same body text repeats under different sub-headers: include the section header as a prefix in <code class="bg-gray-100 px-1 rounded text-xs">source_text</code> so each match is unique.</p>
-            </td>
-            <td class="px-3 py-2 text-gray-500">Small right pleural effusion.</td>
-          </tr>
+        <tbody id="field-reference-required" class="divide-y divide-gray-100"></tbody>
+        <tbody>
           <tr class="bg-gray-50">
-            <td class="px-3 py-2 font-mono text-xs font-medium" colspan="5">
+            <td class="px-3 py-2 font-mono text-xs font-medium" colspan="4">
               <span class="text-gray-500 text-xs font-normal italic">Canonical optional fields below — include only when applicable</span>
             </td>
           </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">laterality</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2"><code class="bg-gray-100 px-1 rounded text-xs">left</code>, <code class="bg-gray-100 px-1 rounded text-xs">right</code>, <code class="bg-gray-100 px-1 rounded text-xs">bilateral</code></td>
-            <td class="px-3 py-2 text-gray-500">right</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">temporal_status</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">
-              <code class="bg-gray-100 px-1 rounded text-xs">unchanged</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">new</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">resolved</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">larger</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">smaller</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">increased_extent</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">decreased_extent</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">more_conspicuous</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">less_conspicuous</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">increased_complexity</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">decreased_complexity</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
-            </td>
-            <td class="px-3 py-2 text-gray-500">unchanged</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">chronicity</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">
-              <code class="bg-gray-100 px-1 rounded text-xs">acute</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">subacute</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">chronic</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">remote</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">evolving</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">resolving</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">healing</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">healed</code>,
-              <code class="bg-gray-100 px-1 rounded text-xs">indeterminate</code>
-            </td>
-            <td class="px-3 py-2 text-gray-500">chronic</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">size</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">Numerical measurements with units <strong>only</strong> (e.g., "7 mm", "2.3 cm"). Qualitative descriptors like "small" or "large" go in <code class="bg-gray-100 px-1 rounded text-xs">severity</code>.</td>
-            <td class="px-3 py-2 text-gray-500">7 mm</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">severity</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">
-              Intensity: <code class="bg-gray-100 px-1 rounded text-xs">mild</code>, <code class="bg-gray-100 px-1 rounded text-xs">moderate</code>, <code class="bg-gray-100 px-1 rounded text-xs">severe</code><br>
-              Extent: <code class="bg-gray-100 px-1 rounded text-xs">small</code>, <code class="bg-gray-100 px-1 rounded text-xs">medium</code>, <code class="bg-gray-100 px-1 rounded text-xs">large</code>
-            </td>
-            <td class="px-3 py-2 text-gray-500">small</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">anatomic_site</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">Compound anatomic terms stay intact (e.g., "right upper lobe").</td>
-            <td class="px-3 py-2 text-gray-500">right upper lobe</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">features</td>
-            <td class="px-3 py-2">string or array</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">Descriptive properties of the finding (e.g., cavitation, loculated). Comma-separated string or JSON array.</td>
-            <td class="px-3 py-2 text-gray-500">"loculated, septated"</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">tip_location</td>
-            <td class="px-3 py-2">string</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2">For device findings (catheters, lines): where the device tip terminates.</td>
-            <td class="px-3 py-2 text-gray-500">SVC-RA junction</td>
-          </tr>
-          <tr>
-            <td class="px-3 py-2 font-mono text-xs font-medium">position_status</td>
-            <td class="px-3 py-2">enum</td>
-            <td class="px-3 py-2">Optional</td>
-            <td class="px-3 py-2"><code class="bg-gray-100 px-1 rounded text-xs">satisfactory</code>, <code class="bg-gray-100 px-1 rounded text-xs">malpositioned</code></td>
-            <td class="px-3 py-2 text-gray-500">satisfactory</td>
-          </tr>
         </tbody>
+        <tbody id="field-reference-optional" class="divide-y divide-gray-100"></tbody>
       </table>
     </div>
 
     <h3 class="text-sm font-semibold text-gray-900 mt-6 mb-2">Example JSON</h3>
-    <pre class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto"><code>[
-  {
-    "record_id": "ARN-RSNA-CXR-0001",
-    "finding_name": "pleural_effusion",
-    "presence": "present",
-    "source_text": "Small right pleural effusion.",
-    "laterality": "right",
-    "severity": "small"
-  },
-  {
-    "record_id": "ARN-RSNA-CXR-0001",
-    "finding_name": "cardiomegaly",
-    "presence": "present",
-    "source_text": "The heart is mildly enlarged.",
-    "severity": "mild"
-  }
-]</code></pre>
+    <p id="example-intro" class="text-xs text-gray-500 mb-2"></p>
+    <pre class="text-xs bg-gray-50 rounded-lg p-4 overflow-x-auto"><code id="example-json"></code></pre>
+    <ul id="example-notes" class="mt-3 ml-4 list-disc text-xs text-gray-600 space-y-1"></ul>
 
     <p class="text-sm text-gray-500 mt-4">
       Custom fields beyond the canonical set are preserved on each finding as free-text attributes. Edit, display, and export work alongside canonical fields; only canonical enums are vocabulary-checked.
     </p>
     <p class="text-sm text-gray-500 mt-2">
-      CSV files with these same field names as column headers also import. JSON is the recommended format because LLMs produce it more reliably than CSV.
+      CSV files with these same field names as column headers also import. JSON is the recommended format because AI tools produce it more reliably than CSV.
     </p>
   </details>
 </div>
 
 <script>
-(async () => {
+// Deferred scripts (Storage, Schema, ExtractionExample, ExtractionPrompt)
+// finish before DOMContentLoaded, so this must wait for it — an immediate
+// IIFE would run first and throw.
+window.addEventListener('DOMContentLoaded', async () => {
   const tax = await Storage.loadTaxonomy();
-  const cfg = await fetch('../data/attributes.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  // Bundle-aware: a persisted .idm 'attributes' asset governs over the repo
+  // default, same resolution the annotator itself uses (D5) — never a bare
+  // fetch of data/attributes.json, so this page can't drift from what the
+  // app would actually validate against. Fetched at most once: when no
+  // bundle override is persisted, `cfg` IS the default, so the later
+  // schema-filter step reuses it instead of fetching the same static file
+  // again.
+  const persistedAttrs = await Storage.getDataAsset('attributes');
+  const defaultCfg = await fetch('../data/attributes.json').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  const cfg = (persistedAttrs && persistedAttrs.payload) || defaultCfg;
+  Schema.init(cfg);
+
+  // Corpus injection (D1): when reports are already loaded, name the real
+  // ID column + a few real record_ids instead of generic placeholder text.
+  const reportCount = await Storage.getReportCount();
+  let corpus = null;
+  if (reportCount > 0) {
+    const [idColumnAsset, recordIds] = await Promise.all([
+      Storage.getDataAsset('corpus_id_column'),
+      Storage.listReportIds(),
+    ]);
+    corpus = {
+      idColumn: idColumnAsset?.payload?.idColumn || '',
+      sampleIds: recordIds.slice(0, 3),
+    };
+  }
 
   const promptText = ExtractionPrompt.build({
     taxonomy: tax?.findings || [],
     attributeConfig: cfg,
     examType: tax?.examType || '',
+    corpus,
   });
   document.getElementById('prompt-text').textContent = promptText;
 
@@ -358,7 +288,60 @@
     a.click();
     URL.revokeObjectURL(url);
   });
-})();
+
+  // --- Field reference table + example JSON: generated from the
+  // session-active schema (D5), not hand-maintained. ---
+  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const code = (s) => `<code class="bg-gray-100 px-1 rounded text-xs">${escapeHtml(s)}</code>`;
+  const valuesCell = (fieldCfg) => {
+    if (fieldCfg.type === 'enum' && fieldCfg.values && fieldCfg.values.length) {
+      return fieldCfg.values.map(code).join(', ');
+    }
+    return escapeHtml(fieldCfg.description || fieldCfg.type || 'string');
+  };
+  const row = (name, type, required, valuesHtml) => `
+    <tr>
+      <td class="px-3 py-2 font-mono text-xs font-medium">${escapeHtml(name)}</td>
+      <td class="px-3 py-2">${escapeHtml(type)}</td>
+      <td class="px-3 py-2">${required ? '<span class="text-red-600 font-medium">Required</span>' : 'Optional'}</td>
+      <td class="px-3 py-2">${valuesHtml}</td>
+    </tr>`;
+
+  const requiredBody = document.getElementById('field-reference-required');
+  requiredBody.innerHTML = [
+    row('record_id', 'string', true, 'Must match a record ID already loaded in the annotator'),
+    row('finding_name', 'string', true, `A name from the active taxonomy (case-insensitive). If nothing fits, use ${code('unmapped:your_term')} — the annotator preserves it for later review.`),
+    row('presence', 'enum', true, valuesCell(cfg.presence || {})),
+    row('source_text', 'string', true, 'The verbatim sentence from FINDINGS supporting this finding. For templated reports where the same body text repeats under different sub-headers, include the section header as a prefix so each match is unique.'),
+  ].join('');
+
+  const optionalBody = document.getElementById('field-reference-optional');
+  optionalBody.innerHTML = Schema.findingAttributeKeys()
+    .map(key => row(key, cfg[key].type, false, valuesCell(cfg[key])))
+    .join('');
+
+  // Example JSON: the same shared fixture the prompt's worked example uses
+  // (js/extraction-example.js), so this page can never show an example the
+  // importer wouldn't actually accept. Fields that look like a KNOWN
+  // canonical attribute but aren't declared in the active schema are
+  // dropped (a custom .idm bundle may ship a reduced attribute set); a
+  // field the active schema doesn't recognize at all is kept as-is — it's
+  // demonstrating the custom-attribute passthrough, which is schema-
+  // independent by design.
+  const RESERVED = new Set(['record_id', 'finding_name', 'presence', 'source_text', 'confidence']);
+  const filterToActiveSchema = (finding) => {
+    const out = {};
+    for (const [k, v] of Object.entries(finding)) {
+      if (RESERVED.has(k) || k in cfg || !(k in defaultCfg)) out[k] = v;
+    }
+    return out;
+  };
+  const filteredExample = ExtractionExample.findings.map(filterToActiveSchema);
+  document.getElementById('example-intro').textContent =
+    'A worked example — a short FINDINGS excerpt and the JSON it should produce:';
+  document.getElementById('example-json').textContent = JSON.stringify(filteredExample, null, 2);
+  document.getElementById('example-notes').innerHTML = ExtractionExample.notes.map(n => `<li>${escapeHtml(n)}</li>`).join('');
+});
 </script>
 
 </body>

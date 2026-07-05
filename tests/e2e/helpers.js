@@ -24,13 +24,20 @@ async function gotoApp(page) {
   );
   // Storage is a window global once js/storage.js runs.
   await page.waitForFunction(() => typeof window.Storage === 'object');
+  // init() starts on the loading view; wait for it to resolve to a real view
+  // so specs can assert on welcome/annotate immediately.
+  await page.waitForFunction(() => Alpine.store('app').currentView !== 'loading', { timeout: 10000 });
 }
 
-/** Wipe both Dexie tables. Use between specs that share the dev-server origin. */
+/** Wipe all Dexie tables. Use between specs that share the dev-server origin.
+ *  Backups are cleared last — clearAllReports snapshots before clearing, so the
+ *  order matters to leave each spec with an empty backups table. */
 async function resetIndexedDb(page) {
   await page.evaluate(async () => {
     await Storage.clearAllReports();
     await Storage.clearTaxonomy();
+    await Storage.clearBackups();
+    await Storage.clearDataAssets();
   });
 }
 
@@ -71,7 +78,7 @@ async function seedReports(page, recordIds = ['R001', 'R002', 'R003']) {
       R002: 'FINDINGS:\nBrain Parenchyma:\n- Small acute subdural hemorrhage along the left convexity.\n- No midline shift.\nVentricular System:\n- Ventricles are normal.',
       R003: 'FINDINGS:\nBrain Parenchyma:\n- No acute infarct.\n- Chronic right basal ganglia infarct.\nVentricular System:\n- Mild hydrocephalus.',
     };
-    const SCHEMA_VERSION = 4;
+    const SCHEMA_VERSION = 7;
     const reports = ids.map(rid => {
       const text = TEXTS[rid];
       const findingsText = Sentences.parseFindingsSection(text);
@@ -81,8 +88,7 @@ async function seedReports(page, recordIds = ['R001', 'R002', 'R003']) {
         report_text: text,
         sentences,
         sectionBreaks,
-        llm_extractions: [],
-        validated_findings: [],
+        findings: [],
         validated: false,
         validated_at: null,
         custom_findings_added: [],

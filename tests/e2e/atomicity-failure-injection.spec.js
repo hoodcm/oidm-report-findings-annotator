@@ -44,7 +44,7 @@ test.describe('Atomic-replace contracts: failed imports do not destroy prior dat
     try {
       await page.evaluate(async () => {
         await Alpine.store('app')._writeReportsAndStartSession([
-          { record_id: 'NEW-1', report_text: 'x', sentences: [], schema_version: 4, validated: false, validated_findings: [], llm_extractions: [] },
+          { record_id: 'NEW-1', report_text: 'x', sentences: [], schema_version: 5, validated: false, validated_findings: [], llm_extractions: [] },
         ]);
       });
     } catch (e) {

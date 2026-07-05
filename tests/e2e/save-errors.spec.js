@@ -14,10 +14,12 @@ test.describe('_saveCurrentReport surfaces storage failures', () => {
     await seedReports(page);
   });
 
-  test('rejected Storage.saveReport produces an error toast', async ({ page }) => {
+  test('rejected report save produces an error toast', async ({ page }) => {
+    // _saveCurrentReport writes via savePlainReport (the no-re-clone hot path);
+    // inject the failure there.
     await page.evaluate(() => {
-      window.__originalSaveReport = Storage.saveReport;
-      Storage.saveReport = () => {
+      window.__originalSaveReport = Storage.savePlainReport;
+      Storage.savePlainReport = () => {
         const err = new Error('simulated');
         err.name = 'QuotaExceededError';
         return Promise.reject(err);
@@ -31,14 +33,20 @@ test.describe('_saveCurrentReport surfaces storage failures', () => {
     const state = await page.evaluate(() => ({
       toast: Alpine.store('app').toastMessage,
       toastType: Alpine.store('app').toastType,
-      hasUnsavedChanges: Alpine.store('app').hasUnsavedChanges,
+      saveFailed: Alpine.store('app')._saveFailed,
     }));
     expect(state.toastType).toBe('error');
     expect(state.toast).toMatch(/could not save changes/i);
     expect(state.toast).toMatch(/quotaexceedederror/i);
     expect(state.toast).toMatch(/export your session/i);
+    // A real save failure arms the beforeunload guard.
+    expect(state.saveFailed).toBe(true);
 
-    // Restore so the afterEach IndexedDB reset doesn't accidentally exercise the stub.
-    await page.evaluate(() => { Storage.saveReport = window.__originalSaveReport; });
+    // Restore, then a successful save clears the flag (closing is safe again).
+    await page.evaluate(async () => {
+      Storage.savePlainReport = window.__originalSaveReport;
+      await Alpine.store('app')._saveCurrentReport();
+    });
+    expect(await page.evaluate(() => Alpine.store('app')._saveFailed)).toBe(false);
   });
 });

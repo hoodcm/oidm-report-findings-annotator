@@ -1,0 +1,8 @@
+id,name,category,parent_id,synonyms,finding_type
+HID001,cerebral edema,brain,,brain swelling|cerebral swelling,observation
+HID002,subdural hemorrhage,hemorrhage,,subdural hematoma|SDH,observation
+HID003,midline shift,mass_effect,,midline_shift,observation
+HID004,mass effect,mass_effect,,,observation
+HID005,acute infarct,brain,,acute stroke|cerebral infarct,observation
+HID006,hydrocephalus,ventricular,,ventricular enlargement,observation
+HID007,craniotomy,surgical,,,procedure

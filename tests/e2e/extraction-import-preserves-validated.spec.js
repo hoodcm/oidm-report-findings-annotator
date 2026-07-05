@@ -8,10 +8,15 @@
 //      into the existing validated finding's attribute set — but only into
 //      attributes that are currently empty. Annotator-set values are never
 //      overwritten.
-//   3. Pending llm_extractions are fully replaced (any prior pending superseded).
-//   4. New unmatched rows land in llm_extractions as pending.
-//   5. If new pending work exists after the import, a previously-validated
+//   3. New unmatched rows land in llm_extractions as pending.
+//   4. If new pending work exists after the import, a previously-validated
 //      report drops out of validated state (validated=false, validated_at=null).
+//
+// Merge-mode (D4, extraction-prompt-redesign plan step 5): what happens to
+// PRE-EXISTING pending findings on re-import ('add' keeps them, 'replace'
+// supersedes them, as it always did) is covered separately in
+// extraction-import-merge-mode.spec.js — this file's two tests don't seed
+// any pre-existing pending finding, so they pass unchanged under either mode.
 
 const { test, expect } = require('@playwright/test');
 const { gotoApp, resetIndexedDb, seedTaxonomy, seedReports } = require('./helpers');
@@ -56,8 +61,9 @@ test.describe('Extraction import preserves validated findings (IE2 / v1.3.0 merg
     // The source_text matches sentence #1 ("No acute infarct.") in the seed.
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      app.report.validated_findings.push({
+      app.report.findings.push({
         finding_name: 'acute infarct',
+        status: 'validated',
         taxonomy_id: 'HID005',
         source_sentence_idx: 1,
         source_text: 'No acute infarct.',
@@ -89,13 +95,15 @@ test.describe('Extraction import preserves validated findings (IE2 / v1.3.0 merg
     }]);
 
     const report = await page.evaluate(async () => await Storage.loadReport('R001'));
-    expect(report.validated_findings.length).toBe(1);
-    const vf = report.validated_findings[0];
+    const validated = report.findings.filter(f => f.status === 'validated');
+    const pending = report.findings.filter(f => f.status === 'pending');
+    expect(validated.length).toBe(1);
+    const vf = validated[0];
     expect(vf.attributes.presence).toBe('absent');
     expect(vf.attributes.laterality).toBe('left');
     expect(vf.was_modified).toBe(true);
-    // The merged row should NOT appear in llm_extractions.
-    expect(report.llm_extractions.length).toBe(0);
+    // The merged row should NOT appear as a pending finding.
+    expect(pending.length).toBe(0);
   });
 
   test('unmatched new rows land in llm_extractions and unvalidate the report', async ({ page }) => {
@@ -107,9 +115,11 @@ test.describe('Extraction import preserves validated findings (IE2 / v1.3.0 merg
     }]);
 
     const report = await page.evaluate(async () => await Storage.loadReport('R001'));
-    expect(report.validated_findings.length).toBe(1);  // original preserved
-    expect(report.llm_extractions.length).toBe(1);     // new row added as pending
-    expect(report.llm_extractions[0].finding_name).toBe('mass effect');
+    const validated = report.findings.filter(f => f.status === 'validated');
+    const pending = report.findings.filter(f => f.status === 'pending');
+    expect(validated.length).toBe(1);  // original preserved
+    expect(pending.length).toBe(1);    // new row added as pending
+    expect(pending[0].finding_name).toBe('mass effect');
     // Report drops out of validated state because new pending work exists.
     expect(report.validated).toBe(false);
     expect(report.validated_at).toBe(null);

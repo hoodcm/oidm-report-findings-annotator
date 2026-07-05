@@ -27,6 +27,69 @@ describe('Sentences.parseFindingsSection — section boundary detection', () => 
     const text = 'FINDINGS: a. b.\nImpression: c.';
     assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
   });
+
+  // --- Robust out-of-scope screening (v1.6+): strip IMPRESSION/CONCLUSION on
+  // every branch, colon-optional, by the locked boundary rule (all-caps
+  // anywhere OR line-start any case, word-boundaried). ---
+
+  it('strips IMPRESSION with no colon (leak fix — was capturing the whole impression)', () => {
+    const text = 'FINDINGS: Lung clear.\nIMPRESSION\nNo acute finding.';
+    assertEqual(Sentences.parseFindingsSection(text), 'Lung clear.');
+  });
+
+  it('strips an all-caps IMPRESSION appearing inline (no line break, no colon)', () => {
+    const text = 'FINDINGS: Lung clear. IMPRESSION Small nodule.';
+    assertEqual(Sentences.parseFindingsSection(text), 'Lung clear.');
+  });
+
+  it('strips a CONCLUSION header', () => {
+    const text = 'FINDINGS: a. b.\nCONCLUSION: c.';
+    assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
+  });
+
+  it('strips a capitalized "Conclusions:" header on its own line', () => {
+    const text = 'FINDINGS: a. b.\nConclusions: c. d.';
+    assertEqual(Sentences.parseFindingsSection(text), 'a. b.');
+  });
+
+  it('strips a capitalized "Conclusion" header even without a colon (line-start)', () => {
+    const text = 'FINDINGS: Lung clear.\nConclusion\nNo acute process.';
+    assertEqual(Sentences.parseFindingsSection(text), 'Lung clear.');
+  });
+
+  it('returns empty string for an impression-only report (preserves empty-state contract)', () => {
+    const text = 'IMPRESSION: see above.';
+    assertEqual(Sentences.parseFindingsSection(text), '');
+  });
+
+  it('strips IMPRESSION on a body with no FINDINGS token', () => {
+    const text = 'Lung clear.\nIMPRESSION: none.';
+    assertEqual(Sentences.parseFindingsSection(text), 'Lung clear.');
+  });
+
+  it('does not truncate on a lowercase "conclusion" mid-body (false-positive guard)', () => {
+    const text = 'FINDINGS: reached the conclusion of the study without incident.\nIMPRESSION: x.';
+    assertEqual(Sentences.parseFindingsSection(text), 'reached the conclusion of the study without incident.');
+  });
+
+  it('does not truncate a wrapped findings line that STARTS with lowercase "conclusion" (capitalized-header rule)', () => {
+    // A soft-wrapped continuation line beginning with the ordinary lowercase
+    // word "conclusion" is real findings text, not a section header — it must
+    // survive. Only a Capitalized/ALL-CAPS heading truncates.
+    const text = 'FINDINGS: There is no evidence to support the prior\nconclusion of hemorrhage in the left lobe.';
+    assertEqual(
+      Sentences.parseFindingsSection(text),
+      'There is no evidence to support the prior\nconclusion of hemorrhage in the left lobe.'
+    );
+  });
+
+  it('does not truncate a wrapped findings line that STARTS with lowercase "impression"', () => {
+    const text = 'FINDINGS: The finding is stable in\nimpression compared to the prior study.';
+    assertEqual(
+      Sentences.parseFindingsSection(text),
+      'The finding is stable in\nimpression compared to the prior study.'
+    );
+  });
 });
 
 describe('Sentences.splitIntoSentences — period + uppercase splits', () => {
@@ -88,10 +151,13 @@ describe('Sentences.splitIntoSentences — headers and section prefixes', () => 
     assert(sentences[1].startsWith('Brain:'), 'second sentence should carry header prefix');
   });
 
-  it('skips templated "Header: none" placeholders', () => {
+  it('keeps a templated "Header: none" placeholder as an ordinary sentence', () => {
+    // A templated null gets the same treatment as "Unremarkable." / "Normal."
+    // — sentence numbering stays aligned with the raw report and the line
+    // stays quotable by an extractor.
     const text = 'Brain: none.';
     const { sentences } = Sentences.splitIntoSentences(text);
-    assertEqual(sentences.length, 0);
+    assertDeepEqual(sentences, ['Brain: none.']);
   });
 
   it('treats colons >60 chars as not-a-header', () => {
@@ -159,6 +225,62 @@ describe('Sentences.matchSourceToSentence — 1-based indexing', () => {
   });
 });
 
+describe('Sentences.matchSourceToSentence — closest-sentence suggestion (D4)', () => {
+  // Templated-normal report fixture: two near-identical sibling sentences
+  // (only the laterality word differs) + one distinctly unique sentence.
+  const TEMPLATED = [
+    'Left kidney is normal in size and echogenicity.',
+    'Right kidney is normal in size and echogenicity.',
+    'There is a 2 cm hypoechoic lesion in the spleen.',
+  ];
+
+  it("SHOULDN'T fire: a laterality-free paraphrase is genuinely ambiguous between near-identical siblings (margin gate)", () => {
+    const r = Sentences.matchSourceToSentence('Kidney shows normal size and echogenicity.', TEMPLATED, 'r1', []);
+    assertEqual(r.error, 'not_in_report');
+    assertEqual(r.suggestion, null, 'top-1 vs top-2 margin is ~0 between the two identical-scoring siblings');
+  });
+
+  it('MUST fire: a paraphrase of the one distinctly unique sentence clears both the floor and the margin', () => {
+    const r = Sentences.matchSourceToSentence('There is a 2cm hypoechoic lesion within the spleen.', TEMPLATED, 'r1', []);
+    assertEqual(r.error, 'not_in_report');
+    assert(r.suggestion, 'suggestion should fire');
+    assertEqual(r.suggestion.idx, 3);
+    assert(r.suggestion.score >= Sentences.SUGGESTION_FLOOR);
+  });
+
+  it('a crossAttributed row (exact match in ANOTHER report) still gets a same-report fuzzy candidate at the matcher level — suppression is the caller\'s job', () => {
+    // Paraphrase of the unique spleen sentence would fuzzy-suggest idx 3 in
+    // the named report; the text ALSO appears verbatim in another loaded
+    // report, which is the strong record_id-mix-up signal (alsoMatchesIn).
+    const otherReport = { record_id: 'r2', sentences: ['There is a 2cm hypoechoic lesion within the spleen.'] };
+    const r = Sentences.matchSourceToSentence('There is a 2cm hypoechoic lesion within the spleen.', TEMPLATED, 'r1', [otherReport]);
+    assertEqual(r.error, 'not_in_report');
+    assertDeepEqual(r.alsoMatchesIn, ['r2']);
+    assert(r.suggestion, 'the matcher itself still computes the candidate unconditionally');
+    assertEqual(r.suggestion.idx, 3);
+    // The suppression-on-crossAttributed contract lives one layer up, in
+    // CsvImport.validateExtractionRows (js/extraction-import.js), which
+    // never surfaces a suggestion on a row it buckets as crossAttributed
+    // (alsoMatchesIn.length > 0) — covered in extraction-import.test.js.
+  });
+
+  it('two-sentence span: a quote straddling a sentence boundary suggests the HEAD sentence (the one where the quote starts)', () => {
+    const sentences = [
+      'A fracture line extends to the articular',
+      'surface with a small step-off deformity.',
+    ];
+    const r = Sentences.matchSourceToSentence('extends to the articular surface with a small step-off', sentences, 'r1', []);
+    assertEqual(r.error, 'not_in_report');
+    assertEqual(r.suggestion.idx, 1, 'suggests sentence 1, which contains the head of the quote');
+    assertEqual(r.suggestion.score, 1);
+  });
+
+  it('empty source_text yields no suggestion', () => {
+    const r = Sentences.matchSourceToSentence('', TEMPLATED, 'r1', []);
+    assertEqual(r.suggestion, null);
+  });
+});
+
 describe('Sentences.mergeKey — B4 stable merge identity', () => {
   it('produces identical keys for same source_text + finding (case/whitespace insensitive)', () => {
     const a = Sentences.mergeKey('Brain: Hello world.', 'Cerebral edema');
@@ -205,14 +327,14 @@ describe('Sentences.splitSentenceHeader', () => {
 });
 
 describe('Sentences.splitIntoSentences — templated-none edge cases', () => {
-  it('skips "Header:none" with no space after the colon', () => {
+  it('keeps "Header:none" with no space after the colon (space normalized)', () => {
     const { sentences } = Sentences.splitIntoSentences('Hemorrhage:none');
-    assertEqual(sentences.length, 0);
+    assertDeepEqual(sentences, ['Hemorrhage: none']);
   });
 
-  it('skips "Header: None." with trailing period', () => {
+  it('keeps "Header: None." with trailing period', () => {
     const { sentences } = Sentences.splitIntoSentences('Hemorrhage: None.');
-    assertEqual(sentences.length, 0);
+    assertDeepEqual(sentences, ['Hemorrhage: None.']);
   });
 });
 
@@ -247,3 +369,210 @@ describe('Sentences.isFirstOfHeaderRun — v1.3.0 header-rendering fix', () => {
 // in the same class as the packed-numbered-impressions case above. Tests would
 // either pin broken behavior or fail until the splitter learns abbreviations —
 // neither is a useful regression signal today.
+
+describe('Sentences.splitIntoSentences — flattened line breaks (2026-07-05 forensics)', () => {
+  // Real-world shape: a reports CSV whose newlines were flattened to runs of
+  // spaces by a spreadsheet round-trip. Without space-run normalization the
+  // whole FINDINGS body is one line and the first section header glues onto
+  // EVERY sentence ("Devices/Tubes/Lines: Pleura: No pleural effusions.").
+  const FLAT = 'Devices/Tubes/Lines: none    Lungs: Lungs are clear.    Pleura: No pleural effusions.    Bones/Soft Tissues: Degenerative changes.';
+
+  it('recovers per-section sentences from a single flattened line (no header glue)', () => {
+    const { sentences } = Sentences.splitIntoSentences(FLAT);
+    assertDeepEqual(sentences, [
+      'Devices/Tubes/Lines: none',
+      'Lungs: Lungs are clear.',
+      'Pleura: No pleural effusions.',
+      'Bones/Soft Tissues: Degenerative changes.',
+    ]);
+  });
+
+  it('keeps a flattened "Header: none" as an ordinary sentence (numbering aligned with raw report)', () => {
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences(FLAT);
+    assertEqual(sentences[0], 'Devices/Tubes/Lines: none');
+    assertDeepEqual(sectionBreaks, [], 'a templated null is a sentence, not an invented empty subheader');
+  });
+
+  it('handles a 2-space-flattened blob (no newlines anywhere)', () => {
+    const { sentences } = Sentences.splitIntoSentences('Lungs: Clear.  Pleura: No effusion.');
+    assertDeepEqual(sentences, ['Lungs: Clear.', 'Pleura: No effusion.']);
+  });
+
+  it('a typographic double space after a period yields the same sentences as before', () => {
+    const { sentences } = Sentences.splitIntoSentences('Heart: Normal size.  No effusion.');
+    assertDeepEqual(sentences, ['Heart: Normal size.', 'Heart: No effusion.']);
+  });
+
+  it('a mid-sentence double space in a MULTI-LINE report does not split the sentence', () => {
+    const { sentences } = Sentences.splitIntoSentences('Lungs: The heart is  normal in size.\nPleura: Clear.');
+    assertEqual(sentences.length, 2);
+    assertEqual(sentences[1], 'Pleura: Clear.');
+  });
+});
+
+describe('Sentences.matchSourceToSentence — multi-sentence quotes and out-of-scope (2026-07-05 forensics)', () => {
+  const SENTENCES = [
+    'Lungs: There is no evidence of pneumonia or pulmonary edema.',
+    'Pleura: No pleural effusion or pneumothorax.',
+    'Bones: Degenerative changes of the thoracic spine.',
+  ];
+  const RAW = 'FINDINGS Lungs: There is no evidence of pneumonia or pulmonary edema. Pleura: No pleural effusion or pneumothorax. Bones: Degenerative changes of the thoracic spine. IMPRESSION No radiographic evidence of pneumonia. Stable degenerative changes of the spine.';
+
+  it('anchors a FINDINGS+IMPRESSION stitched quote to the findings sentence (spannedPieces)', () => {
+    const q = 'There is no evidence of pneumonia or pulmonary edema. No radiographic evidence of pneumonia.';
+    const r = Sentences.matchSourceToSentence(q, SENTENCES, 'r1', [], RAW);
+    assertEqual(r.idx, 1);
+    assertEqual(r.spannedPieces, 2);
+  });
+
+  it('anchors a quote stitched from two findings sentences to the first uniquely-matching piece', () => {
+    const q = 'No pleural effusion or pneumothorax. Degenerative changes of the thoracic spine.';
+    const r = Sentences.matchSourceToSentence(q, SENTENCES, 'r1', [], RAW);
+    assertEqual(r.idx, 2);
+    assertEqual(r.spannedPieces, 2);
+  });
+
+  it('reports out_of_scope (not not_in_report) for a verbatim IMPRESSION-only quote', () => {
+    const r = Sentences.matchSourceToSentence('No radiographic evidence of pneumonia.', SENTENCES, 'r1', [], RAW);
+    assertEqual(r.error, 'out_of_scope');
+  });
+
+  it('without reportText an impression quote degrades to not_in_report (legacy callers)', () => {
+    const r = Sentences.matchSourceToSentence('No radiographic evidence of pneumonia.', SENTENCES, 'r1', []);
+    assertEqual(r.error, 'not_in_report');
+  });
+
+  it('a stitched quote with one piece verbatim NOWHERE does not match', () => {
+    const q = 'No pleural effusion or pneumothorax. The lungs are hyperexpanded bilaterally.';
+    const r = Sentences.matchSourceToSentence(q, SENTENCES, 'r1', [], RAW);
+    assert(!r.idx, 'must not anchor when a piece is hallucinated');
+  });
+
+  it('flags templated boilerplate (found in 3+ other reports) so callers keep the suggestion', () => {
+    const others = ['r2', 'r3', 'r4'].map(id => ({ record_id: id, sentences: ['No pneumothorax.'] }));
+    const r = Sentences.matchSourceToSentence('No pneumothorax.', SENTENCES, 'r1', others, RAW);
+    assertEqual(r.error, 'not_in_report');
+    assertEqual(r.boilerplate, true);
+    assertEqual(r.alsoMatchesIn.length, 3);
+  });
+
+  it('does NOT flag boilerplate for 1-2 other reports (genuine record_id mix-up signal)', () => {
+    const others = [{ record_id: 'r2', sentences: ['No pneumothorax.'] }];
+    const r = Sentences.matchSourceToSentence('No pneumothorax.', SENTENCES, 'r1', others, RAW);
+    assertEqual(r.error, 'not_in_report');
+    assertEqual(r.boilerplate, false);
+  });
+});
+
+describe('Sentences._reconstructLines — generalized collapse recovery (subheaders must render)', () => {
+  it('single-space collapse: header after a period starts its own line', () => {
+    const { sentences } = Sentences.splitIntoSentences('Lungs: Clear. Pleura: No effusions. Heart: Normal.');
+    assertDeepEqual(sentences, ['Lungs: Clear.', 'Pleura: No effusions.', 'Heart: Normal.']);
+  });
+
+  it('single-space collapse: header after a templated "none" starts its own line', () => {
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences('Devices/Tubes/Lines: none Lungs: Clear. Pleura: No effusions.');
+    assertDeepEqual(sentences, ['Devices/Tubes/Lines: none', 'Lungs: Clear.', 'Pleura: No effusions.']);
+    assertDeepEqual(sectionBreaks, []);
+  });
+
+  it('REAL-newline report with several sections on one line still yields per-section sentences', () => {
+    const { sentences } = Sentences.splitIntoSentences('Comparison: None. Lungs: Clear.\nPleura: No effusions.');
+    assertDeepEqual(sentences, ['Comparison: None.', 'Lungs: Clear.', 'Pleura: No effusions.']);
+  });
+
+  it('does not split a sentence at an ordinary period followed by a plain capitalized word', () => {
+    const { sentences } = Sentences.splitIntoSentences('Lungs: Clear. The heart is normal.');
+    assertDeepEqual(sentences, ['Lungs: Clear.', 'Lungs: The heart is normal.']);
+  });
+
+  it('parseFindingsSection strips a mixed-case Impression that was collapsed onto the findings line', () => {
+    const body = Sentences.parseFindingsSection('EXAMINATION  Chest radiograph  FINDINGS  Lungs: Clear.  Impression: No acute disease.');
+    const { sentences } = Sentences.splitIntoSentences(body);
+    assertDeepEqual(sentences, ['Lungs: Clear.'], 'impression content must not become annotatable');
+  });
+});
+
+describe('Sentences — section vs subheader classification (2026-07-05 header-style fix)', () => {
+  // Contract from real report styling: large section headers (HEAD:,
+  // CERVICAL SPINE:) are ALL-CAPS and bare — label alone, content below.
+  // Subheaders (Lungs:, Devices/Tubes/Lines:) are mixed-case; a templated
+  // null value ("Header: none") is ordinary sentence content, never a break.
+  it('ALL-CAPS bare header is a large section divider (sub: false)', () => {
+    const text = 'HEAD:\nBrain Parenchyma: No midline shift.\nCERVICAL SPINE:\nAlignment and Vertebrae: Intact.';
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences(text);
+    assertDeepEqual(sentences, ['Brain Parenchyma: No midline shift.', 'Alignment and Vertebrae: Intact.']);
+    assertDeepEqual(sectionBreaks, [
+      { before: 0, header: 'HEAD:', sub: false },
+      { before: 1, header: 'CERVICAL SPINE:', sub: false },
+    ]);
+  });
+
+  it('"Header: none" is an ordinary sentence in report order, not a break — any case', () => {
+    const mixed = Sentences.splitIntoSentences('Heart/Mediastinum: none\nBones/Soft Tissues: Rib fractures.');
+    assertDeepEqual(mixed.sentences, ['Heart/Mediastinum: none', 'Bones/Soft Tissues: Rib fractures.']);
+    assertDeepEqual(mixed.sectionBreaks, []);
+    const caps = Sentences.splitIntoSentences('LINES AND TUBES: none\nLungs: Clear.');
+    assertDeepEqual(caps.sentences, ['LINES AND TUBES: none', 'Lungs: Clear.']);
+    assertDeepEqual(caps.sectionBreaks, []);
+  });
+
+  it('a trailing "Header: none" stays in the sentence list (numbering intact)', () => {
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences('Lungs: Clear.\nBones/Soft Tissues: none');
+    assertDeepEqual(sentences, ['Lungs: Clear.', 'Bones/Soft Tissues: none']);
+    assertDeepEqual(sectionBreaks, []);
+  });
+
+  it('mixed-case bare header is a subheader break (its content arrives on following lines)', () => {
+    const { sectionBreaks } = Sentences.splitIntoSentences('Right:\nExternal Ear: Normal.\nLeft:\nExternal Ear: Unremarkable.');
+    assertDeepEqual(sectionBreaks, [
+      { before: 0, header: 'Right:', sub: true },
+      { before: 1, header: 'Left:', sub: true },
+    ]);
+  });
+
+  it('a trailing bare header break sits at sentences.length so the renderer can show it', () => {
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences('Lungs: Clear.\nBones/Soft Tissues:');
+    assertEqual(sentences.length, 1);
+    assertDeepEqual(sectionBreaks, [{ before: 1, header: 'Bones/Soft Tissues:', sub: true }]);
+  });
+});
+
+describe('Sentences.isSubBreak / breaksBefore — render-side classification and dedup', () => {
+  it('isSubBreak honors an explicit sub flag', () => {
+    assertEqual(Sentences.isSubBreak({ header: 'HEAD:', sub: true }), true);
+    assertEqual(Sentences.isSubBreak({ header: 'Pleura:', sub: false }), false);
+  });
+
+  it('isSubBreak classifies legacy flag-less breaks (stored sessions) by label case', () => {
+    assertEqual(Sentences.isSubBreak({ header: 'Devices/Tubes/Lines:' }), true);
+    assertEqual(Sentences.isSubBreak({ header: 'HEAD:' }), false);
+  });
+
+  it('breaksBefore returns breaks at the given index, including trailing ones', () => {
+    const report = {
+      sentences: ['Lungs: Clear.'],
+      sectionBreaks: [
+        { before: 0, header: 'Devices/Tubes/Lines:', sub: true },
+        { before: 1, header: 'Bones/Soft Tissues:', sub: true },
+      ],
+    };
+    assertDeepEqual(Sentences.breaksBefore(report, 0).map(b => b.header), ['Devices/Tubes/Lines:']);
+    assertDeepEqual(Sentences.breaksBefore(report, 1).map(b => b.header), ['Bones/Soft Tissues:']);
+  });
+
+  it('breaksBefore drops a subheader break whose header the next sentence carries as prefix (no double render)', () => {
+    const { sentences, sectionBreaks } = Sentences.splitIntoSentences('Brain Parenchyma:\n- No hemorrhage.\n- No mass.');
+    const report = { sentences, sectionBreaks };
+    assertEqual(sentences[0].startsWith('Brain Parenchyma:'), true);
+    assertDeepEqual(Sentences.breaksBefore(report, 0), [], 'inline header run already renders this label');
+  });
+
+  it('breaksBefore keeps a large section divider even when the next sentence carries its prefix', () => {
+    const report = {
+      sentences: ['HEAD: No acute hemorrhage.'],
+      sectionBreaks: [{ before: 0, header: 'HEAD:', sub: false }],
+    };
+    assertDeepEqual(Sentences.breaksBefore(report, 0).map(b => b.header), ['HEAD:']);
+  });
+});

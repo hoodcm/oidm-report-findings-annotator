@@ -1,0 +1,2640 @@
+[
+  {
+    "id": "FID0010",
+    "name": "air_bronchogram",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0020",
+    "name": "airspace_opacity",
+    "category": "lung",
+    "synonyms": [
+      "Air space opacity",
+      "Infiltrate"
+    ]
+  },
+  {
+    "id": "FID0040",
+    "name": "airway_abnormality",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0060",
+    "name": "pulmonary_scarring",
+    "category": "lung",
+    "synonyms": [
+      "Scarring"
+    ]
+  },
+  {
+    "id": "FID0070",
+    "name": "architectural_distortion",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0080",
+    "name": "aspiration",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0090",
+    "name": "atelectasis",
+    "category": "lung",
+    "synonyms": [
+      "Collapse",
+      "Lung collapse"
+    ]
+  },
+  {
+    "id": "FID0100",
+    "name": "azygos_fissure",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0110",
+    "name": "azygos_lobe",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0120",
+    "name": "accessory_fissure",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0130",
+    "name": "reticular_opacity",
+    "category": "lung",
+    "synonyms": [
+      "Reticular opacities"
+    ]
+  },
+  {
+    "id": "FID0150",
+    "name": "thickening_of_bronchial_wall",
+    "category": "airway",
+    "synonyms": [
+      "Peribronchial cuffing",
+      "Bronchial wall thickening"
+    ]
+  },
+  {
+    "id": "FID0160",
+    "name": "bronchiectasis",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0170",
+    "name": "calcified_pulmonary_nodule",
+    "category": "lung",
+    "synonyms": [
+      "Calcified granuloma",
+      "Calcified nodule"
+    ]
+  },
+  {
+    "id": "FID0180",
+    "name": "cavitary_lesion",
+    "category": "lung",
+    "synonyms": [
+      "Cavitation",
+      "Cavitary lucency"
+    ]
+  },
+  {
+    "id": "FID0190",
+    "name": "consolidation",
+    "category": "lung",
+    "synonyms": [
+      "Airspace consolidation"
+    ]
+  },
+  {
+    "id": "FID0210",
+    "name": "ground_glass_opacity",
+    "category": "lung",
+    "synonyms": [
+      "Hazy opacity",
+      "Ground-glass opacification",
+      "Ground glass opacification"
+    ]
+  },
+  {
+    "id": "FID0230",
+    "name": "diffuse_increased_lung_lucency",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0250",
+    "name": "miliary_pattern",
+    "category": "lung",
+    "synonyms": [
+      "Miliary nodules",
+      "Miliary nodularity"
+    ]
+  },
+  {
+    "id": "FID0260",
+    "name": "elevation_of_hemidiaphragm",
+    "category": "diaphragm",
+    "synonyms": [
+      "Elevated hemidiaphragm"
+    ]
+  },
+  {
+    "id": "FID0265",
+    "name": "depression_of_hemidiaphragm",
+    "category": "diaphragm",
+    "synonyms": [
+      "Depressed hemidiaphragm"
+    ]
+  },
+  {
+    "id": "FID0270",
+    "name": "emphysema",
+    "category": "lung",
+    "synonyms": [
+      "Emphysematous changes"
+    ]
+  },
+  {
+    "id": "FID0275",
+    "name": "bulla",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0280",
+    "name": "engorgement_of_pulmonary_vasculature",
+    "category": "lung",
+    "synonyms": [
+      "Pulmonary vascular congestion",
+      "Pulmonary venous congestion"
+    ]
+  },
+  {
+    "id": "FID0290",
+    "name": "blood_flow_redistribution",
+    "category": "lung",
+    "synonyms": [
+      "Cephalization of pulmonary vasculature",
+      "Cephalization",
+      "Vascular redistribution",
+      "Pulmonary vascular redistribution"
+    ]
+  },
+  {
+    "id": "FID0300",
+    "name": "indistinct_pulmonary_vasculature",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0305",
+    "name": "pulmonary_vascular_abnormality",
+    "category": "lung",
+    "synonyms": [
+      "Abnormal pulmonary vasculature",
+      "Pulmonary vascularity abnormality",
+      "Pulmonary vasculature abnormality"
+    ]
+  },
+  {
+    "id": "FID0310",
+    "name": "eventration_of_hemidiaphragm",
+    "category": "diaphragm",
+    "synonyms": []
+  },
+  {
+    "id": "FID0315",
+    "name": "diaphragmatic_abnormality",
+    "category": "diaphragm",
+    "synonyms": [
+      "Diaphragm abnormality"
+    ]
+  },
+  {
+    "id": "FID0320",
+    "name": "thickening_of_fissure",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID0330",
+    "name": "flattening_of_hemidiaphragm",
+    "category": "diaphragm",
+    "synonyms": []
+  },
+  {
+    "id": "FID0360",
+    "name": "pulmonary_calcification",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0370",
+    "name": "pulmonary_hyperinflation",
+    "category": "lung",
+    "synonyms": [
+      "Hyperinflation of lungs",
+      "Hyperexpanded lungs",
+      "Hyperinflated lungs"
+    ]
+  },
+  {
+    "id": "FID0380",
+    "name": "interstitial_pulmonary_edema",
+    "category": "lung",
+    "synonyms": [
+      "Pulmonary interstitial edema"
+    ]
+  },
+  {
+    "id": "FID0390",
+    "name": "thickening_of_interstitium",
+    "category": "lung",
+    "synonyms": [
+      "Interstitial thickening",
+      "Interstitial prominence"
+    ]
+  },
+  {
+    "id": "FID0420",
+    "name": "linear_opacity",
+    "category": "lung",
+    "synonyms": [
+      "Bandlike opacity",
+      "Linear opacities"
+    ]
+  },
+  {
+    "id": "FID0440",
+    "name": "lobectomy",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0450",
+    "name": "low_lung_volumes",
+    "category": "image_quality",
+    "synonyms": [
+      "Poor inspiratory volume",
+      "Decreased lung volumes",
+      "Suboptimal inspiration",
+      "Poor inspiratory effort"
+    ]
+  },
+  {
+    "id": "FID0460",
+    "name": "lung_abnormality",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0465",
+    "name": "osseous_lucency",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID0470",
+    "name": "lung_lucency",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0475",
+    "name": "pulmonary_mass",
+    "category": "lung",
+    "synonyms": [
+      "Lung mass"
+    ]
+  },
+  {
+    "id": "FID0480",
+    "name": "mucoid_impaction",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0485",
+    "name": "bronchial_occlusion",
+    "category": "airway",
+    "synonyms": [
+      "Endobronchial obstruction",
+      "Bronchial cutoff sign"
+    ]
+  },
+  {
+    "id": "FID0490",
+    "name": "pulmonary_nodule",
+    "category": "lung",
+    "synonyms": [
+      "Lung nodule"
+    ]
+  },
+  {
+    "id": "FID0500",
+    "name": "lung_transplant",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0530",
+    "name": "nipple_shadow",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID0550",
+    "name": "pneumonectomy",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0560",
+    "name": "pneumonia",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0570",
+    "name": "post_resection_volume_loss",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0590",
+    "name": "pulmonary_contusion",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0595",
+    "name": "pulmonary_laceration",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0600",
+    "name": "pulmonary_edema",
+    "category": "lung",
+    "synonyms": [
+      "Edema"
+    ]
+  },
+  {
+    "id": "FID0605",
+    "name": "alveolar_pulmonary_edema",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0610",
+    "name": "pulmonary_fibrosis",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0620",
+    "name": "pulmonary_oligemia",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0640",
+    "name": "reduction_of_lung_markings",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0650",
+    "name": "reticulonodular_opacity",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0660",
+    "name": "surgical_staple_line",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0670",
+    "name": "calcification_of_trachea",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0680",
+    "name": "deviation_of_trachea",
+    "category": "airway",
+    "synonyms": [
+      "Tracheal deviation"
+    ]
+  },
+  {
+    "id": "FID0690",
+    "name": "diverticulum_of_trachea",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0710",
+    "name": "obstruction_of_trachea",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0720",
+    "name": "stenosis_of_trachea",
+    "category": "airway",
+    "synonyms": [
+      "Tracheal narrowing"
+    ]
+  },
+  {
+    "id": "FID0730",
+    "name": "tracheomegaly",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID0750",
+    "name": "volume_loss",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0760",
+    "name": "wedge_resection",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0770",
+    "name": "cystic_fibrosis",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID0780",
+    "name": "air_fluid_level",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID1000",
+    "name": "blunting_of_costophrenic_angle",
+    "category": "pleura",
+    "synonyms": [
+      "Blunted costophrenic angle"
+    ]
+  },
+  {
+    "id": "FID1010",
+    "name": "calcified_pleural_plaque",
+    "category": "pleura",
+    "synonyms": [
+      "Calcified pleural plaques",
+      "Pleural plaque",
+      "Pleural plaques"
+    ]
+  },
+  {
+    "id": "FID1030",
+    "name": "pleural_abnormality",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID1040",
+    "name": "pleural_effusion",
+    "category": "pleura",
+    "synonyms": [
+      "Hydrothorax",
+      "Pleural fluid",
+      "Effusions"
+    ]
+  },
+  {
+    "id": "FID1060",
+    "name": "thickening_of_pleura",
+    "category": "pleura",
+    "synonyms": [
+      "Pleural scarring",
+      "Pleural thickening"
+    ]
+  },
+  {
+    "id": "FID1065",
+    "name": "apical_pleuroparenchymal_scarring",
+    "category": "pleura",
+    "synonyms": [
+      "Apical scarring"
+    ]
+  },
+  {
+    "id": "FID1070",
+    "name": "pneumothorax",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID1075",
+    "name": "tension_pneumothorax",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID1080",
+    "name": "pleural_nodule",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID1100",
+    "name": "abnormal_aortic_contour",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1110",
+    "name": "abnormal_aortopulmonary_window_contour",
+    "category": "mediastinal",
+    "synonyms": [
+      "Loss of aortopulmonary window concavity"
+    ]
+  },
+  {
+    "id": "FID1120",
+    "name": "abnormal_hilar_contour",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hilar abnormality"
+    ]
+  },
+  {
+    "id": "FID1130",
+    "name": "abnormal_mediastinal_contour",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1140",
+    "name": "abnormal_pulmonary_artery_contour",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1150",
+    "name": "calcification_of_aorta",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1160",
+    "name": "dilation_of_aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Aortic dilation"
+    ]
+  },
+  {
+    "id": "FID1170",
+    "name": "aneurysm_of_aorta",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1180",
+    "name": "bulging_of_aortic_arch",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1190",
+    "name": "cardiac_abnormality",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1195",
+    "name": "heart_transplant",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1200",
+    "name": "cardiomegaly",
+    "category": "cardiac",
+    "synonyms": [
+      "Enlarged cardiac silhouette"
+    ]
+  },
+  {
+    "id": "FID1210",
+    "name": "dextrocardia",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1220",
+    "name": "double_density_sign",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1230",
+    "name": "enlargement_of_aortic_knob",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1240",
+    "name": "enlargement_of_left_atrium",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1250",
+    "name": "enlargement_of_left_ventricle",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1260",
+    "name": "enlargement_of_right_atrium",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1270",
+    "name": "enlargement_of_right_ventricle",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1275",
+    "name": "enlargement_of_left_heart_border",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1276",
+    "name": "enlargement_of_right_heart_border",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1280",
+    "name": "globular_cardiac_silhouette",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1290",
+    "name": "hiatal_hernia",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hiatus hernia"
+    ]
+  },
+  {
+    "id": "FID1300",
+    "name": "enlargement_of_hilum",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hilar fullness",
+      "Perihilar fullness"
+    ]
+  },
+  {
+    "id": "FID1310",
+    "name": "lymphadenopathy",
+    "category": "mediastinal",
+    "synonyms": [
+      "Lymph node enlargement",
+      "Adenopathy"
+    ]
+  },
+  {
+    "id": "FID1330",
+    "name": "mediastinal_abnormality",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1340",
+    "name": "mediastinal_fat_pad",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1370",
+    "name": "mediastinal_shift",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1380",
+    "name": "calcification_of_mitral_annulus",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1390",
+    "name": "calcification_of_pericardium",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1400",
+    "name": "pericardial_effusion",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1405",
+    "name": "pericardial_cyst",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1410",
+    "name": "pericardial_fat_pad",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1420",
+    "name": "pneumomediastinum",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1430",
+    "name": "pneumopericardium",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID1440",
+    "name": "enlargement_of_pulmonary_artery",
+    "category": "mediastinal",
+    "synonyms": [
+      "Prominent pulmonary artery segment"
+    ]
+  },
+  {
+    "id": "FID1450",
+    "name": "splaying_of_carina",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1470",
+    "name": "fullness_of_superior_mediastinum",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID1480",
+    "name": "tortuosity_of_aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Aortic tortuosity",
+      "Tortuous aorta"
+    ]
+  },
+  {
+    "id": "FID1490",
+    "name": "unfolding_of_aorta",
+    "category": "mediastinal",
+    "synonyms": [
+      "Unfolded aorta"
+    ]
+  },
+  {
+    "id": "FID1500",
+    "name": "widening_of_mediastinum",
+    "category": "mediastinal",
+    "synonyms": [
+      "Widened mediastinum",
+      "Mediastinal enlargement",
+      "Widened cardiomediastinal silhouette"
+    ]
+  },
+  {
+    "id": "FID1510",
+    "name": "amelia",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1520",
+    "name": "bifid_rib",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1530",
+    "name": "bone_island",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1540",
+    "name": "osseous_lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Bone lesion"
+    ]
+  },
+  {
+    "id": "FID1550",
+    "name": "bridging_rib",
+    "category": "osseous",
+    "synonyms": [
+      "Fused rib"
+    ]
+  },
+  {
+    "id": "FID1560",
+    "name": "cervical_rib",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1575",
+    "name": "costochondral_calcification",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1585",
+    "name": "fracture",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1600",
+    "name": "compression_fracture",
+    "category": "osseous",
+    "synonyms": [
+      "Vertebral compression deformity"
+    ]
+  },
+  {
+    "id": "FID1610",
+    "name": "costal_fusion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1615",
+    "name": "degenerative_changes",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1630",
+    "name": "diffuse_idiopathic_skeletal_hyperostosis",
+    "category": "osseous",
+    "synonyms": [
+      "DISH"
+    ]
+  },
+  {
+    "id": "FID1640",
+    "name": "disc_space_narrowing",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1650",
+    "name": "kyphosis",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1660",
+    "name": "fibro_osseous_lesion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1670",
+    "name": "osseous_metastasis",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1690",
+    "name": "generalized_osteosclerosis",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1710",
+    "name": "hemivertebra",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1750",
+    "name": "intrathoracic_rib",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1770",
+    "name": "malunion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1780",
+    "name": "nonunion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1790",
+    "name": "osseous_abnormality",
+    "category": "osseous",
+    "synonyms": [
+      "Skeletal abnormality",
+      "Bony abnormality"
+    ]
+  },
+  {
+    "id": "FID1795",
+    "name": "osteosclerosis",
+    "category": "osseous",
+    "synonyms": [
+      "Sclerosis"
+    ]
+  },
+  {
+    "id": "FID1800",
+    "name": "sclerotic_osseous_lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Osteoblastic lesion",
+      "Sclerotic lesion"
+    ]
+  },
+  {
+    "id": "FID1810",
+    "name": "lytic_osseous_lesion",
+    "category": "osseous",
+    "synonyms": [
+      "Osteolytic lesion"
+    ]
+  },
+  {
+    "id": "FID1820",
+    "name": "osteopenia",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1830",
+    "name": "osteophyte_formation",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1840",
+    "name": "pectus_carinatum",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1850",
+    "name": "pectus_excavatum",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1920",
+    "name": "rib_notching",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1930",
+    "name": "rib_resection",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1950",
+    "name": "rosary_ribs",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID1980",
+    "name": "scoliosis",
+    "category": "osseous",
+    "synonyms": [
+      "Levoconvex curvature"
+    ]
+  },
+  {
+    "id": "FID1990",
+    "name": "shoulder_dislocation",
+    "category": "osseous",
+    "synonyms": [
+      "Humeral head dislocation"
+    ]
+  },
+  {
+    "id": "FID2010",
+    "name": "sprengel_deformity",
+    "category": "osseous",
+    "synonyms": [
+      "Elevated scapula"
+    ]
+  },
+  {
+    "id": "FID2040",
+    "name": "thoracic_vertebra_plana",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2050",
+    "name": "height_loss_of_vertebral_body",
+    "category": "osseous",
+    "synonyms": [
+      "Vertebral body height loss"
+    ]
+  },
+  {
+    "id": "FID2080",
+    "name": "wedging_of_vertebral_body",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2090",
+    "name": "vertebral_endplate_irregularity",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2110",
+    "name": "upper_limb_amputation",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2120",
+    "name": "rib_osteolysis",
+    "category": "osseous",
+    "synonyms": [
+      "Vanishing ribs",
+      "Vanishing bone",
+      "Rib resorption",
+      "Progressive rib lysis"
+    ]
+  },
+  {
+    "id": "FID2130",
+    "name": "osseous_deformity",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2140",
+    "name": "osseous_erosion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2150",
+    "name": "osseous_destruction",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID2200",
+    "name": "breast_implant",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2210",
+    "name": "calcification_of_axillary_lymph_node",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Calcified axillary lymph node",
+      "Calcified axillary node"
+    ]
+  },
+  {
+    "id": "FID2220",
+    "name": "calcified_breast_implant",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2240",
+    "name": "mastectomy",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID2250",
+    "name": "metallic_foreign_body",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2260",
+    "name": "soft_tissue_abnormality",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID2270",
+    "name": "soft_tissue_calcification",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID2280",
+    "name": "soft_tissue_lesion",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Soft tissue mass"
+    ]
+  },
+  {
+    "id": "FID2290",
+    "name": "soft_tissue_swelling",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID2300",
+    "name": "subcutaneous_emphysema",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Subcutaneous gas"
+    ]
+  },
+  {
+    "id": "FID2310",
+    "name": "surgical_clip",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2320",
+    "name": "calcific_tendinosis",
+    "category": "soft_tissue",
+    "synonyms": [
+      "Calcific tendinitis"
+    ]
+  },
+  {
+    "id": "FID2330",
+    "name": "thyroid_enlargement",
+    "category": "mediastinal",
+    "synonyms": [
+      "Goiter"
+    ]
+  },
+  {
+    "id": "FID2335",
+    "name": "thyroid_nodule",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2400",
+    "name": "abnormal_anterior_junction_line",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2410",
+    "name": "abnormal_azygoesophageal_line",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2420",
+    "name": "abnormal_left_paraspinal_line",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2430",
+    "name": "abnormal_left_paratracheal_stripe",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2440",
+    "name": "abnormal_posterior_junction_line",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2450",
+    "name": "abnormal_right_paraspinal_line",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2460",
+    "name": "abnormal_right_paratracheal_stripe",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID2500",
+    "name": "distension_of_bowel",
+    "category": "abdomen",
+    "synonyms": [
+      "Gas distended bowel"
+    ]
+  },
+  {
+    "id": "FID2505",
+    "name": "dilation_of_bowel",
+    "category": "abdomen",
+    "synonyms": [
+      "Dilated bowel"
+    ]
+  },
+  {
+    "id": "FID2510",
+    "name": "distension_of_stomach",
+    "category": "abdomen",
+    "synonyms": [
+      "Gaseous distention of the stomach"
+    ]
+  },
+  {
+    "id": "FID2520",
+    "name": "gallstone",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2530",
+    "name": "hepatomegaly",
+    "category": "abdomen",
+    "synonyms": [
+      "Enlarged liver"
+    ]
+  },
+  {
+    "id": "FID2540",
+    "name": "kidney_stone",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2550",
+    "name": "calcification_of_liver",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2560",
+    "name": "pneumatosis",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2570",
+    "name": "pneumobilia",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2580",
+    "name": "pneumoperitoneum",
+    "category": "abdomen",
+    "synonyms": [
+      "Free abdominal gas",
+      "Free air",
+      "Free intraperitoneal gas"
+    ]
+  },
+  {
+    "id": "FID2590",
+    "name": "calcification_of_spleen",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID2600",
+    "name": "splenomegaly",
+    "category": "abdomen",
+    "synonyms": [
+      "Enlarged spleen"
+    ]
+  },
+  {
+    "id": "FID2605",
+    "name": "abdominal_clip",
+    "category": "devices",
+    "synonyms": [
+      "Abdominal clips"
+    ]
+  },
+  {
+    "id": "FID2610",
+    "name": "airway_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2620",
+    "name": "anterior_cervical_fusion_device",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2630",
+    "name": "aortic_stent",
+    "category": "devices",
+    "synonyms": [
+      "Endovascular aortic repair"
+    ]
+  },
+  {
+    "id": "FID2640",
+    "name": "axillary_clip",
+    "category": "devices",
+    "synonyms": [
+      "Axillary clips"
+    ]
+  },
+  {
+    "id": "FID2650",
+    "name": "biceps_tenodesis_anchor",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2660",
+    "name": "biliary_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2670",
+    "name": "breast_clip",
+    "category": "devices",
+    "synonyms": [
+      "Breast clips"
+    ]
+  },
+  {
+    "id": "FID2680",
+    "name": "cardiac_patch_monitor",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2690",
+    "name": "cardiac_valve_replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic heart valve",
+      "Prosthetic valve"
+    ]
+  },
+  {
+    "id": "FID2700",
+    "name": "central_venous_catheter",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2710",
+    "name": "chest_tube",
+    "category": "devices",
+    "synonyms": [
+      "Intercostal drain",
+      "Thoracostomy tube",
+      "Pigtail chest tube",
+      "Pigtail catheter",
+      "Pleural drain",
+      "Pleural tube"
+    ]
+  },
+  {
+    "id": "FID2720",
+    "name": "cholecystectomy_clip",
+    "category": "devices",
+    "synonyms": [
+      "Cholecystectomy clips"
+    ]
+  },
+  {
+    "id": "FID2730",
+    "name": "clamshell_sternotomy",
+    "category": "osseous",
+    "synonyms": [
+      "Clamshell sternotomy wires"
+    ]
+  },
+  {
+    "id": "FID2740",
+    "name": "clavicle_fixation",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2750",
+    "name": "coronary_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2760",
+    "name": "double_balloon_esophageal_catheter",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2770",
+    "name": "ecmo_catheter",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2780",
+    "name": "endotracheal_tube",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2790",
+    "name": "enteric_tube",
+    "category": "devices",
+    "synonyms": [
+      "Nasogastric tube",
+      "Gastric tube",
+      "NG tube"
+    ]
+  },
+  {
+    "id": "FID2800",
+    "name": "epicardial_pacing_wires",
+    "category": "devices",
+    "synonyms": [
+      "Epicardial pacer wires",
+      "Temporary epicardial wires"
+    ]
+  },
+  {
+    "id": "FID2810",
+    "name": "epidural_catheter",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2820",
+    "name": "esophageal_tamponade_tube",
+    "category": "devices",
+    "synonyms": [
+      "Sengstaken-Blakemore tube",
+      "Minnesota tube"
+    ]
+  },
+  {
+    "id": "FID2830",
+    "name": "esophagectomy",
+    "category": "mediastinal",
+    "synonyms": [
+      "Esophagectomy with gastric pull up"
+    ]
+  },
+  {
+    "id": "FID2840",
+    "name": "gastric_band",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2850",
+    "name": "gastrostomy_tube",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2860",
+    "name": "icd",
+    "category": "devices",
+    "synonyms": [
+      "Implantable cardioverter defibrillator"
+    ]
+  },
+  {
+    "id": "FID2870",
+    "name": "icd_leads",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2880",
+    "name": "impella_device",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2890",
+    "name": "inferior_vena_cava_filter",
+    "category": "devices",
+    "synonyms": [
+      "IVC filter"
+    ]
+  },
+  {
+    "id": "FID2900",
+    "name": "intra_aortic_balloon_pump",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2910",
+    "name": "intravascular_line",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2920",
+    "name": "leadless_pacemaker",
+    "category": "devices",
+    "synonyms": [
+      "Leadless cardiac pacemaker",
+      "Micra"
+    ]
+  },
+  {
+    "id": "FID2930",
+    "name": "left_ventricular_assist_device",
+    "category": "devices",
+    "synonyms": [
+      "LVAD"
+    ]
+  },
+  {
+    "id": "FID2940",
+    "name": "loop_recorder",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2960",
+    "name": "mediastinal_drain",
+    "category": "devices",
+    "synonyms": [
+      "Jackson-Pratt drain",
+      "JP drain",
+      "Blake tube"
+    ]
+  },
+  {
+    "id": "FID2970",
+    "name": "mediastinal_clip",
+    "category": "devices",
+    "synonyms": [
+      "Mediastinal clips",
+      "Hilar clips",
+      "CABG clips"
+    ]
+  },
+  {
+    "id": "FID2980",
+    "name": "metallic_marker",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID2990",
+    "name": "mitral_annuloplasty_ring",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3000",
+    "name": "monitoring_leads",
+    "category": "devices",
+    "synonyms": [
+      "EKG leads",
+      "ECG leads",
+      "Telemetry leads"
+    ]
+  },
+  {
+    "id": "FID3010",
+    "name": "neck_clip",
+    "category": "devices",
+    "synonyms": [
+      "Neck clips"
+    ]
+  },
+  {
+    "id": "FID3020",
+    "name": "nuss_bar",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3030",
+    "name": "pacemaker",
+    "category": "devices",
+    "synonyms": [
+      "Dual chamber pacemaker",
+      "Single chamber pacemaker",
+      "Cardiac pacemaker"
+    ]
+  },
+  {
+    "id": "FID3040",
+    "name": "pacer_leads",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3050",
+    "name": "pericardial_drain",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3060",
+    "name": "peripherally_inserted_central_catheter",
+    "category": "devices",
+    "synonyms": [
+      "PICC"
+    ]
+  },
+  {
+    "id": "FID3070",
+    "name": "pfo_closure_device",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3080",
+    "name": "port_catheter",
+    "category": "devices",
+    "synonyms": [
+      "Chest port",
+      "Portacath",
+      "Port-a-cath",
+      "Implanted port"
+    ]
+  },
+  {
+    "id": "FID3090",
+    "name": "pulmonary_arterial_catheter",
+    "category": "devices",
+    "synonyms": [
+      "Swan-Ganz catheter"
+    ]
+  },
+  {
+    "id": "FID3100",
+    "name": "retained_surgical_foreign_body",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3110",
+    "name": "reverse_total_shoulder_arthroplasty",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3120",
+    "name": "cerclage_wire",
+    "category": "devices",
+    "synonyms": [
+      "Rib cerclage wires",
+      "Cerclage wires"
+    ]
+  },
+  {
+    "id": "FID3130",
+    "name": "rib_fixation",
+    "category": "devices",
+    "synonyms": [
+      "Chest wall fixation"
+    ]
+  },
+  {
+    "id": "FID3140",
+    "name": "rotator_cuff_anchor",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3150",
+    "name": "shoulder_fixation",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3160",
+    "name": "shoulder_replacement",
+    "category": "devices",
+    "synonyms": [
+      "Total shoulder arthroplasty"
+    ]
+  },
+  {
+    "id": "FID3170",
+    "name": "spinal_catheter",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3180",
+    "name": "spinal_fixation",
+    "category": "devices",
+    "synonyms": [
+      "Stabilization rods"
+    ]
+  },
+  {
+    "id": "FID3190",
+    "name": "spinal_fusion",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID3200",
+    "name": "sternal_sutures",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3220",
+    "name": "subclavian_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3230",
+    "name": "superior_vena_cava_stent",
+    "category": "devices",
+    "synonyms": [
+      "SVC stent"
+    ]
+  },
+  {
+    "id": "FID3250",
+    "name": "suture_anchors_in_humeral_head",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3260",
+    "name": "tavr",
+    "category": "devices",
+    "synonyms": [
+      "Transcatheter aortic valve replacement",
+      "TAVI"
+    ]
+  },
+  {
+    "id": "FID3270",
+    "name": "temporary_pacer_wire",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3280",
+    "name": "thyroid_bed_clip",
+    "category": "devices",
+    "synonyms": [
+      "Thyroid bed clips"
+    ]
+  },
+  {
+    "id": "FID3290",
+    "name": "tracheostomy_tube",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3300",
+    "name": "ventricular_shunt",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3310",
+    "name": "esophageal_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3320",
+    "name": "aortic_valve_replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic aortic valve",
+      "Mechanical aortic valve",
+      "Bioprosthetic aortic valve",
+      "Aortic valve prosthesis"
+    ]
+  },
+  {
+    "id": "FID3330",
+    "name": "mitral_valve_replacement",
+    "category": "devices",
+    "synonyms": [
+      "Prosthetic mitral valve",
+      "Mechanical mitral valve",
+      "Bioprosthetic mitral valve"
+    ]
+  },
+  {
+    "id": "FID3340",
+    "name": "feeding_tube",
+    "category": "devices",
+    "synonyms": [
+      "Dobhoff tube",
+      "Nasoenteric tube",
+      "NJ tube",
+      "Nasojejunal tube",
+      "GJ tube",
+      "Gastrojejunostomy tube"
+    ]
+  },
+  {
+    "id": "FID3350",
+    "name": "median_sternotomy",
+    "category": "osseous",
+    "synonyms": [
+      "Sternotomy",
+      "Sternal wires",
+      "Median sternotomy wires"
+    ]
+  },
+  {
+    "id": "FID3360",
+    "name": "thoracotomy",
+    "category": "osseous",
+    "synonyms": [
+      "Lateral thoracotomy",
+      "Posterolateral thoracotomy"
+    ]
+  },
+  {
+    "id": "FID3370",
+    "name": "vertebroplasty",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID3380",
+    "name": "mitral_valve_clip",
+    "category": "devices",
+    "synonyms": [
+      "MitraClip"
+    ]
+  },
+  {
+    "id": "FID3390",
+    "name": "left_atrial_appendage_ligation",
+    "category": "devices",
+    "synonyms": [
+      "AtriClip"
+    ]
+  },
+  {
+    "id": "FID3400",
+    "name": "hemodialysis_catheter",
+    "category": "devices",
+    "synonyms": [
+      "Dialysis catheter",
+      "HD catheter"
+    ]
+  },
+  {
+    "id": "FID3410",
+    "name": "esophageal_probe",
+    "category": "devices",
+    "synonyms": [
+      "Esophageal monitoring device",
+      "Esophageal temperature probe"
+    ]
+  },
+  {
+    "id": "FID3420",
+    "name": "coronary_artery_bypass_graft",
+    "category": "cardiac",
+    "synonyms": [
+      "CABG"
+    ]
+  },
+  {
+    "id": "FID3430",
+    "name": "support_device",
+    "category": "devices",
+    "synonyms": [
+      "Support lines and tubes",
+      "Support device",
+      "Support devices"
+    ]
+  },
+  {
+    "id": "FID3440",
+    "name": "tunneled_catheter",
+    "category": "devices",
+    "synonyms": [
+      "Tunneled central catheter",
+      "Tunneled line"
+    ]
+  },
+  {
+    "id": "FID3450",
+    "name": "introducer_sheath",
+    "category": "devices",
+    "synonyms": [
+      "Vascular sheath"
+    ]
+  },
+  {
+    "id": "FID3460",
+    "name": "vascular_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3610",
+    "name": "clipped_costophrenic_angle",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3620",
+    "name": "clipped_lateral_soft_tissue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3630",
+    "name": "clipped_lung_apex",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3640",
+    "name": "grid_artifact",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3650",
+    "name": "image_marker_absent",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3660",
+    "name": "image_marker_incorrect",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3670",
+    "name": "improper_centering",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3690",
+    "name": "lungs_incompletely_imaged",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3700",
+    "name": "motion_artifact",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3720",
+    "name": "obscured_by_external_object",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3730",
+    "name": "obscured_by_laterality_marker",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3740",
+    "name": "obscured_by_medical_device",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3750",
+    "name": "obscured_by_chin",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID3760",
+    "name": "overpenetration",
+    "category": "image_quality",
+    "synonyms": [
+      "Overpenetrated",
+      "Overexposed"
+    ]
+  },
+  {
+    "id": "FID3790",
+    "name": "rotation",
+    "category": "image_quality",
+    "synonyms": [
+      "Rotated",
+      "Rotated image"
+    ]
+  },
+  {
+    "id": "FID3795",
+    "name": "lordotic_positioning",
+    "category": "image_quality",
+    "synonyms": [
+      "Lordotic projection",
+      "Lordotic view"
+    ]
+  },
+  {
+    "id": "FID3820",
+    "name": "underpenetration",
+    "category": "image_quality",
+    "synonyms": [
+      "Underpenetrated",
+      "Underexposed"
+    ]
+  },
+  {
+    "id": "FID3850",
+    "name": "obscuration_of_hemidiaphragm",
+    "category": "diaphragm",
+    "synonyms": []
+  },
+  {
+    "id": "FID3860",
+    "name": "calcification_of_hilar_lymph_node",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID3870",
+    "name": "resection_of_clavicle",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID3880",
+    "name": "pectus_excavatum_repair",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID3890",
+    "name": "sternal_fixation",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3900",
+    "name": "tricuspid_annuloplasty_ring",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID3910",
+    "name": "widening_of_rib_interspaces",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID3920",
+    "name": "pericardial_abnormality",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID3930",
+    "name": "aortic_abnormality",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID3940",
+    "name": "lung_anatomic_variant",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID3950",
+    "name": "lung_postsurgical_change",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID3960",
+    "name": "linear_atelectasis",
+    "category": "lung",
+    "synonyms": [
+      "Plate-like atelectasis",
+      "Discoid atelectasis",
+      "Band atelectasis"
+    ]
+  },
+  {
+    "id": "FID3970",
+    "name": "pulmonary_lesion",
+    "category": "lung",
+    "synonyms": [
+      "Lung lesion"
+    ]
+  },
+  {
+    "id": "FID3980",
+    "name": "tracheal_abnormality",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID3990",
+    "name": "bronchial_abnormality",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID4000",
+    "name": "thyroid_abnormality",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID4010",
+    "name": "bronchocele",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID4020",
+    "name": "saber_sheath_trachea",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID4030",
+    "name": "cardiac_postsurgical_change",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID4040",
+    "name": "cardiac_anatomic_variant",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID4050",
+    "name": "calcification_of_aortic_valve",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID4060",
+    "name": "calcification_of_coronary_artery",
+    "category": "cardiac",
+    "synonyms": []
+  },
+  {
+    "id": "FID4070",
+    "name": "mediastinal_anatomic_variant",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID4080",
+    "name": "osseous_postsurgical_change",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4090",
+    "name": "osseous_anatomic_variant",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4100",
+    "name": "periosteal_reaction",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4110",
+    "name": "pathologic_fracture",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4120",
+    "name": "paget_disease",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4130",
+    "name": "osteonecrosis",
+    "category": "osseous",
+    "synonyms": [
+      "Avascular necrosis",
+      "AVN"
+    ]
+  },
+  {
+    "id": "FID4140",
+    "name": "bone_infarct",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4150",
+    "name": "h_shaped_vertebra",
+    "category": "osseous",
+    "synonyms": [
+      "Fish mouth vertebra",
+      "H-shaped vertebrae"
+    ]
+  },
+  {
+    "id": "FID4160",
+    "name": "osteomyelitis",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4170",
+    "name": "soft_tissue_anatomic_variant",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID4180",
+    "name": "soft_tissue_postsurgical_change",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID4190",
+    "name": "absence_of_pectoral_muscle",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID4200",
+    "name": "skin_fold",
+    "category": "soft_tissue",
+    "synonyms": []
+  },
+  {
+    "id": "FID4210",
+    "name": "abdominal_abnormality",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID4220",
+    "name": "hardware",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4230",
+    "name": "support_apparatus",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4240",
+    "name": "foreign_body",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4250",
+    "name": "cardiac_hardware",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4260",
+    "name": "endovascular_hardware",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4270",
+    "name": "luminal_stent",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4280",
+    "name": "orthopedic_hardware",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4290",
+    "name": "chest_wall_hardware",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4300",
+    "name": "airway_apparatus",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4310",
+    "name": "vascular_access",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4320",
+    "name": "drain",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4330",
+    "name": "enteric_apparatus",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4340",
+    "name": "spinal_apparatus",
+    "category": "devices",
+    "synonyms": []
+  },
+  {
+    "id": "FID4350",
+    "name": "mediastinal_postsurgical_change",
+    "category": "mediastinal",
+    "synonyms": []
+  },
+  {
+    "id": "FID4355",
+    "name": "image_quality_issue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4360",
+    "name": "exposure_issue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4370",
+    "name": "field_of_view_issue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4380",
+    "name": "patient_positioning_issue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4400",
+    "name": "artifact",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4410",
+    "name": "obscured_anatomy",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4420",
+    "name": "image_marker_issue",
+    "category": "image_quality",
+    "synonyms": []
+  },
+  {
+    "id": "FID4430",
+    "name": "honeycombing",
+    "category": "lung",
+    "synonyms": [
+      "Stacked cysts",
+      "Microcystic lung"
+    ]
+  },
+  {
+    "id": "FID4440",
+    "name": "septal_line",
+    "category": "lung",
+    "synonyms": [
+      "Septal thickening line"
+    ]
+  },
+  {
+    "id": "FID4450",
+    "name": "kerley_a_line",
+    "category": "lung",
+    "synonyms": [
+      "Kerley A line",
+      "Kerley A lines"
+    ]
+  },
+  {
+    "id": "FID4460",
+    "name": "kerley_b_line",
+    "category": "lung",
+    "synonyms": [
+      "Kerley B line",
+      "Kerley B lines"
+    ]
+  },
+  {
+    "id": "FID4470",
+    "name": "apical_cap",
+    "category": "pleura",
+    "synonyms": [
+      "Apical pleural cap"
+    ]
+  },
+  {
+    "id": "FID4480",
+    "name": "juxtaphrenic_peak",
+    "category": "lung",
+    "synonyms": [
+      "Juxtaphrenic peak sign"
+    ]
+  },
+  {
+    "id": "FID4490",
+    "name": "mycetoma",
+    "category": "lung",
+    "synonyms": [
+      "Fungus ball"
+    ]
+  },
+  {
+    "id": "FID4500",
+    "name": "broncholith",
+    "category": "airway",
+    "synonyms": []
+  },
+  {
+    "id": "FID4510",
+    "name": "pulmonary_infarct",
+    "category": "lung",
+    "synonyms": [
+      "Pulmonary infarction"
+    ]
+  },
+  {
+    "id": "FID4520",
+    "name": "pneumatocele",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4530",
+    "name": "silhouette_sign",
+    "category": "lung",
+    "synonyms": [
+      "Silhouetting"
+    ]
+  },
+  {
+    "id": "FID4540",
+    "name": "air_crescent_sign",
+    "category": "lung",
+    "synonyms": [
+      "Air crescent"
+    ]
+  },
+  {
+    "id": "FID4550",
+    "name": "hampton_hump",
+    "category": "lung",
+    "synonyms": [
+      "Hampton's hump"
+    ]
+  },
+  {
+    "id": "FID4560",
+    "name": "westermark_sign",
+    "category": "lung",
+    "synonyms": [
+      "Westermark's sign"
+    ]
+  },
+  {
+    "id": "FID4570",
+    "name": "golden_s_sign",
+    "category": "lung",
+    "synonyms": [
+      "S sign of Golden"
+    ]
+  },
+  {
+    "id": "FID4580",
+    "name": "luftsichel_sign",
+    "category": "lung",
+    "synonyms": [
+      "Luftsichel"
+    ]
+  },
+  {
+    "id": "FID4590",
+    "name": "deep_sulcus_sign",
+    "category": "pleura",
+    "synonyms": [
+      "Deep sulcus"
+    ]
+  },
+  {
+    "id": "FID4600",
+    "name": "hilum_overlay_sign",
+    "category": "mediastinal",
+    "synonyms": [
+      "Hilar overlay sign"
+    ]
+  },
+  {
+    "id": "FID4610",
+    "name": "spine_sign",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4620",
+    "name": "scimitar_sign",
+    "category": "lung",
+    "synonyms": [
+      "Scimitar"
+    ]
+  },
+  {
+    "id": "FID4630",
+    "name": "scimitar_syndrome",
+    "category": "lung",
+    "synonyms": [
+      "Partial anomalous pulmonary venous return",
+      "PAPVR"
+    ]
+  },
+  {
+    "id": "FID4640",
+    "name": "parenchymal_band",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4650",
+    "name": "pneumonitis",
+    "category": "lung",
+    "synonyms": []
+  }
+]

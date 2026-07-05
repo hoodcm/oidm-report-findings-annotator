@@ -1,16 +1,23 @@
-// Three small sidebar / center-panel affordances added together:
+// Small sidebar / center-panel affordances:
 //
 //   1. goToNextUnvalidated distinguishes "no other unvalidated reports"
 //      (current is the only one) from "all reports validated" (true success).
 //      Previously the loop started at offset=1 and never checked the current
 //      report, so a session of one unvalidated report falsely showed
 //      "All reports validated!".
-//   2. Sidebar shows "X/Y sentences with findings" using distinct
-//      source_sentence_idx values from validated_findings (matches the green
-//      sentence highlight semantics already used in the body).
+//   2. _isSentenceAnchor (Number.isInteger-guarded) decides whether a
+//      finding's source_sentence_idx is a real anchor; unassignedValidatedFindings
+//      is its exact complement. The floating-workspace redesign retired the
+//      sidebar's "X/Y sentences with findings" label (and annotatedSentenceCount,
+//      its sole caller) — not every sentence gets a finding, so the metric
+//      misled — but the restored-data guard still matters for every other
+//      _isSentenceAnchor caller (export, recovery, incomplete-block).
 //   3. Center panel renders a "No annotatable text found" placeholder when
 //      the splitter extracts zero sentences (instead of an empty void), and
 //      hides the click-to-edit subtitle + colour legend in that state.
+//   4. The colour legend is a flex-none footer, out of the report column's
+//      scrolling area — it stays put at a fixed position as the prose
+//      scrolls past it (floating-workspace redesign, step 6).
 
 const { test, expect } = require('@playwright/test');
 const { gotoApp, resetIndexedDb, seedTaxonomy, seedReports, expectToast } = require('./helpers');
@@ -69,63 +76,33 @@ test.describe('Sidebar + empty-state affordances', () => {
     await expectToast(page, 'All reports validated');
   });
 
-  test('Sidebar progress label shows "0/N sentences with findings" before any work', async ({ page }) => {
-    await seedTaxonomy(page);
-    await seedReports(page, ['R001']);
-
-    const label = page.locator('aside p.text-xs.text-gray-400');
-    await expect(label).toContainText(/^0\/\d+ sentences with findings$/);
-
-    // Sanity-check N matches the parsed sentence count.
-    const expectedN = await page.evaluate(() => Alpine.store('app').report.sentences.length);
-    await expect(label).toContainText(`0/${expectedN} sentences with findings`);
-  });
-
-  test('Sidebar progress label increments distinct sentences as findings get validated', async ({ page }) => {
-    await seedTaxonomy(page);
-    await seedReports(page, ['R001']);
-
-    // Validate two findings on sentence 1 + one finding on sentence 2.
-    // Three validated findings, but only two distinct sentence indices → expect "2/N".
-    await page.evaluate(() => {
-      const app = Alpine.store('app');
-      const stamp = new Date().toISOString();
-      app.report.validated_findings.push(
-        { finding_name: 'edema',   source_text: 'a', source_sentence_idx: 1, attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'sdh',     source_text: 'b', source_sentence_idx: 1, attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'infarct', source_text: 'c', source_sentence_idx: 2, attributes: { presence: 'present' }, validated_at: stamp },
-      );
-    });
-
-    const expectedN = await page.evaluate(() => Alpine.store('app').report.sentences.length);
-    const label = page.locator('aside p.text-xs.text-gray-400');
-    await expect(label).toContainText(`2/${expectedN} sentences with findings`);
-  });
-
-  test('Sidebar progress label rejects non-integer source_sentence_idx (restored-data shape)', async ({ page }) => {
+  test('_isSentenceAnchor rejects non-integer source_sentence_idx (restored-data shape)', async ({ page }) => {
     // Review-flagged regression: a bare `idx >= 1 && idx <= max` lets a string
-    // "1" and a number 1 land in the Set as separate entries, inflating the
-    // numerator above the denominator. Number.isInteger() must screen them out.
+    // "1" and a number 1 land as separate entries, so a malformed shape can
+    // silently pass as anchored. Number.isInteger() must screen them out.
+    // _isSentenceAnchor now feeds unassignedValidatedFindings (exact
+    // complement) rather than the retired annotatedSentenceCount sidebar
+    // label, but the guard it protects is unchanged.
     await seedTaxonomy(page);
     await seedReports(page, ['R001']);
 
     await page.evaluate(() => {
       const app = Alpine.store('app');
       const stamp = new Date().toISOString();
-      app.report.validated_findings.push(
-        { finding_name: 'real',  source_text: 'a', source_sentence_idx: 1,    attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'str',   source_text: 'b', source_sentence_idx: '1',  attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'flt',   source_text: 'c', source_sentence_idx: 1.5,  attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'huge',  source_text: 'd', source_sentence_idx: 999,  attributes: { presence: 'present' }, validated_at: stamp },
-        { finding_name: 'zero',  source_text: 'e', source_sentence_idx: 0,    attributes: { presence: 'present' }, validated_at: stamp },
+      app.report.findings.push(
+        { finding_name: 'real',  status: 'validated', source_text: 'a', source_sentence_idx: 1,    attributes: { presence: 'present' }, validated_at: stamp },
+        { finding_name: 'str',   status: 'validated', source_text: 'b', source_sentence_idx: '1',  attributes: { presence: 'present' }, validated_at: stamp },
+        { finding_name: 'flt',   status: 'validated', source_text: 'c', source_sentence_idx: 1.5,  attributes: { presence: 'present' }, validated_at: stamp },
+        { finding_name: 'huge',  status: 'validated', source_text: 'd', source_sentence_idx: 999,  attributes: { presence: 'present' }, validated_at: stamp },
+        { finding_name: 'zero',  status: 'validated', source_text: 'e', source_sentence_idx: 0,    attributes: { presence: 'present' }, validated_at: stamp },
       );
     });
 
-    const N = await page.evaluate(() => Alpine.store('app').report.sentences.length);
-    const count = await page.evaluate(() => Alpine.store('app').annotatedSentenceCount());
-    // Only the integer-1 finding should count. Numerator never exceeds N.
-    expect(count).toBe(1);
-    expect(count).toBeLessThanOrEqual(N);
+    const unassignedNames = await page.evaluate(() =>
+      Alpine.store('app').unassignedValidatedFindings.map(f => f.finding_name));
+    // Only the real integer-1 finding is anchored; every malformed shape
+    // (string "1", float, out-of-range, zero) falls to "unassigned".
+    expect(unassignedNames.sort()).toEqual(['flt', 'huge', 'str', 'zero']);
   });
 
   test('Empty report: center panel shows "No annotatable text found" when splitter yields zero sentences', async ({ page }) => {
@@ -134,14 +111,13 @@ test.describe('Sidebar + empty-state affordances', () => {
     // Seed a single report whose sentences array is empty (legitimately —
     // upstream parser found no findings text). Reload so init() picks it up.
     await page.evaluate(async () => {
-      const SCHEMA_VERSION = 4;
+      const SCHEMA_VERSION = 7;
       await Storage.atomicReplace([{
         record_id: 'R_EMPTY',
         report_text: 'IMPRESSION: see above.',
         sentences: [],
         sectionBreaks: [],
-        llm_extractions: [],
-        validated_findings: [],
+        findings: [],
         validated: false,
         validated_at: null,
         custom_findings_added: [],
@@ -161,9 +137,6 @@ test.describe('Sidebar + empty-state affordances', () => {
     await expect(page.getByText('No annotatable text found', { exact: true })).toBeVisible();
     await expect(page.locator('text=Click highlighted text to view and edit findings')).toBeHidden();
     await expect(page.locator('text=Validated findings').first()).toBeHidden();  // legend hidden too
-
-    // Progress label correctly reports 0/0.
-    await expect(page.locator('aside p.text-xs.text-gray-400')).toContainText('0/0 sentences with findings');
   });
 
   test('Empty report: Add Finding panel is hidden so users cannot create unanchored findings', async ({ page }) => {
@@ -174,10 +147,10 @@ test.describe('Sidebar + empty-state affordances', () => {
     // guard (next test) catches programmatic callers.
     await seedTaxonomy(page);
     await page.evaluate(async () => {
-      const SCHEMA_VERSION = 4;
+      const SCHEMA_VERSION = 7;
       await Storage.atomicReplace([{
         record_id: 'R_EMPTY', report_text: 'IMPRESSION: see above.',
-        sentences: [], sectionBreaks: [], llm_extractions: [], validated_findings: [],
+        sentences: [], sectionBreaks: [], findings: [],
         validated: false, validated_at: null, custom_findings_added: [],
         extraction_model: null, extraction_timestamp: null,
         taxonomyVersion: 'CT Head:0', schema_version: SCHEMA_VERSION,
@@ -197,10 +170,10 @@ test.describe('Sidebar + empty-state affordances', () => {
   test('addFinding guard: empty report refuses to save with actionable toast', async ({ page }) => {
     await seedTaxonomy(page);
     await page.evaluate(async () => {
-      const SCHEMA_VERSION = 4;
+      const SCHEMA_VERSION = 7;
       await Storage.atomicReplace([{
         record_id: 'R_EMPTY', report_text: 'IMPRESSION: see above.',
-        sentences: [], sectionBreaks: [], llm_extractions: [], validated_findings: [],
+        sentences: [], sectionBreaks: [], findings: [],
         validated: false, validated_at: null, custom_findings_added: [],
         extraction_model: null, extraction_timestamp: null,
         taxonomyVersion: 'CT Head:0', schema_version: SCHEMA_VERSION,
@@ -215,7 +188,7 @@ test.describe('Sidebar + empty-state affordances', () => {
     await expectToast(page, 'no annotatable sentences');
 
     // No finding should have been written.
-    const count = await page.evaluate(() => Alpine.store('app').report.validated_findings.length);
+    const count = await page.evaluate(() => Alpine.store('app').report.findings.length);
     expect(count).toBe(0);
   });
 
@@ -229,7 +202,7 @@ test.describe('Sidebar + empty-state affordances', () => {
     await page.evaluate(() => Alpine.store('app').addFinding('cerebral edema', false));
     await expectToast(page, 'no sentence selected');
 
-    const count = await page.evaluate(() => Alpine.store('app').report.validated_findings.length);
+    const count = await page.evaluate(() => Alpine.store('app').report.findings.length);
     expect(count).toBe(0);
   });
 
@@ -243,12 +216,12 @@ test.describe('Sidebar + empty-state affordances', () => {
     await page.evaluate(() => {
       const app = Alpine.store('app');
       const stamp = new Date().toISOString();
-      app.report.validated_findings.push(
-        { finding_name: 'cerebral edema', source_text: '', source_sentence_idx: null,
+      app.report.findings.push(
+        { finding_name: 'cerebral edema', status: 'validated', source_text: '', source_sentence_idx: null,
           attributes: { presence: 'present' }, validated_at: stamp, origin: 'human_added' },
         // String-shaped index also counts as unassigned (defends against
-        // restored-data malformation; consistent with annotatedSentenceCount).
-        { finding_name: 'midline shift', source_text: 'x', source_sentence_idx: '2',
+        // restored-data malformation via the shared _isSentenceAnchor guard).
+        { finding_name: 'midline shift', status: 'validated', source_text: 'x', source_sentence_idx: '2',
           attributes: { presence: 'present' }, validated_at: stamp, origin: 'human_added' },
       );
     });
@@ -268,5 +241,31 @@ test.describe('Sidebar + empty-state affordances', () => {
 
     const remaining = await page.evaluate(() => Alpine.store('app').unassignedValidatedFindings.length);
     expect(remaining).toBe(1);
+  });
+
+  test('Legend stays pinned at the bottom of the report column while the prose scrolls (floating-workspace redesign)', async ({ page }) => {
+    await seedTaxonomy(page);
+    // A long report so the prose overflows and actually needs to scroll.
+    await page.evaluate(async () => {
+      const lines = Array.from({ length: 60 }, (_, i) => `- Finding sentence number ${i + 1} in the report.`).join('\n');
+      const text = 'FINDINGS:\nBrain Parenchyma:\n' + lines;
+      const findingsText = Sentences.parseFindingsSection(text);
+      const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
+      await Storage.atomicReplace([{
+        record_id: 'R001', report_text: text, sentences, sectionBreaks, findings: [],
+        validated: false, validated_at: null, custom_findings_added: [],
+        extraction_model: null, extraction_timestamp: null,
+        taxonomyVersion: 'CT Head:0', schema_version: 7,
+      }]);
+    });
+    await page.reload();
+    await page.waitForFunction(() => Alpine.store('app').currentView === 'annotate', { timeout: 10000 });
+
+    const legend = page.locator('text=Validated findings').first();
+    const before = await legend.boundingBox();
+    await page.locator('.flex-1.overflow-y-auto').first().evaluate(el => { el.scrollTop = el.scrollHeight; });
+    await page.waitForTimeout(150);
+    const after = await legend.boundingBox();
+    expect(after.y).toBe(before.y);
   });
 });

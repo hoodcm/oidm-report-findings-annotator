@@ -30,12 +30,17 @@
   <div id="results"></div>
 
   <!-- Dexie (required by ../js/storage.js for contract tests) -->
-  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
+  <script src="../vendor/dexie.min.js"></script>
+
+  <!-- PapaParse (required by ../js/file-classifier.js CSV sampling) -->
+  <script src="../vendor/papaparse.min.js"></script>
 
   <!-- App modules under test (load order matters: dependencies first) -->
   <script src="../js/sentences.js"></script>
   <script src="../js/taxonomy.js"></script>
   <script src="../js/extraction-import.js"></script>
+  <script src="../js/file-classifier.js"></script>
+  <script src="../js/undo.js"></script>
   <script src="../js/exam-type.js"></script>
   <script src="../js/storage.js"></script>
 
@@ -46,6 +51,8 @@
   <script src="framework.js"></script>
   <script src="sentences.test.js"></script>
   <script src="extraction-import.test.js"></script>
+  <script src="file-classifier.test.js"></script>
+  <script src="undo.test.js"></script>
   <script src="exam-type.test.js"></script>
   <script src="taxonomy.test.js"></script>
   <script src="contracts.test.js"></script>

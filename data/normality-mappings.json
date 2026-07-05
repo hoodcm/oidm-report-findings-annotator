@@ -1,0 +1,32 @@
+{
+  "clear_lungs": "Lung abnormality",
+  "lungs_clear": "Lung abnormality",
+  "lungs_are_clear": "Lung abnormality",
+  "normal_lungs": "Lung abnormality",
+  "lung_fields_unremarkable": "Lung abnormality",
+  "normal_cardiac_silhouette": "Cardiac abnormality",
+  "normal_heart_size": "Cardiac abnormality",
+  "heart_normal_in_size": "Cardiac abnormality",
+  "cardiac_silhouette_within_normal_limits": "Cardiac abnormality",
+  "normal_cardiomediastinal_silhouette": [
+    "Cardiac abnormality",
+    "Mediastinal abnormality"
+  ],
+  "cardiomediastinal_silhouette_within_normal_limits": [
+    "Cardiac abnormality",
+    "Mediastinal abnormality"
+  ],
+  "mediastinum_unremarkable": "Mediastinal abnormality",
+  "normal_mediastinal_contours": "Mediastinal abnormality",
+  "bones_unremarkable": "Osseous abnormality",
+  "no_acute_osseous_abnormality": "Osseous abnormality",
+  "osseous_structures_intact": "Osseous abnormality",
+  "soft_tissues_unremarkable": "Soft tissue abnormality",
+  "unremarkable_soft_tissues": "Soft tissue abnormality",
+  "soft_tissues_normal": "Soft tissue abnormality",
+  "pleural_spaces_clear": "Pleural abnormality",
+  "pleura_unremarkable": "Pleural abnormality",
+  "patent_airways": "Airway abnormality",
+  "normal_trachea": "Airway abnormality",
+  "normal_tracheobronchial_tree": "Airway abnormality"
+}

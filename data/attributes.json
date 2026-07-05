@@ -1,12 +1,27 @@
 {
   "presence": {
     "type": "enum",
-    "description": "Finding presence status",
+    "description": "Finding presence status (polarity only \u2014 which way the radiologist leans)",
     "values": [
       "present",
-      "absent",
-      "indeterminate"
+      "absent"
     ]
+  },
+  "confidence": {
+    "type": "map",
+    "description": "Assertion modality: which axes the radiologist hedged (omitted = definite)",
+    "values": [],
+    "allowed_axes": [
+      "presence",
+      "laterality",
+      "chronicity",
+      "temporal_status",
+      "severity",
+      "extent",
+      "integrity",
+      "position_status"
+    ],
+    "value": "hedged"
   },
   "laterality": {
     "type": "enum",
@@ -31,9 +46,9 @@
       "more_conspicuous",
       "less_conspicuous",
       "increased_complexity",
-      "decreased_complexity",
-      "indeterminate"
-    ]
+      "decreased_complexity"
+    ],
+    "multi_value": true
   },
   "chronicity": {
     "type": "enum",
@@ -46,9 +61,9 @@
       "evolving",
       "resolving",
       "healing",
-      "healed",
-      "indeterminate"
-    ]
+      "healed"
+    ],
+    "multi_value": true
   },
   "size": {
     "type": "text",
@@ -57,11 +72,19 @@
   },
   "severity": {
     "type": "enum",
-    "description": "Degree or grade",
+    "description": "Clinical intensity grade",
     "values": [
       "mild",
+      "mild_to_moderate",
       "moderate",
-      "severe",
+      "moderate_to_severe",
+      "severe"
+    ]
+  },
+  "extent": {
+    "type": "enum",
+    "description": "Qualitative physical size of a finding",
+    "values": [
       "small",
       "medium",
       "large"
@@ -70,6 +93,21 @@
   "anatomic_site": {
     "type": "text",
     "description": "Compound anatomic terms",
+    "values": []
+  },
+  "features": {
+    "type": "array",
+    "description": "Finding-specific descriptive properties that cannot exist independently",
+    "values": []
+  },
+  "aggregate": {
+    "type": "boolean",
+    "description": "Marks a finding row as representing a non-discrete collection or diffuse pattern rather than a single discrete instance",
+    "values": []
+  },
+  "insertion_site": {
+    "type": "text",
+    "description": "Where the device enters",
     "values": []
   },
   "tip_location": {
@@ -85,14 +123,12 @@
       "malpositioned"
     ]
   },
-  "features": {
-    "type": "array",
-    "description": "Finding-specific descriptive properties that cannot exist independently",
-    "values": []
-  },
-  "multiple": {
-    "type": "boolean",
-    "description": "Marks a finding row as representing a non-discrete collection or diffuse pattern rather than a single discrete instance",
-    "values": []
+  "integrity": {
+    "type": "enum",
+    "description": "Device structural integrity",
+    "values": [
+      "intact",
+      "discontinuous"
+    ]
   }
 }

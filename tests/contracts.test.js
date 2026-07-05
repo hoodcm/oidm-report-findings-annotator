@@ -169,15 +169,15 @@ describe('Contract: Storage.saveReport accepts Alpine-Proxy-wrapped input (secon
       report_text: 'FINDINGS: Brain: No acute findings.',
       sentences: ['Brain: No acute findings.'],
       validated: false,
-      validated_findings: [],
-      llm_extractions: [
+      findings: [
         {
           finding_name: 'cerebral edema',
+          status: 'pending',
           source_text: 'No acute findings',
           attributes: { presence: 'absent' },
         },
       ],
-      schema_version: 4,
+      schema_version: 7,
     };
     const proxied = proxyWrap(plainReport);
 
@@ -204,9 +204,10 @@ describe('Contract: Storage.saveReport / loadReport deep-equality round-trip', (
       sectionBreaks: [],
       validated: true,
       validated_at: '2026-05-24T10:00:00Z',
-      validated_findings: [
+      findings: [
         {
           finding_name: 'mass_effect',
+          status: 'validated',
           source_text: 'Mass effect present',
           source_sentence_idx: 1,
           attributes: {
@@ -219,8 +220,7 @@ describe('Contract: Storage.saveReport / loadReport deep-equality round-trip', (
           },
         },
       ],
-      llm_extractions: [],
-      schema_version: 4,
+      schema_version: 7,
     };
 
     await Storage.saveReport(report);

@@ -18,6 +18,8 @@ docs/plans/
 
 # Data files (user uploads)
 *.csv
+# ...but synthetic e2e fixtures are test code, not user data (CI needs them)
+!tests/e2e/fixtures/*.csv
 
 # Node / test artifacts
 node_modules/

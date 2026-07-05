@@ -20,6 +20,7 @@ async function seedOneFinding(page, findingOverrides = {}, reportOverrides = {})
     const finding = Object.assign({
       finding_name: 'subdural hemorrhage',
       taxonomy_id: 'HID002',
+      status: 'validated',
       source_sentence_idx: 1,
       source_text: sentences[0] || '',
       _needsReview: false,
@@ -32,13 +33,12 @@ async function seedOneFinding(page, findingOverrides = {}, reportOverrides = {})
       record_id: 'R001',
       report_text: text,
       sentences, sectionBreaks,
-      llm_extractions: [],
-      validated_findings: [finding],
+      findings: [finding],
       validated: false,
       validated_at: null,
       custom_findings_added: [],
       taxonomyVersion: 'CT Head:0',
-      schema_version: 4,
+      schema_version: 7,
     }, r);
     await Storage.atomicReplace([report]);
   }, { f: findingOverrides, r: reportOverrides, text: REPORT_TEXT });
@@ -58,7 +58,7 @@ async function seedOneFinding(page, findingOverrides = {}, reportOverrides = {})
 async function readFinding(page) {
   return page.evaluate(async () => {
     const r = await Storage.loadReport('R001');
-    return r.validated_findings[0];
+    return r.findings[0];
   });
 }
 
@@ -78,7 +78,7 @@ test('old-shape finding/report (no confidence/flagged fields) renders without th
   // Reading the attribute rows + flag state must not throw.
   const out = await page.evaluate(() => {
     const app = Alpine.store('app');
-    const f = app.report.validated_findings[0];
+    const f = app.report.findings[0];
     return {
       confidence: f.confidence ?? null,
       findingFlagged: f.flagged ?? null,
@@ -126,7 +126,7 @@ test('getSetAttributes returns canonical order and keeps empty-valued rows', asy
   await seedOneFinding(page, { attributes: { presence: 'present', chronicity: 'acute', laterality: 'left' } });
   await page.evaluate(() => Alpine.store('app').addAttribute(0, 'severity')); // empty row
   const keys = await page.evaluate(() =>
-    Alpine.store('app').getSetAttributes(Alpine.store('app').report.validated_findings[0]).map(a => a.key));
+    Alpine.store('app').getSetAttributes(Alpine.store('app').report.findings[0]).map(a => a.key));
   // Canonical order per attributes.json: laterality < chronicity < severity.
   expect(keys).toEqual(['laterality', 'chronicity', 'severity']);
 });
@@ -135,7 +135,7 @@ test('getAvailableAttributes excludes a just-added empty attribute (no double-ad
   await seedOneFinding(page);
   await page.evaluate(() => Alpine.store('app').addAttribute(0, 'severity'));
   const avail = await page.evaluate(() =>
-    Alpine.store('app').getAvailableAttributes(Alpine.store('app').report.validated_findings[0]).map(a => a.key));
+    Alpine.store('app').getAvailableAttributes(Alpine.store('app').report.findings[0]).map(a => a.key));
   expect(avail).not.toContain('severity');
 });
 
@@ -162,10 +162,12 @@ test('emptying a hedged array attribute via a comma-only input drops the danglin
   // Regression: updateAttribute's array branch can collapse to [] from input
   // like ',' — that logically-empty value must clear the hedge (invariant),
   // not leave confidence.features='hedged' on a blank axis.
+  // features isn't a hedgeable axis (no eye-toggle), so seed the stored hedge
+  // directly — the invariant under test is that emptying the array still drops it.
   await seedOneFinding(page, {
     attributes: { presence: 'present', features: ['spiculated', 'irregular'] },
+    confidence: { features: 'hedged' },
   });
-  await page.evaluate(() => Alpine.store('app').toggleHedge(0, 'features'));
   expect((await readFinding(page)).confidence).toEqual({ features: 'hedged' });
   await page.evaluate(() => Alpine.store('app').updateAttribute(0, 'features', ' , '));
   const f = await readFinding(page);
@@ -221,19 +223,19 @@ test('adding an attribute shows an empty (—) row', async ({ page }) => {
 
 test('boolean attribute renders a hybrid cycle+dropdown and cycles false↔true', async ({ page }) => {
   await seedOneFinding(page);
-  await page.locator('select[data-tip="Add an attribute"]').selectOption('multiple');
-  const mulRow = page.locator('div.grid', { has: page.locator('span', { hasText: /^multiple$/ }) });
+  await page.locator('select[data-tip="Add an attribute"]').selectOption('aggregate');
+  const aggRow = page.locator('div.grid', { has: page.locator('span', { hasText: /^aggregate$/ }) });
   // Hybrid control (a cycle button + a real dropdown), NOT a free-text input.
-  await expect(mulRow.locator('button[data-tip="Click to advance"]')).toBeVisible();
-  await expect(mulRow.locator('input')).toHaveCount(0);
-  await expect(mulRow.locator('select')).toHaveCount(1);
-  const cycle = mulRow.locator('button[data-tip="Click to advance"]');
+  await expect(aggRow.locator('button[data-tip="Click to advance"]')).toBeVisible();
+  await expect(aggRow.locator('input')).toHaveCount(0);
+  await expect(aggRow.locator('select')).toHaveCount(1);
+  const cycle = aggRow.locator('button[data-tip="Click to advance"]');
   await cycle.click(); // '' → false
   await expect(cycle).toHaveText('false');
-  expect((await readFinding(page)).attributes.multiple).toBe('false');
+  expect((await readFinding(page)).attributes.aggregate).toBe('false');
   await cycle.click(); // false → true
   await expect(cycle).toHaveText('true');
-  expect((await readFinding(page)).attributes.multiple).toBe('true');
+  expect((await readFinding(page)).attributes.aggregate).toBe('true');
 });
 
 // ---- Step 4: per-finding flag + popover ----
@@ -251,12 +253,14 @@ test('per-finding flag: open, add reason, click-outside close, reopen persists, 
     expect((await readFinding(page)).flag_reason).toBe('wrong heading — cannot annotate');
   }).toPass();
 
-  // Click outside (the report title) closes the popover.
-  await page.locator('h2').first().click();
+  // Click outside (the report's click-to-edit hint — the sidebar redesign
+  // dropped the report-view record_id heading this used to target) closes
+  // the popover.
+  await page.locator('text=Click highlighted text to view and edit findings').click();
   await expect(card.locator('.reason-pop')).toHaveCount(0);
 
   // Reopen via the depressed flag; the reason persists.
-  await card.locator('button[data-tip="Flagged — click to view/edit"]').click();
+  await card.locator('button[data-tip="Flagged — click to edit"]').click();
   await expect(card.locator('.reason-pop textarea')).toHaveValue('wrong heading — cannot annotate');
 
   // Remove flag clears both fields.
@@ -301,7 +305,7 @@ test('a fully-definite finding exports confidence={} and carries no confidence k
   const out = await page.evaluate(() => {
     const app = Alpine.store('app');
     const row = app._buildFindingRows(app.report)[0];
-    return { rowConfidence: row.confidence, hasKey: 'confidence' in app.report.validated_findings[0] };
+    return { rowConfidence: row.confidence, hasKey: 'confidence' in app.report.findings[0] };
   });
   expect(out.rowConfidence).toBe('{}');
   expect(out.hasKey).toBe(false); // JSON export omits confidence for definite findings
@@ -314,9 +318,9 @@ test('flagged report with zero findings still emits one sentinel CSV row', async
     const { sentences, sectionBreaks } = Sentences.splitIntoSentences(findingsText);
     await Storage.atomicReplace([{
       record_id: 'R001', report_text: text, sentences, sectionBreaks,
-      llm_extractions: [], validated_findings: [],
+      findings: [],
       validated: false, validated_at: null, custom_findings_added: [],
-      taxonomyVersion: 'CT Head:0', schema_version: 4,
+      taxonomyVersion: 'CT Head:0', schema_version: 7,
       flagged: true, flag_reason: 'wrong heading',
     }]);
   }, { text: REPORT_TEXT });
@@ -368,19 +372,19 @@ test('JSON session round-trip preserves confidence, finding flag, and exam flag'
     const r = await page.evaluate(() => Storage.loadReport('R001'));
     expect(r.flagged).toBe(true);
     expect(r.flag_reason).toBe('exam reason');
-    const f = r.validated_findings[0];
+    const f = r.findings[0];
     expect(f.confidence.chronicity).toBe('hedged');
     expect(f.flagged).toBe(true);
     expect(f.flag_reason).toBe('finding reason');
   }).toPass();
 });
 
-// ---- Step 5: whole-exam flag ----
+// ---- Step 5: whole-exam flag (sidebar, floating-workspace redesign) ----
 
 test('whole-exam flag + reason persist across reload', async ({ page }) => {
   await seedOneFinding(page);
   await page.locator('button:has-text("Flag exam")').click();
-  const reason = page.locator('input[placeholder^="why is this exam"]');
+  const reason = page.locator('input[placeholder="What\'s wrong with this report?"]');
   await expect(reason).toBeVisible();
   await reason.fill('Omar mismap: ILD → pulmonary fibrosis');
   await reason.blur();
@@ -395,6 +399,6 @@ test('whole-exam flag + reason persist across reload', async ({ page }) => {
     () => Alpine.store && Alpine.store('app') && Alpine.store('app').currentView === 'annotate',
     { timeout: 10000 }
   );
-  await expect(page.locator('button:has-text("Exam flagged")')).toBeVisible();
-  await expect(page.locator('input[placeholder^="why is this exam"]')).toHaveValue('Omar mismap: ILD → pulmonary fibrosis');
+  await expect(page.locator('.flag-panel')).toContainText('Exam flagged');
+  await expect(page.locator('input[placeholder="What\'s wrong with this report?"]')).toHaveValue('Omar mismap: ILD → pulmonary fibrosis');
 });

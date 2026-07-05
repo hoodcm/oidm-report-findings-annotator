@@ -13,14 +13,19 @@ input:focus-visible {
   outline-offset: 2px;
 }
 
-/* Button press feedback — every pressable element feels responsive */
-button,
+/* Button press feedback — every pressable element feels responsive. Inline
+   editor controls (.ctl — the attribute cycle + presence bodies) are EXCLUDED:
+   they sit inside an overflow-hidden pill with a truncating value, and
+   animating a scale transform on clipped text makes the browser re-composite,
+   flashing the value out on both press and release (the "text disappears twice
+   per click" flicker). Excluding them keeps the cycle instant and in-place. */
+button:not(.ctl),
 label.cursor-pointer,
 .drop-zone {
   transition: transform 160ms var(--ease-out);
 }
 
-button:active,
+button:active:not(.ctl),
 label.cursor-pointer:active {
   transform: scale(0.985);
 }
@@ -39,6 +44,26 @@ label.cursor-pointer:active {
   outline: 2px solid #3b82f6;
   outline-offset: 0px;
   border-radius: 3px;
+}
+
+/* Validated sentence carrying a finding whose attribute was added but left
+   without a value. A wrap-safe striped background — green base (validated)
+   with soft amber hatching (needs a value) — reads as distinct from both plain
+   done-green and pending-amber, so the sentence no longer looks fully done.
+   Backgrounds (unlike borders/underlines) don't fragment across line wraps. */
+.sentence-incomplete {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #fde68a 0, #fde68a 4px,       /* amber-200 hatch */
+    #dcfce7 4px, #dcfce7 11px      /* green-100 base */
+  );
+  border-radius: 3px;
+}
+/* Hover feedback for the striped incomplete state (its background is a gradient,
+   so a Tailwind hover:bg-* can't apply) — parity with the green/amber/gray
+   sentences, which all darken on hover. Suppressed while selected. */
+.sentence-incomplete:not(.sentence-selected):hover {
+  filter: brightness(0.95);
 }
 
 /* Sentence spans: extend hover target to fill inter-line gaps without changing line spacing */
@@ -167,8 +192,8 @@ details[open] summary::before {
 /* ---- Unified Rows attribute editor: control type + icon tooltips ---- */
 /* Standardized 12px control type across value cells, "+ attribute", and
    tooltips (matches the finding-card mockup). --tipdelay defers the tooltip
-   ~300ms so it doesn't flash on cursor pass-through. */
-:root { --ctl-fs: 12px; --tipdelay: .3s; }
+   ~500ms so it doesn't flash on cursor pass-through. */
+:root { --ctl-fs: 12px; --tipdelay: .5s; }
 
 .ctl {
   font-size: var(--ctl-fs);
@@ -180,18 +205,35 @@ details[open] summary::before {
 /* CSS-only tooltip: any element with data-tip shows its text on hover.
    Rendered ABOVE the icon by default. */
 [data-tip] { position: relative; }
-[data-tip]:hover::after {
+/* An empty data-tip (e.g. a bound :data-tip whose source string is blank) must
+   not render an empty tooltip box on hover. */
+[data-tip=""]:hover::after { content: none; }
+/* :not(:focus) suppresses the tip the moment a button is clicked (clicking a
+   button focuses it in Chromium/Firefox) instead of leaving it stuck onscreen
+   until the mouse physically leaves — distracting right when a click opens a
+   popover next to it. No-op on non-focusable tip hosts (badges, spans). */
+[data-tip]:hover:not(:focus)::after {
   content: attr(data-tip);
   position: absolute;
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
   margin-bottom: 5px;
-  white-space: nowrap;
+  /* Cap the width and wrap rather than nowrap: a long tip (e.g. an attribute's
+     description) would otherwise stretch off to one side and overlap adjacent
+     controls. Short tips still render on a single line (width: max-content). */
+  width: max-content;
+  max-width: 220px;
+  white-space: normal;
+  text-align: center;
   background: #111827;
   color: #fff;
   font-size: var(--ctl-fs);
   font-weight: 400;
+  /* text-transform is inherited — without this reset, a tip on an
+     uppercase-styled badge (e.g. the "custom" label) would render in caps
+     too, even though the data-tip string itself is written in sentence case. */
+  text-transform: none;
   line-height: 1;
   padding: 3px 6px;
   border-radius: 4px;
@@ -212,3 +254,335 @@ details[open] summary::before {
 }
 
 @keyframes tipIn { to { opacity: 1; } }
+
+/* ---- Floating workspace: sidebar redesign (2026-07-04) ---- */
+/* Surface tokens tuned in-app (bumped beyond the original mockup-slider
+   values, which read as too subtle once rendered for real — see the plan's
+   Implementation deviations): near-white card, canvas ~3.5% darker, a wider
+   and darker shadow doing the separating. --ctrl-h is the shared height for
+   the sidebar nav row + quiet CTAs. */
+:root {
+  --surface: hsl(20 10% 99.5%);
+  --canvas:  hsl(20 10% 96.5%);
+  --elev:    0 10px 42px -14px rgba(28, 25, 23, 0.16);
+  --ctrl-h:  30px;
+}
+
+/* Sidebar + findings panel: rounded cards floating on --canvas. The report
+   column stays transparent and sits directly on the canvas (Option A). */
+.card-float {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--elev);
+}
+
+/* Shared 30px control height (nav buttons, jump input, quiet CTAs) so the
+   whole row reads as one calm family instead of mismatched heights. */
+.ctrl-h {
+  height: var(--ctrl-h);
+}
+
+/* Shared wide-tracked-caps label look (status eyebrow, drawer subheads,
+   export-grid column headers) — same size/weight/case/color; each keeps
+   its own letter-spacing and layout extras. */
+.side-eyebrow,
+.drawer-subhead,
+.export-grid .colh {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #a8a29e;
+}
+
+/* Status block: hero id + eyebrow + not-yet-validated chip. */
+.side-eyebrow {
+  letter-spacing: .1em;
+}
+.side-hero-id {
+  /* Long accession-style identifiers (ARN-RSNA-CXR-0221) must fit the rail.
+     Browsers don't expose SF Pro Condensed / SF Compact by family name, so
+     use the nameable condensed system faces: Avenir Next Condensed ships
+     with macOS, Arial Narrow with macOS + Windows. font-stretch narrows
+     width-variable fonts on other platforms; ellipsis remains the last
+     resort (full id in the hover tooltip). */
+  font-family: 'Avenir Next Condensed', 'Arial Narrow', 'Helvetica Neue', system-ui, sans-serif;
+  font-stretch: condensed;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1c1917;
+  letter-spacing: -.01em;
+  line-height: 1.05;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip-pend {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f5f5f4;
+  color: #78716c;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+.chip-pend .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #a8a29e;
+}
+/* Same box (padding/font-size/border-radius) as .chip-pend, colors only —
+   swapping between them on validate/unvalidate must not shift height. */
+.chip-pend.chip-validated {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Quiet ghost CTA (Next unvalidated). */
+.cta-quiet {
+  width: 100%;
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  color: #57534e;
+  border: 1px solid #e7e5e4;
+  border-radius: 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.cta-quiet:hover {
+  background: #fafaf9;
+  color: #292524;
+}
+
+/* Quiet "Flag exam" trigger + its self-contained red panel. The panel
+   replaces the trigger in place (no layout jostle elsewhere in the sidebar). */
+.flagbtn-side {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #78716c;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+.flagbtn-side:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+.flag-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 8px;
+  padding: 9px 10px;
+  text-align: left;
+}
+.flag-x-btn {
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  border-radius: 5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.flag-x-btn:hover {
+  background: #fee2e2;
+}
+.flag-input {
+  width: 100%;
+  font-size: 12px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: #57534e;
+  font-family: inherit;
+}
+/* Red-tinted variant of the app's shared :focus-visible outline (app.css
+   top), not a from-scratch ring — keeps focus-visible-only (not plain
+   :focus) so it doesn't fire on mouse clicks, matching the global convention. */
+.flag-input:focus-visible {
+  outline: 2px solid #f87171;
+  outline-offset: 2px;
+}
+
+/* Single-open accordion drawer. Alpine-driven `open` state (index.html),
+   not native <details name> — browser support for that is newer than this
+   app targets. */
+.drawer {
+  border-top: 1px solid #e7e5e4;
+}
+.drawer-summary {
+  cursor: pointer;
+  padding: 11px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #57534e;
+}
+.drawer-summary:hover {
+  background: #fafaf9;
+  color: #292524;
+}
+.drawer-chev {
+  transition: transform 200ms ease-out;
+}
+.drawer-chev.is-open {
+  transform: rotate(90deg);
+}
+.drawer-body {
+  padding: 2px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.drawer-subhead {
+  letter-spacing: .07em;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+/* Higher specificity than the base rule above (two classes vs. one) so it
+   wins regardless of stylesheet order — used on the second subhead in a
+   drawer, where more vertical room is wanted than the default 4px. */
+.drawer-subhead.gap-before {
+  margin-top: 10px;
+}
+
+/* One universal drop-or-click zone inside the Import & add data drawer. */
+.dropzone-big {
+  border: 1px dashed #d6d3d1;
+  border-radius: 10px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  cursor: pointer;
+  color: #78716c;
+  background: #fafaf9;
+}
+.dropzone-big:hover {
+  border-color: #a5b4fc;
+  background: #eef2ff;
+  color: #4338ca;
+}
+.dropzone-big .dz-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #292524;
+}
+.dropzone-big:hover .dz-title {
+  color: #4338ca;
+}
+.dropzone-big .dz-sub {
+  font-size: 11px;
+  color: #a8a29e;
+  line-height: 1.45;
+}
+
+/* Export scope x format grid (This report / All reports x JSON / CSV). */
+.export-grid {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  gap: 6px;
+  align-items: center;
+}
+.export-grid .colh {
+  letter-spacing: .06em;
+  text-align: center;
+}
+.export-grid .rowh {
+  font-size: 12px;
+  color: #57534e;
+  padding-right: 2px;
+}
+.export-cell {
+  padding: 7px 0;
+  font-size: 12px;
+  background: #f5f5f4;
+  color: #57534e;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.export-cell:hover {
+  background: #e7e5e4;
+  color: #292524;
+}
+
+/* Click-to-open "?" tooltip on wide-tracked-caps subheaders — click, not
+   hover, so it never shifts the drawer's layout. Alpine (x-show + @click.away)
+   drives visibility; this owns the popover's dark-box chrome. Separate from
+   the [data-tip] hover-tooltip system above since it's click-triggered. */
+.qbtn {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a8a29e;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  flex: none;
+}
+.qbtn:hover,
+.qbtn.is-open {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+.help-pop {
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 190px;
+  background: #1c1917;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.5;
+  padding: 9px 11px;
+  border-radius: 8px;
+  text-align: left;
+  z-index: 40;
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, .5);
+}
+.help-pop::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1c1917;
+}

@@ -48,8 +48,8 @@ test.describe('Confidence carries through import → accept → export', () => {
     await page.evaluate(async () => {
       const app = Alpine.store('app');
       app.selectedSentenceIdx = 1;
-      app.report.llm_extractions.push({
-        finding_name: 'acute infarct', source_sentence_idx: 1, source_text: 'No acute infarct.',
+      app.report.findings.push({
+        finding_name: 'acute infarct', status: 'pending', source_sentence_idx: 1, source_text: 'No acute infarct.',
         attributes: { presence: 'present', chronicity: 'acute' },
         confidence: { chronicity: 'hedged' },
       });
@@ -57,7 +57,7 @@ test.describe('Confidence carries through import → accept → export', () => {
       await app.acceptFinding(0);
     });
     const vf = await page.evaluate(async () =>
-      (await Storage.loadReport('R001')).validated_findings.find(f => /infarct/.test(f.finding_name)));
+      (await Storage.loadReport('R001')).findings.find(f => /infarct/.test(f.finding_name)));
     expect(vf.confidence.chronicity).toBe('hedged');
   });
 
@@ -65,8 +65,8 @@ test.describe('Confidence carries through import → accept → export', () => {
     // Pre-validate a finding whose chronicity is empty; re-import supplies it hedged.
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      app.report.validated_findings.push({
-        finding_name: 'acute infarct', taxonomy_id: 'HID005', source_sentence_idx: 1,
+      app.report.findings.push({
+        finding_name: 'acute infarct', status: 'validated', taxonomy_id: 'HID005', source_sentence_idx: 1,
         source_text: 'No acute infarct.', origin: 'llm', was_modified: false, is_custom: false,
         attributes: { presence: 'absent' }, // no chronicity yet
       });
@@ -78,8 +78,10 @@ test.describe('Confidence carries through import → accept → export', () => {
     }], MAP);
     await expect(async () => {
       const vf = await page.evaluate(async () =>
-        (await Storage.loadReport('R001')).validated_findings.find(f => /infarct/.test(f.finding_name)));
-      expect(vf.attributes.chronicity).toBe('acute');
+        (await Storage.loadReport('R001')).findings.find(f => /infarct/.test(f.finding_name)));
+      // chronicity is multi-value (D5) — the parser emits an array even for a
+      // single value.
+      expect(vf.attributes.chronicity).toEqual(['acute']);
       expect(vf.confidence.chronicity).toBe('hedged');
     }).toPass();
   });
@@ -94,14 +96,14 @@ test.describe('Confidence carries through import → accept → export', () => {
     // Wait for the pending extraction to surface on the (reloaded) report.
     await page.waitForFunction(() =>
       Alpine.store('app').report
-      && (Alpine.store('app').report.llm_extractions || []).some(e => /mass/.test(e.finding_name)),
+      && (Alpine.store("app").report.findings || []).some(e => e.status === "pending" && /mass/.test(e.finding_name)),
       { timeout: 10000 });
 
     // Accept it, then export the training CSV rows.
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      const idx = app.report.llm_extractions.findIndex(e => /mass/.test(e.finding_name));
-      app.selectedSentenceIdx = app.report.llm_extractions[idx].source_sentence_idx || 2;
+      const idx = app.report.findings.findIndex(e => e.status === "pending" && /mass/.test(e.finding_name));
+      app.selectedSentenceIdx = app.report.findings[idx].source_sentence_idx || 2;
       await app.acceptFinding(idx);
     });
 
@@ -116,11 +118,37 @@ test.describe('Confidence carries through import → accept → export', () => {
     }).toPass();
   });
 
+  test('a presence hedge (presence_confidence=hedged) survives import and reads "possible" (D3)', async ({ page }) => {
+    // The workbench polarity+hedge model: a hedged positive imports as present +
+    // confidence.presence:'hedged' — no longer stripped at the import boundary.
+    await runImport(page, [{
+      record_id: 'R001', finding_name: 'acute infarct', source_text: 'No acute infarct.',
+      presence: 'present', presence_confidence: 'hedged',
+    }], { record_id: 'record_id', finding_name: 'finding_name', source_text: 'source_text', presence: 'presence' });
+
+    await expect(async () => {
+      const pend = await page.evaluate(async () =>
+        (await Storage.loadReport('R001')).findings.find(f => f.status === 'pending' && /infarct/.test(f.finding_name)));
+      expect(pend).toBeTruthy();
+      expect(pend.attributes.presence).toBe('present');
+      expect(pend.confidence.presence).toBe('hedged');
+    }).toPass();
+    // Its spectrum cell reads "possible" with the present+hedged icon.
+    expect(await page.evaluate(() => {
+      const f = (Alpine.store('app').report.findings || []).find(x => x.status === 'pending' && /infarct/.test(x.finding_name));
+      return Alpine.store('app').presenceCellDisplay(f);
+    })).toBe('possible');
+    expect(await page.evaluate(() => {
+      const f = (Alpine.store('app').report.findings || []).find(x => x.status === 'pending' && /infarct/.test(x.finding_name));
+      return Alpine.store('app').presenceCellIcon(f);
+    })).toBe(await page.evaluate(() => Alpine.store('app').presenceOptions().find(o => o.presence === 'present' && o.hedged).icon));
+  });
+
   test('re-import does NOT hedge an axis the annotator already valued (preserve-annotator)', async ({ page }) => {
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      app.report.validated_findings.push({
-        finding_name: 'acute infarct', taxonomy_id: 'HID005', source_sentence_idx: 1,
+      app.report.findings.push({
+        finding_name: 'acute infarct', status: 'validated', taxonomy_id: 'HID005', source_sentence_idx: 1,
         source_text: 'No acute infarct.', origin: 'llm', was_modified: false, is_custom: false,
         attributes: { presence: 'absent', chronicity: 'acute' }, // annotator value
       });
@@ -133,7 +161,7 @@ test.describe('Confidence carries through import → accept → export', () => {
     }], MAP);
     await expect(async () => {
       const vf = await page.evaluate(async () =>
-        (await Storage.loadReport('R001')).validated_findings.find(f => /infarct/.test(f.finding_name)));
+        (await Storage.loadReport('R001')).findings.find(f => /infarct/.test(f.finding_name)));
       expect(vf.attributes.chronicity).toBe('acute'); // annotator value survives
       expect(vf.confidence && vf.confidence.chronicity).toBeFalsy(); // and stays un-hedged
     }).toPass();

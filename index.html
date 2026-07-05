@@ -9,48 +9,30 @@
   <title>Report Annotator</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
-  <!-- Tailwind CSS Play CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          transitionTimingFunction: {
-            'custom': 'cubic-bezier(0.23, 1, 0.32, 1)',
-          },
-          colors: {
-            gray: { 50:'#fafaf9',100:'#f5f5f4',200:'#e7e5e4',300:'#d6d3d1',400:'#a8a29e',500:'#78716c',600:'#57534e',700:'#44403c',800:'#292524',900:'#1c1917',950:'#0c0a09' },
-            green: { 50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',300:'#86efac',400:'#4ade80',500:'#22c55e',600:'#16a34a',700:'#15803d',800:'#166534',900:'#14532d' },
-            amber: { 50:'#fffbeb',100:'#fef3c7',200:'#fde68a',300:'#fcd34d',400:'#fbbf24',500:'#f59e0b',600:'#d97706',700:'#b45309',800:'#92400e',900:'#78350f' },
-            blue: { 50:'#f0f9ff',100:'#e0f2fe',200:'#bae6fd',300:'#7dd3fc',400:'#38bdf8',500:'#0ea5e9',600:'#0284c7',700:'#0369a1',800:'#075985',900:'#0c4a6e' },
-            red: { 50:'#fef2f2',100:'#fee2e2',200:'#fecaca',300:'#fca5a5',400:'#f87171',500:'#ef4444',600:'#dc2626',700:'#b91c1c',800:'#991b1b',900:'#7f1d1d' },
-            orange: { 50:'#fff7ed',100:'#ffedd5',200:'#fed7aa',300:'#fdba74',400:'#fb923c',500:'#f97316',600:'#ea580c',700:'#c2410c',800:'#9a3412',900:'#7c2d12' },
-            indigo: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' },
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Precompiled Tailwind (regenerate after class-usage changes:
+       npx tailwindcss -i css/tailwind.source.css -o css/tailwind.css --minify) -->
+  <link rel="stylesheet" href="css/tailwind.css">
 
-  <!-- Tabler Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.36.1/dist/tabler-icons.min.css">
+  <!-- Tabler Icons (vendored) -->
+  <link rel="stylesheet" href="vendor/tabler/tabler-icons.min.css">
 
-  <!-- Dexie.js (IndexedDB) -->
-  <script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.min.js"></script>
-
-  <!-- PapaParse (CSV) -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5/papaparse.min.js"></script>
-
-  <!-- Alpine.js (loaded last, deferred) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
-
-  <!-- App modules (order matters: deps before app.js) -->
-  <script src="js/storage.js"></script>
-  <script src="js/sentences.js"></script>
-  <script src="js/taxonomy.js"></script>
-  <script src="js/extraction-import.js"></script>
-  <script src="js/exam-type.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Vendored libraries + app modules. All deferred: every file only
+       registers globals, defer preserves document order, and Alpine loads
+       last so alpine:init fires after app.js has registered its listener. -->
+  <script defer src="vendor/dexie.min.js"></script>
+  <script defer src="vendor/papaparse.min.js"></script>
+  <script defer src="vendor/fflate.min.js"></script>
+  <script defer src="js/storage.js"></script>
+  <script defer src="js/sentences.js"></script>
+  <script defer src="js/taxonomy.js"></script>
+  <script defer src="js/schema.js"></script>
+  <script defer src="js/extraction-import.js"></script>
+  <script defer src="js/file-classifier.js"></script>
+  <script defer src="js/undo.js"></script>
+  <script defer src="js/idm-loader.js"></script>
+  <script defer src="js/exam-type.js"></script>
+  <script defer src="js/app.js"></script>
+  <script defer src="vendor/alpine.min.js"></script>
 
   <!-- Custom styles -->
   <link rel="stylesheet" href="css/app.css">
@@ -58,6 +40,20 @@
 <body class="bg-gray-50 text-gray-900">
 
 <div x-data x-init="$store.app.init()" class="h-screen flex flex-col">
+
+  <!-- ============================== -->
+  <!-- VIEW: Loading                  -->
+  <!-- Initial view while init() resolves — prevents a mid-session reload  -->
+  <!-- from flashing the empty welcome screen.                             -->
+  <!-- ============================== -->
+  <template x-if="$store.app.currentView === 'loading'">
+    <div class="w-full h-full flex items-center justify-center" data-loading-view>
+      <div class="text-center text-gray-400">
+        <i class="ti ti-loader-2 text-3xl animate-spin inline-block"></i>
+        <p class="mt-2 text-sm">Loading…</p>
+      </div>
+    </div>
+  </template>
 
   <!-- ============================== -->
   <!-- VIEW: Welcome                  -->
@@ -85,75 +81,200 @@
           </div>
         </template>
 
-        <!-- Taxonomy selector -->
-        <div class="mb-6 bg-white rounded-lg shadow-sm p-5"
-             :class="$store.app.taxonomy.length > 0 ? 'border border-gray-200' : 'border-2 border-indigo-300 bg-indigo-50/30'">
-          <div class="flex items-center justify-between">
-            <div>
-              <h2 class="text-sm font-semibold text-gray-900">Active Taxonomy</h2>
+        <!-- Universal drop zone: one front door for every accepted file type.
+             The classifier routes each file by content signature; the chips
+             below say what each file was recognized as and why. -->
+        <div class="mb-6">
+          <label id="universal-drop"
+                 class="drop-zone relative flex items-center justify-center border-2 border-dashed border-indigo-300 bg-indigo-50/40 hover:bg-indigo-50 rounded-lg p-6 cursor-pointer transition-colors min-h-[110px]"
+                 @dragover.prevent="$el.classList.add('drop-zone-active')"
+                 @dragleave.prevent="$el.classList.remove('drop-zone-active')"
+                 @drop.prevent="$el.classList.remove('drop-zone-active'); $store.app.handleUniversalDrop($event.dataTransfer.files)">
+            <input type="file" multiple class="absolute inset-0 opacity-0 cursor-pointer"
+                   @change="$store.app.handleUniversalDrop($event.target.files); $event.target.value = ''">
+            <div class="pointer-events-none text-center">
+              <i class="ti ti-cloud-upload text-2xl text-indigo-600"></i>
+              <p class="mt-2 text-sm font-medium text-indigo-800">Drop your files here — any order, all at once is fine</p>
+              <p class="mt-1 text-xs text-indigo-600">Taxonomy CSV · reports CSV · AI extractions · saved session · data bundle (.idm)</p>
+            </div>
+          </label>
+
+          <!-- Per-file routing chips -->
+          <template x-if="$store.app.dropResults.length > 0">
+            <div class="mt-2 space-y-1">
+              <template x-for="(chip, ci) in $store.app.dropResults" :key="ci">
+                <div data-drop-chip :data-chip-status="chip.status"
+                     class="flex items-start gap-2 px-3 py-1.5 rounded border text-xs"
+                     :class="chip.status === 'error' ? 'bg-red-50 border-red-200 text-red-800'
+                            : chip.status === 'queued' ? 'bg-amber-50 border-amber-200 text-amber-800'
+                            : 'bg-green-50 border-green-200 text-green-800'">
+                  <i class="ti mt-0.5"
+                     :class="chip.status === 'error' ? 'ti-alert-circle'
+                            : chip.status === 'queued' ? 'ti-clock' : 'ti-check'"></i>
+                  <div class="min-w-0">
+                    <span class="font-medium" x-text="chip.name"></span>
+                    <span> — </span>
+                    <span x-text="chip.status === 'queued'
+                        ? 'waiting for reports — will import automatically when reports are loaded'
+                        : chip.rationale"></span>
+                    <template x-if="chip.note">
+                      <span class="text-gray-500"> (<span x-text="chip.note"></span>)</span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </template>
+        </div>
+
+        <!-- Setup stepper: the one checklist a first-time user follows. Each
+             step shows a state chip; the drop zone above routes files in the
+             right order no matter how they're dropped, so the gating here is
+             purely visual guidance. -->
+        <div class="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 divide-y divide-gray-100">
+
+          <!-- Step 1: Taxonomy -->
+          <div class="flex items-center gap-4 p-4" data-step="taxonomy" :data-step-state="$store.app.stepState('taxonomy')">
+            <span class="flex-none inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold"
+                  :class="$store.app.stepState('taxonomy') === 'done' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'">
+              <template x-if="$store.app.stepState('taxonomy') === 'done'"><i class="ti ti-check"></i></template>
+              <template x-if="$store.app.stepState('taxonomy') !== 'done'"><span>1</span></template>
+            </span>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-sm font-semibold text-gray-900">Load a findings taxonomy</h2>
               <template x-if="$store.app.taxonomy.length > 0">
-                <p class="text-sm text-gray-500 mt-0.5">
+                <p class="text-xs text-gray-500 mt-0.5">
                   <span class="font-medium" x-text="$store.app.examType"></span>
-                  &mdash; <span x-text="$store.app.taxonomy.length"></span> findings
+                  &mdash; <span x-text="$store.app.taxonomy.length"></span> findings loaded
                 </p>
               </template>
               <template x-if="$store.app.taxonomy.length === 0">
-                <p class="text-sm text-indigo-700 mt-0.5">
-                  No taxonomy loaded. Upload a findings taxonomy CSV before importing reports.
-                </p>
+                <p class="text-xs text-gray-500 mt-0.5">The list of finding names this exam type uses. Drop the taxonomy CSV above, or browse for it here.</p>
               </template>
             </div>
-            <div class="flex items-center gap-2">
-              <label class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors cursor-pointer">
-                <i class="ti ti-upload text-base"></i> Upload Taxonomy CSV
-                <input type="file" accept=".csv" class="hidden"
-                       @change="$store.app.handleTaxonomyUpload($event.target.files[0]); $event.target.value = ''">
-              </label>
+            <span data-step-chip class="flex-none text-[11px] font-medium uppercase tracking-wide px-2 py-0.5 rounded"
+                  :class="$store.app.stepState('taxonomy') === 'done' ? 'bg-green-100 text-green-700' : 'bg-indigo-100 text-indigo-700'"
+                  x-text="$store.app.stepState('taxonomy') === 'done' ? 'done' : 'start here'"></span>
+            <label class="flex-none text-xs text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
+              browse…
+              <input type="file" accept=".csv" class="hidden"
+                     @change="$store.app.handleTaxonomyUpload($event.target.files[0]); $event.target.value = ''">
+            </label>
+          </div>
+
+          <!-- Step 2: Reports -->
+          <div class="flex items-center gap-4 p-4" data-step="reports" :data-step-state="$store.app.stepState('reports')">
+            <span class="flex-none inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold"
+                  :class="$store.app.stepState('reports') === 'done' ? 'bg-green-100 text-green-700'
+                        : $store.app.stepState('reports') === 'current' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'">
+              <template x-if="$store.app.stepState('reports') === 'done'"><i class="ti ti-check"></i></template>
+              <template x-if="$store.app.stepState('reports') !== 'done'"><span>2</span></template>
+            </span>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-sm font-semibold" :class="$store.app.stepState('reports') === 'waiting' ? 'text-gray-400' : 'text-gray-900'">Load the reports to annotate</h2>
+              <template x-if="$store.app.totalCount > 0">
+                <p class="text-xs text-gray-500 mt-0.5"><span x-text="$store.app.totalCount"></span> reports loaded (<span x-text="$store.app.validatedCount"></span> validated)</p>
+              </template>
+              <template x-if="$store.app.totalCount === 0">
+                <p class="text-xs mt-0.5" :class="$store.app.stepState('reports') === 'waiting' ? 'text-gray-400' : 'text-gray-500'"
+                   x-text="$store.app.stepState('reports') === 'waiting'
+                     ? 'Load a taxonomy first — findings are matched against it.'
+                     : 'A CSV with an ID column and a report text column. See the format guide below.'"></p>
+              </template>
             </div>
+            <span data-step-chip class="flex-none text-[11px] font-medium uppercase tracking-wide px-2 py-0.5 rounded"
+                  :class="$store.app.stepState('reports') === 'done' ? 'bg-green-100 text-green-700'
+                        : $store.app.stepState('reports') === 'current' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'"
+                  x-text="$store.app.stepState('reports') === 'done' ? 'done' : $store.app.stepState('reports') === 'current' ? 'next' : 'waiting'"></span>
+            <label class="flex-none text-xs text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
+              browse…
+              <input type="file" accept=".csv" class="hidden"
+                     @change="$store.app.handleReportsCsvUpload($event.target.files[0]); $event.target.value = ''">
+            </label>
+          </div>
+
+          <!-- Step 3: Extractions (optional) -->
+          <div class="flex items-center gap-4 p-4" data-step="extractions" :data-step-state="$store.app.stepState('extractions')">
+            <span class="flex-none inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold"
+                  :class="$store.app.stepState('extractions') === 'done' ? 'bg-green-100 text-green-700'
+                        : $store.app.stepState('extractions') === 'optional' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'">
+              <template x-if="$store.app.stepState('extractions') === 'done'"><i class="ti ti-check"></i></template>
+              <template x-if="$store.app.stepState('extractions') !== 'done'"><span>3</span></template>
+            </span>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-sm font-semibold" :class="$store.app.stepState('extractions') === 'waiting' ? 'text-gray-400' : 'text-gray-900'">Import AI extractions <span class="font-normal text-gray-400">(optional)</span></h2>
+              <p class="text-xs mt-0.5" :class="$store.app.stepState('extractions') === 'waiting' ? 'text-gray-400' : 'text-gray-500'">
+                Findings pre-extracted by an AI, for you to review instead of annotating from scratch.
+                <a href="pages/llm-extractions.html" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">LLM extractions playbook</a>
+              </p>
+            </div>
+            <span data-step-chip class="flex-none text-[11px] font-medium uppercase tracking-wide px-2 py-0.5 rounded"
+                  :class="$store.app.stepState('extractions') === 'done' ? 'bg-green-100 text-green-700'
+                        : $store.app.stepState('extractions') === 'optional' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'"
+                  x-text="$store.app.stepState('extractions') === 'done' ? 'done'
+                        : $store.app.stepState('extractions') === 'optional' ? 'optional'
+                        : $store.app.queuedExtractions.length > 0 ? 'queued' : 'waiting'"></span>
+            <label class="flex-none text-xs text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
+              browse…
+              <input type="file" accept=".json,.csv,application/json,text/csv" class="hidden"
+                     @change="$store.app.handleUniversalDrop($event.target.files); $event.target.value = ''">
+            </label>
+          </div>
+
+          <!-- Start annotating -->
+          <div class="flex items-center gap-4 p-4">
+            <span class="flex-none inline-flex items-center justify-center w-7 h-7 rounded-full text-sm font-semibold"
+                  :class="$store.app.totalCount > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'">
+              <i class="ti ti-arrow-right"></i>
+            </span>
+            <div class="flex-1">
+              <h2 class="text-sm font-semibold" :class="$store.app.totalCount > 0 ? 'text-gray-900' : 'text-gray-400'">Start annotating</h2>
+            </div>
+            <button data-start-annotating @click="$store.app.currentView = 'annotate'"
+                    :disabled="$store.app.totalCount === 0"
+                    class="flex-none px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">
+              Start annotating
+            </button>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-6">
-          <!-- Upload reports CSV -->
-          <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">Upload Reports CSV</h2>
-            <p class="text-sm text-gray-500 mb-4">Import a new set of reports to annotate.</p>
-            <label class="drop-zone relative flex-1 flex items-center justify-center border-2 border-dashed border-blue-200 bg-blue-50/40 hover:bg-blue-50 rounded-lg p-6 cursor-pointer transition-colors min-h-[120px]"
-                   @dragover.prevent="$el.classList.add('drop-zone-active')"
-                   @dragleave.prevent="$el.classList.remove('drop-zone-active')"
-                   @drop.prevent="$el.classList.remove('drop-zone-active'); $store.app.handleReportsCsvUpload($event.dataTransfer.files[0])">
-              <input type="file" accept=".csv" class="absolute inset-0 opacity-0 cursor-pointer"
-                     @change="$store.app.handleReportsCsvUpload($event.target.files[0]); $event.target.value = ''">
-              <div class="pointer-events-none text-center">
-                <i class="ti ti-file-spreadsheet text-2xl text-blue-600"></i>
-                <p class="mt-2 text-sm font-medium text-blue-700">Drop a CSV here or click to browse</p>
-                <p class="mt-1 text-xs text-blue-600">CSV must have an ID column and a report text column</p>
-              </div>
-            </label>
-            <a href="pages/reports-format-guide.html" target="_blank"
-               class="text-xs text-blue-600 hover:text-blue-800 underline mt-2 self-start">
-              Reports CSV format guide →
-            </a>
-          </section>
-
-          <!-- Restore saved session -->
-          <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">Restore Saved Session</h2>
-            <p class="text-sm text-gray-500 mb-4">Continue where you left off using a saved session file.</p>
-            <label class="drop-zone relative flex-1 flex items-center justify-center border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 rounded-lg p-6 cursor-pointer transition-colors min-h-[120px]"
-                   @dragover.prevent="$el.classList.add('drop-zone-active')"
-                   @dragleave.prevent="$el.classList.remove('drop-zone-active')"
-                   @drop.prevent="$el.classList.remove('drop-zone-active'); if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.dataTransfer.files[0])">
-              <input type="file" accept=".json" class="absolute inset-0 opacity-0 cursor-pointer"
-                     @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0]); $event.target.value = ''">
-              <div class="pointer-events-none text-center">
-                <i class="ti ti-folder-open text-2xl text-gray-700"></i>
-                <p class="mt-2 text-sm font-medium text-gray-800">Drop a session JSON here or click to browse</p>
-                <p class="mt-1 text-xs text-gray-500">This will replace any current work after confirmation</p>
-              </div>
-            </label>
-          </section>
+        <!-- Restore a saved session file (the drop zone above accepts it too) -->
+        <div class="mb-6 flex items-center gap-2 text-xs text-gray-500">
+          <i class="ti ti-folder-open text-base text-gray-400"></i>
+          <span>Returning with a saved session file?</span>
+          <label class="text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
+            Restore it here
+            <input type="file" accept=".json" class="hidden"
+                   @change="const f = $event.target.files[0]; $event.target.value = ''; if (f) $store.app.confirmDialog('Restore this saved session? It replaces all current data.', 'A backup of the current data is taken automatically first.').then(ok => { if (ok) $store.app.restoreSession(f) })">
+          </label>
+          <span class="text-gray-400">— replaces any current work after confirmation.</span>
         </div>
+
+        <!-- Recover from a recent backup: snapshots are taken automatically
+             before every destructive action (replace, clear, taxonomy switch).
+             Only shown when at least one snapshot exists. -->
+        <template x-if="$store.app.backups.length > 0">
+          <div class="mt-6 bg-white rounded-lg shadow-sm border border-amber-200 border-l-4 border-l-amber-400 p-5">
+            <h3 class="text-sm font-semibold text-amber-800 mb-1">Restore a recent backup</h3>
+            <p class="text-sm text-gray-500 mb-3">Automatic snapshots from just before the last few destructive actions. Restoring is itself undoable — your current data is snapshotted first.</p>
+            <div class="space-y-2">
+              <template x-for="b in $store.app.backups" :key="b.id">
+                <div class="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50/50 border border-amber-100 rounded">
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-gray-800" x-text="$store.app.formatBackupTime(b.created_at)"></p>
+                    <p class="text-xs text-gray-500">
+                      <span x-text="b.report_count"></span> report(s)<template x-if="b.taxonomy"><span> &middot; <span x-text="b.taxonomy"></span></span></template>
+                    </p>
+                  </div>
+                  <button @click="$store.app.confirmDialog('Restore this backup?', 'Your current data is snapshotted first, so restoring is itself undoable.').then(ok => { if (ok) $store.app.restoreFromBackup(b.id) })"
+                          class="flex-none px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors">
+                    Restore
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
 
         <!-- Getting started -->
         <details class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -164,7 +285,7 @@
             <p><strong>Step 1:</strong> Start with a CSV containing an ID column and a report text column (any header names work).</p>
             <p><strong>Step 2:</strong> Upload it above — the tool auto-detects columns and lets you pick which is which.</p>
             <p><strong>Step 3 (optional):</strong> Test your extraction algorithm using the tools below, then import the results.</p>
-            <p class="text-xs text-gray-400 mt-2">Tip: Your work auto-saves in the browser. Use Save Session to create a portable backup you can restore later.</p>
+            <p class="text-xs text-gray-400 mt-2">Tip: Your work auto-saves in the browser. Open the "Save & export" panel and click Save to create a portable backup you can restore later.</p>
           </div>
         </details>
 
@@ -445,6 +566,41 @@
                     <span x-text="$store.app.extractionValidationSummary.counts.total"></span> rows ready to import
                   </p>
 
+                  <!-- Coverage summary (D4): informational, non-blocking — the
+                       signal for a silently partial extraction (the AI skipped
+                       some of the attached reports, or its reply got cut off). -->
+                  <p class="text-xs mt-1"
+                     :class="$store.app.extractionCoverage.covered === $store.app.extractionCoverage.total ? 'text-gray-500' : 'text-amber-800'">
+                    Findings cover
+                    <span x-text="$store.app.extractionCoverage.covered"></span> of
+                    <span x-text="$store.app.extractionCoverage.total"></span> loaded reports
+                    <span x-show="$store.app.extractionCoverage.uncoveredIds.length > 0">
+                      — not covered:
+                      <span class="font-mono" x-text="$store.app.extractionCoverage.uncoveredIds.slice(0, 5).join(', ') + ($store.app.extractionCoverage.uncoveredIds.length > 5 ? '...' : '')"></span>
+                    </span>
+                  </p>
+
+                  <!-- Rows set aside before checking (unknown record_id / missing
+                       identity fields). Outside the ready<total list below: these
+                       rows aren't in that denominator, and silently shrinking the
+                       count is exactly the confusion this note prevents. -->
+                  <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-900"
+                       x-show="$store.app.extractionDropSummary">
+                    <p class="font-medium">
+                      <span x-text="$store.app.extractionDropSummary?.count"></span>
+                      row(s) were set aside before checking and are NOT in the counts above.
+                    </p>
+                    <p x-show="($store.app.extractionDropSummary?.unknownIds || []).length > 0">
+                      They name report IDs that aren't loaded
+                      (<span class="font-mono" x-text="($store.app.extractionDropSummary?.unknownIds || []).slice(0, 5).join(', ') + (($store.app.extractionDropSummary?.unknownIds || []).length > 5 ? '...' : '')"></span>).
+                      If the AI extracted from a newer reports file, import that reports CSV first, then re-run this check.
+                    </p>
+                    <p x-show="($store.app.extractionDropSummary?.missing || 0) > 0">
+                      <span x-text="$store.app.extractionDropSummary?.missing"></span>
+                      of them are missing record_id or finding_name entirely.
+                    </p>
+                  </div>
+
                   <ul class="mt-2 ml-4 list-disc text-xs space-y-0.5"
                       x-show="$store.app.extractionValidationSummary.counts.ready < $store.app.extractionValidationSummary.counts.total">
                     <li x-show="$store.app.extractionValidationSummary.counts.missingRequired > 0"
@@ -452,16 +608,36 @@
                     <li x-show="$store.app.extractionValidationSummary.counts.unknownRecord > 0"
                         x-text="$store.app.extractionValidationSummary.counts.unknownRecord + ' rows: record_id not in loaded reports'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.notInReport > 0"
-                        x-text="$store.app.extractionValidationSummary.counts.notInReport + ' rows: source_text not in named report and not in any other loaded report (likely paraphrase or hallucination)'"></li>
+                        x-text="$store.app.extractionValidationSummary.counts.notInReport + ' rows: source_text not found anywhere in the named report (likely paraphrase or hallucination)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.outOfScope > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.outOfScope + ' rows: quote is real but comes from the Impression/Conclusion — the tool annotates FINDINGS sentences only (see closest matches below)'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.boilerplate > 0"
+                        x-text="$store.app.extractionValidationSummary.counts.boilerplate + ' rows: templated wording found in other reports but not in the named one — the named report likely words it slightly differently (see closest matches below)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.crossAttributed > 0"
                         x-text="$store.app.extractionValidationSummary.counts.crossAttributed + ' rows: source_text not in named report but found in another loaded report (likely record_id mix-up)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.ambiguous > 0"
                         x-text="$store.app.extractionValidationSummary.counts.ambiguous + ' rows: source_text matches multiple sentences (add section header to disambiguate)'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.badPresence > 0"
-                        x-text="$store.app.extractionValidationSummary.counts.badPresence + ' rows: presence value not in {present, absent, indeterminate}'"></li>
+                        x-text="$store.app.extractionValidationSummary.counts.badPresence + ' rows: presence value not recognized (allowed: ' + Schema.presenceValues().join(', ') + ')'"></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.presenceConverted > 0"
+                        class="text-indigo-700"
+                        x-text="$store.app.extractionValidationSummary.counts.presenceConverted + \" rows: legacy 'indeterminate' converted to possible/no-definite and flagged for review\""></li>
+                    <li x-show="$store.app.extractionValidationSummary.counts.multiSentence > 0"
+                        class="text-indigo-700"
+                        x-text="$store.app.extractionValidationSummary.counts.multiSentence + ' rows: the quote stitched several report sentences together — anchored to the matching sentence and flagged for review'"></li>
                     <li x-show="$store.app.extractionValidationSummary.counts.badEnum > 0"
                         x-text="$store.app.extractionValidationSummary.counts.badEnum + ' rows: an attribute value is not in its allowed enum'"></li>
                   </ul>
+
+                  <!-- Legacy-schema conversion note: values from an older published
+                       schema were moved to their current home. Informational — the
+                       rows import normally. -->
+                  <p class="text-xs text-indigo-700 mt-2"
+                     x-show="($store.app.extractionValidationSummary.legacyMigrated || 0) > 0">
+                    <span x-text="$store.app.extractionValidationSummary.legacyMigrated"></span>
+                    row(s) used names or values from an older version of this tool and were updated automatically:
+                    <span x-text="($store.app.extractionValidationSummary.migrationNotes || []).join('; ') + '.'"></span>
+                  </p>
 
                   <p class="text-xs text-gray-600 mt-2"
                      x-show="$store.app.extractionValidationSummary.customAttributes.size > 0">
@@ -523,11 +699,46 @@
                     </p>
                   </div>
 
-                  <button @click="$store.app.downloadExtractionErrorCsv()"
-                          x-show="$store.app.extractionValidationSummary.invalid.length > 0"
-                          class="mt-2 text-xs text-blue-600 hover:text-blue-800 underline">
-                    Download error report (CSV) — fix upstream and re-upload
-                  </button>
+                  <!-- Closest-sentence suggestion (D4): a row whose source_text didn't
+                       match anything verbatim, but a nearby sentence is a close enough
+                       match to offer a one-click fix. Never shown for a cross-attributed
+                       row (that's a record_id problem, not a wording problem). -->
+                  <div class="mt-2 p-2 bg-indigo-50 border border-indigo-200 rounded text-xs text-indigo-900"
+                       x-show="$store.app.extractionSuggestibleRows.length > 0">
+                    <p class="font-medium mb-1">
+                      <span x-text="$store.app.extractionSuggestibleRows.length"></span>
+                      row(s) have a close match in the report — review and apply if it's correct:
+                    </p>
+                    <div class="space-y-2 max-h-48 overflow-y-auto">
+                      <template x-for="row in $store.app.extractionSuggestibleRows" :key="row.invalidIdx">
+                        <div class="border border-indigo-100 rounded p-2 bg-white">
+                          <p class="font-mono text-[11px] text-gray-500" x-text="row.finding_name + ' — ' + row.record_id"></p>
+                          <p class="mt-1">You wrote: <span class="italic" x-text="'“' + row.source_text + '”'"></span></p>
+                          <p>Closest sentence: <span class="italic" x-text="'“' + row.suggestion.sentenceText + '”'"></span></p>
+                          <button @click="$store.app.applySentenceSuggestion(row.invalidIdx)"
+                                  class="mt-1 text-xs px-2 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors">
+                            Use this sentence
+                          </button>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+
+                  <div class="mt-2 flex flex-wrap gap-3">
+                    <button @click="$store.app.downloadExtractionErrorCsv()"
+                            x-show="$store.app.extractionValidationSummary.invalid.length > 0"
+                            class="text-xs text-blue-600 hover:text-blue-800 underline">
+                      Download error report (CSV) — fix upstream and re-upload
+                    </button>
+                    <!-- Fix-it prompt (D4): packages the rejected rows into a
+                         self-contained message for a fresh AI chat. Hidden when
+                         there's nothing to fix. -->
+                    <button @click="$store.app.copyFixItPrompt()"
+                            x-show="$store.app.extractionValidationSummary.invalid.length > 0"
+                            class="text-xs text-blue-600 hover:text-blue-800 underline">
+                      Copy fix-it prompt for the rejected rows
+                    </button>
+                  </div>
                 </div>
               </template>
 
@@ -586,26 +797,42 @@
               </details>
             </template>
 
-            <!-- Overwrite warning -->
+            <!-- Merge-mode choice: shown only when a touched report already has
+                 unreviewed (pending) findings from an earlier import. -->
             <template x-if="$store.app.extractionReportsWithExisting.length > 0">
               <div class="bg-amber-50 border border-amber-300 rounded-lg p-4">
-                <p class="text-sm font-medium text-amber-800">
+                <p class="text-sm font-medium text-amber-800 mb-2">
                   <i class="ti ti-alert-triangle mr-1"></i>
                   <span x-text="$store.app.extractionReportsWithExisting.length"></span>
-                  report(s) already have extractions that will be replaced.
+                  report(s) already have findings waiting for your review.
                 </p>
+                <div class="space-y-2">
+                  <label class="flex items-start gap-2 text-sm text-amber-900 cursor-pointer">
+                    <input type="radio" name="extraction-merge-mode" value="add"
+                           x-model="$store.app.extractionMergeMode" class="mt-0.5">
+                    <span><strong>Add to what's there</strong> — keep the earlier unreviewed findings and add these new ones alongside them.</span>
+                  </label>
+                  <label class="flex items-start gap-2 text-sm text-amber-900 cursor-pointer">
+                    <input type="radio" name="extraction-merge-mode" value="replace"
+                           x-model="$store.app.extractionMergeMode" class="mt-0.5">
+                    <span><strong>Start over with this file</strong> — remove the earlier unreviewed findings and replace them with these new ones.</span>
+                  </label>
+                </div>
               </div>
             </template>
 
-            <!-- Validated findings warning -->
+            <!-- Validated findings notice. Import PRESERVES your annotations:
+                 confirmExtractionImport merges incoming rows onto existing
+                 validated findings (filling blank attributes only) and never
+                 deletes them — so this is an amber heads-up, not a red warning. -->
             <template x-if="$store.app.extractionReportsWithValidated.length > 0">
-              <div class="bg-red-50 border border-red-300 rounded-lg p-4">
-                <p class="text-sm font-medium text-red-800">
-                  <i class="ti ti-alert-triangle mr-1"></i>
+              <div class="bg-amber-50 border border-amber-300 rounded-lg p-4">
+                <p class="text-sm font-medium text-amber-900">
+                  <i class="ti ti-info-circle mr-1"></i>
                   <span x-text="$store.app.extractionReportsWithValidated.length"></span>
-                  report(s) have validated findings that will be permanently deleted.
+                  report(s) have validated findings. Your annotations are kept.
                 </p>
-                <p class="text-xs text-red-700 mt-1">Export your session first if you want to preserve this work.</p>
+                <p class="text-xs text-amber-800 mt-1">Matching rows fill in blank attributes only; your existing values are never overwritten. Unreviewed pending rows are replaced.</p>
               </div>
             </template>
 
@@ -716,260 +943,314 @@
   <!-- VIEW: Annotate (main workspace)-->
   <!-- ============================== -->
   <template x-if="$store.app.currentView === 'annotate'">
-    <div class="flex h-full overflow-hidden">
+    <div class="flex h-full overflow-hidden gap-4 p-4" style="background: var(--canvas)">
 
       <!-- Sidebar -->
-      <aside class="w-64 min-w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+      <aside class="card-float overflow-hidden w-64 min-w-64 flex flex-col flex-shrink-0">
         <!-- Header -->
-        <div class="px-3 py-3 border-b border-gray-200">
+        <div class="px-3 py-3 border-b border-gray-200 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <button @click="$store.app.currentView = 'welcome'"
                     class="inline-flex items-center justify-center w-7 h-7 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
                     title="Back to welcome screen">
               <i class="ti ti-home text-lg"></i>
             </button>
-            <h1 class="text-sm font-semibold text-gray-500">Report Annotator</h1>
-            <span class="text-xs text-gray-400" x-text="$store.app.examType"></span>
+            <span class="text-sm font-semibold text-gray-900" x-text="$store.app.examType"></span>
           </div>
+          <button @click="$store.app.showStats()"
+                  class="text-gray-400 hover:text-green-600 transition-colors"
+                  title="View annotation statistics">
+            <i class="ti ti-chart-bar text-base"></i>
+          </button>
         </div>
 
-        <!-- Progress -->
-        <div class="px-3 py-3">
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs font-medium text-gray-500">Progress</span>
-            <div class="flex items-center gap-1.5">
-              <span class="text-xs text-gray-400" x-text="$store.app.validatedCount + '/' + $store.app.totalCount"></span>
-              <button @click="$store.app.showStats()"
-                      class="text-gray-300 hover:text-green-600 transition-colors"
-                      title="View annotation statistics">
-                <i class="ti ti-chart-bar text-sm"></i>
-              </button>
-            </div>
+        <!-- Status -->
+        <div class="px-3 pt-5 pb-3 flex flex-col gap-3.5">
+          <div class="text-center">
+            <p class="side-eyebrow mb-1.5">Report <span x-text="$store.app.currentIdx + 1"></span> of <span x-text="$store.app.recordIds.length"></span></p>
+            <template x-if="$store.app.report">
+              <div>
+                <p class="side-hero-id" x-text="$store.app.report.record_id" :title="$store.app.report.record_id"></p>
+                <div class="mt-2.5 flex justify-center">
+                  <span x-show="!$store.app.report.validated" class="chip-pend"><span class="dot"></span> Not yet validated</span>
+                  <span x-show="$store.app.report.validated" x-cloak class="chip-pend chip-validated">Validated</span>
+                </div>
+
+                <!-- Exam flag: quiet trigger; a self-contained red panel
+                     replaces it in place when flagged (no layout jostle
+                     elsewhere in the sidebar). -->
+                <div class="mt-2.5">
+                  <button x-show="!$store.app.report.flagged" @click="$store.app.toggleExamFlag()" class="flagbtn-side transition-colors" title="Flag this exam as a problem">
+                    <i class="ti ti-flag text-sm"></i> Flag exam
+                  </button>
+                  <div x-show="$store.app.report.flagged" x-cloak class="flag-panel">
+                    <div class="flex items-center justify-between">
+                      <span class="inline-flex items-center gap-1.5 text-xs font-bold text-red-600">
+                        <i class="ti ti-flag text-sm"></i> Exam flagged
+                      </span>
+                      <button @click="$store.app.toggleExamFlag()" class="flag-x-btn" title="Remove flag">
+                        <i class="ti ti-x text-sm"></i>
+                      </button>
+                    </div>
+                    <input type="text" class="flag-input" :value="$store.app.report.flag_reason"
+                           @change="$store.app.setExamFlagReason($event.target.value)"
+                           placeholder="What's wrong with this report?">
+                  </div>
+                </div>
+              </div>
+            </template>
           </div>
-          <div class="w-full bg-gray-100 rounded-full h-1.5">
-            <div class="bg-green-500 h-1.5 rounded-full" style="transition: width 300ms ease-out"
-                 :style="'width:' + ($store.app.totalCount > 0 ? ($store.app.validatedCount / $store.app.totalCount * 100) : 0) + '%'"></div>
+
+          <div>
+            <div class="w-full bg-gray-100 rounded-full h-1.5">
+              <div class="bg-green-500 h-1.5 rounded-full" style="transition: width 300ms ease-out"
+                   :style="'width:' + ($store.app.totalCount > 0 ? ($store.app.validatedCount / $store.app.totalCount * 100) : 0) + '%'"></div>
+            </div>
+            <p class="text-xs text-gray-400 mt-1.5 text-center" x-text="$store.app.validatedCount + ' of ' + $store.app.totalCount + ' reports validated'"></p>
           </div>
         </div>
 
         <!-- Navigation -->
-        <div class="px-3 py-3 space-y-2.5">
-          <div class="flex items-center justify-between gap-1.5">
+        <div class="px-3 pb-3 space-y-2">
+          <div class="flex items-center gap-1.5">
             <button @click="$store.app.navigatePrev()"
                     :disabled="$store.app.currentIdx <= 0"
-                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    class="ctrl-h flex-1 px-2 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               &larr; Prev
             </button>
 
-            <div class="flex items-center gap-1">
-              <input type="number" :value="$store.app.currentIdx + 1" min="1" :max="$store.app.recordIds.length"
-                     @change="$store.app.jumpToReport(parseInt($event.target.value))"
-                     @keydown.enter="$store.app.jumpToReport(parseInt($event.target.value))"
-                     class="w-10 text-center text-xs font-medium text-gray-700 border border-gray-300 rounded py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-              <span class="text-xs text-gray-400" x-text="'/ ' + $store.app.recordIds.length"></span>
-            </div>
+            <input type="number" :value="$store.app.currentIdx + 1" min="1" :max="$store.app.recordIds.length"
+                   @change="$store.app.jumpToReport(parseInt($event.target.value))"
+                   @keydown.enter="$store.app.jumpToReport(parseInt($event.target.value))"
+                   class="ctrl-h w-11 text-center text-xs font-medium text-gray-700 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
 
             <button @click="$store.app.navigateNext()"
                     :disabled="$store.app.currentIdx >= $store.app.recordIds.length - 1"
-                    class="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                    class="ctrl-h flex-1 px-2 text-xs bg-gray-100 hover:bg-gray-200 rounded transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
               Next &rarr;
             </button>
           </div>
 
-          <!-- Report info -->
-          <template x-if="$store.app.report">
-            <div>
-              <div class="flex items-center justify-between">
-                <div>
-                  <p class="text-xs font-medium text-gray-900" x-text="$store.app.report.record_id"></p>
-                  <p class="text-xs text-gray-400 mt-0.5"
-                     x-text="$store.app.annotatedSentenceCount() + '/' + ($store.app.report.sentences || []).length + ' sentences with findings'"></p>
-                </div>
-                <span x-show="$store.app.report.validated" x-cloak
-                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                  Validated
-                </span>
-              </div>
-              <label class="flex items-center gap-1.5 mt-1 text-xs text-gray-500 cursor-pointer select-none">
-                <input type="checkbox" x-model="$store.app.showSentenceBoundaries" class="h-3 w-3">
-                <span>Show sentence boundaries</span>
-              </label>
-            </div>
-          </template>
-
           <!-- Next unvalidated button -->
-          <button @click="$store.app.goToNextUnvalidated()"
-                  class="w-full px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
-            Next Unvalidated <kbd class="ml-1 px-1 bg-gray-200 rounded text-xs">n</kbd>
+          <button @click="$store.app.goToNextUnvalidated()" class="ctrl-h cta-quiet transition-colors">
+            Next Unvalidated <kbd class="ml-1 px-1 bg-gray-100 rounded text-xs">n</kbd>
           </button>
         </div>
 
-        <!-- Spacer -->
-        <div class="flex-1"></div>
+        <!-- Scrollable region: spacer + drawers only, so the header/status/nav
+             above never scroll away — if an opened drawer's content is taller
+             than the remaining space, this region scrolls on its own. -->
+        <div class="flex-1 min-h-0 overflow-y-auto flex flex-col">
+          <!-- Spacer -->
+          <div class="flex-1"></div>
 
-        <!-- Data & Export -->
-        <div class="px-3 py-3 border-t border-gray-200 space-y-2">
-          <details class="text-xs">
-            <summary class="cursor-pointer font-semibold text-gray-500 hover:text-gray-700 py-0.5 select-none flex items-center gap-2">Session & Export</summary>
-            <div class="mt-2 space-y-2.5">
+          <!-- Footer: three single-open accordion drawers. Alpine-driven
+               `openDrawer` state (not native <details name> — browser support
+               for that is newer than this app targets). -->
+          <div x-data="{ openDrawer: null, toggle(id) { this.openDrawer = this.openDrawer === id ? null : id } }">
+          <!-- DRAWER: Import & add data -->
+          <div class="drawer">
+            <button @click="toggle('import')" class="drawer-summary w-full transition-colors">
+              <span class="flex items-center gap-1.5"><i class="ti ti-file-import text-base"></i> Import &amp; add data</span>
+              <i class="ti ti-chevron-right text-sm drawer-chev" :class="openDrawer === 'import' ? 'is-open' : ''"></i>
+            </button>
+            <div x-show="openDrawer === 'import'" x-cloak class="drawer-body">
+              <!-- One universal drop-or-click zone: routes any accepted file
+                   (extractions, taxonomy, reports, session, .idm) through the
+                   same classifier the welcome screen uses. -->
+              <label class="dropzone-big drop-zone"
+                     @dragover.prevent="$el.classList.add('drop-zone-active')"
+                     @dragleave.prevent="$el.classList.remove('drop-zone-active')"
+                     @drop.prevent="$el.classList.remove('drop-zone-active'); $store.app.handleUniversalDrop($event.dataTransfer.files)">
+                <input type="file" multiple class="hidden"
+                       @change="$store.app.handleUniversalDrop($event.target.files); $event.target.value = ''">
+                <i class="ti ti-file-import text-xl"></i>
+                <span class="dz-title">Import LLM extractions</span>
+                <span class="dz-sub">Drop a file or click to browse. A taxonomy, reports, or a saved session work here too — files are sorted automatically.</span>
+              </label>
+
+              <!-- Paste import (D4): skips the save-a-file step entirely — and
+                   the TextEdit smart-quote mangling that comes with it. -->
+              <details class="text-xs">
+                <summary class="text-indigo-600 hover:text-indigo-800 cursor-pointer select-none">Or paste the AI's reply instead</summary>
+                <div class="mt-2 space-y-2" x-data="{ pasted: '' }">
+                  <textarea x-model="pasted" rows="4" placeholder="Paste the AI's reply here — findings JSON, with or without extra text around it"
+                            class="w-full border border-gray-300 rounded px-2 py-1.5 text-xs font-mono"></textarea>
+                  <button @click="$store.app.handleExtractionPaste(pasted); pasted = ''"
+                          :disabled="!pasted.trim()"
+                          class="w-full px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    Import pasted text
+                  </button>
+                </div>
+              </details>
+
+              <a href="pages/llm-extractions.html" target="_blank"
+                 class="text-xs text-indigo-500 hover:text-indigo-700 underline text-center block">
+                LLM extractions playbook
+              </a>
+            </div>
+          </div>
+
+          <!-- DRAWER: Save & export -->
+          <div class="drawer">
+            <button @click="toggle('export')" class="drawer-summary w-full transition-colors">
+              <span class="flex items-center gap-1.5"><i class="ti ti-download text-base"></i> Save &amp; export</span>
+              <i class="ti ti-chevron-right text-sm drawer-chev" :class="openDrawer === 'export' ? 'is-open' : ''"></i>
+            </button>
+            <div x-show="openDrawer === 'export'" x-cloak class="drawer-body">
+              <div class="drawer-subhead" x-data="{ tip: false }">
+                Session backup
+                <button type="button" @click.stop="tip = !tip" @click.away="tip = false" class="qbtn transition-colors" :class="tip ? 'is-open' : ''">
+                  <i class="ti ti-help-circle text-sm"></i>
+                  <span x-show="tip" x-cloak class="help-pop">A file that saves your work-in-progress so you can reload it into the tool later. This is not the annotation data.</span>
+                </button>
+              </div>
               <div class="flex gap-2">
                 <button @click="$store.app.exportSession()"
                         class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 rounded transition-colors">
-                  <i class="ti ti-device-floppy text-base"></i> Save Session
+                  <i class="ti ti-device-floppy text-base"></i> Save
                 </button>
-                <label class="flex-none flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 rounded transition-colors cursor-pointer">
+                <label class="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 bg-gray-200 hover:bg-gray-300 rounded transition-colors cursor-pointer">
                   <i class="ti ti-folder-open text-base"></i> Load
                   <input type="file" accept=".json" class="hidden"
-                         @change="if(confirm('This will replace all current data. Continue?')) $store.app.restoreSession($event.target.files[0]); $event.target.value = ''">
+                         @change="const f = $event.target.files[0]; $event.target.value = ''; if (f) $store.app.confirmDialog('Restore this saved session? It replaces all current data.', 'A backup of the current data is taken automatically first.').then(ok => { if (ok) $store.app.restoreSession(f) })">
                 </label>
               </div>
 
-              <!-- Import extractions -->
-              <label class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-indigo-700 hover:text-indigo-800 bg-indigo-100 hover:bg-indigo-200 rounded transition-colors cursor-pointer">
-                <i class="ti ti-file-import text-base"></i> Import LLM Extractions
-                <input type="file" accept=".json,.csv,application/json,text/csv" class="hidden"
-                       @change="$store.app.handleExtractionCsvUpload($event.target.files[0]); $event.target.value = ''">
-              </label>
-              <p class="text-xs text-indigo-500 -mt-1">
-                <a href="pages/llm-extractions.html" target="_blank"
-                   class="hover:text-indigo-700 underline">LLM extractions playbook</a>
-                &middot; See Home for instructions
-              </p>
-
-              <!-- Export grid -->
-              <p class="text-xs font-medium text-gray-500 pt-1">Export Validated Reports:</p>
-              <div class="grid grid-cols-[1fr_auto_auto] gap-1.5 items-center text-sm">
-                <span class="text-xs text-gray-500">This report</span>
-                <button @click="$store.app.exportCurrentReportJson()"
-                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
-                  JSON
-                </button>
-                <button @click="$store.app.exportCurrentReportCsv()"
-                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
-                  CSV
-                </button>
-                <span class="text-xs text-gray-500">All reports</span>
-                <button @click="$store.app.exportAllJson()"
-                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
-                  JSON
-                </button>
-                <button @click="$store.app.exportTrainingData()"
-                        class="px-2 py-1 text-xs text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                        title="Training-data CSV with stable schema across corpora; custom attributes collapsed into a JSON column.">
-                  CSV
+              <div class="drawer-subhead gap-before" x-data="{ tip: false }">
+                Export validated data
+                <button type="button" @click.stop="tip = !tip" @click.away="tip = false" class="qbtn transition-colors" :class="tip ? 'is-open' : ''">
+                  <i class="ti ti-help-circle text-sm"></i>
+                  <span x-show="tip" x-cloak class="help-pop">Only reports you've validated are included. "All reports · CSV" is the training-data file, with the same columns every time no matter which exam type you're annotating.</span>
                 </button>
               </div>
-
-              <!-- Clear data -->
-              <button @click="if(confirm('This will delete ALL data. Continue?')) $store.app.clearAllData()"
-                      class="w-full px-3 py-2 text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded transition-colors text-center">
-                Clear All Data
-              </button>
+              <div class="export-grid">
+                <div></div><div class="colh">JSON</div><div class="colh">CSV</div>
+                <div class="rowh">This report</div>
+                <button @click="$store.app.exportCurrentReportJson()" class="export-cell transition-colors" title="This report · JSON">
+                  <i class="ti ti-download text-sm"></i>
+                </button>
+                <button @click="$store.app.exportCurrentReportCsv()" class="export-cell transition-colors" title="This report · CSV">
+                  <i class="ti ti-download text-sm"></i>
+                </button>
+                <div class="rowh">All reports</div>
+                <button @click="$store.app.exportAllJson()" class="export-cell transition-colors" title="All reports · JSON">
+                  <i class="ti ti-download text-sm"></i>
+                </button>
+                <button @click="$store.app.exportTrainingData()" class="export-cell transition-colors" title="All annotations · CSV (training data)">
+                  <i class="ti ti-download text-sm"></i>
+                </button>
+              </div>
             </div>
-          </details>
-
-          <div class="flex flex-col gap-1.5">
-            <button @click="$dispatch('open-guidelines')"
-                    class="text-xs text-gray-400 hover:text-gray-600 transition-colors text-left">
-              <kbd class="px-1 bg-gray-100 rounded">?</kbd> annotation guidelines
-            </button>
-            <button @click="$dispatch('open-shortcuts')"
-                    class="text-xs text-gray-400 hover:text-gray-600 transition-colors text-left">
-              <kbd class="px-1 bg-gray-100 rounded">?</kbd> keyboard shortcuts
-            </button>
           </div>
+
+          <!-- DRAWER: Help -->
+          <div class="drawer">
+            <button @click="toggle('help')" class="drawer-summary w-full transition-colors">
+              <span class="flex items-center gap-1.5"><i class="ti ti-book text-base"></i> Help</span>
+              <i class="ti ti-chevron-right text-sm drawer-chev" :class="openDrawer === 'help' ? 'is-open' : ''"></i>
+            </button>
+            <div x-show="openDrawer === 'help'" x-cloak class="drawer-body">
+              <button @click="$dispatch('open-guidelines')"
+                      class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors text-left">
+                <i class="ti ti-book text-base"></i> Annotation guidelines
+              </button>
+              <button @click="$dispatch('open-shortcuts')"
+                      class="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors text-left">
+                <i class="ti ti-keyboard text-base"></i> Keyboard shortcuts
+              </button>
+              <div class="mt-1 pt-2.5 border-t border-dashed border-gray-200">
+                <button @click="$store.app.confirmDialog('Delete ALL data?', 'A backup is taken automatically just before clearing — you can restore it from the welcome screen.').then(ok => { if (ok) $store.app.clearAllData() })"
+                        class="w-full px-3 py-2 text-sm text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 rounded transition-colors text-center flex items-center justify-center gap-2">
+                  <i class="ti ti-trash text-base"></i> Clear all data
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
         </div>
       </aside>
 
       <!-- Main content -->
-      <div class="flex-1 flex overflow-hidden">
+      <div class="flex-1 flex overflow-hidden gap-4">
         <!-- Report view (center) -->
-        <div class="flex-1 overflow-y-auto p-4">
+        <div class="flex-1 flex">
           <template x-if="$store.app.report">
-            <div>
-              <div class="mb-4">
-                <div class="flex items-center gap-3">
-                  <h2 class="text-lg font-semibold text-gray-900" x-text="$store.app.report.record_id"></h2>
-                  <!-- Whole-exam flag: signals in the exported extractions that
-                       this exam is a problem (wrong heading, un-annotatable). -->
-                  <button @click="$store.app.toggleExamFlag()"
-                          class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-medium border transition-colors"
-                          :class="$store.app.report.flagged
-                            ? 'bg-red-50 text-red-600 border-red-200'
-                            : 'text-gray-400 border-gray-200 hover:text-red-500 hover:border-red-200'"
-                          :title="$store.app.report.flagged ? 'Exam flagged — click to unflag' : 'Flag this exam as a problem'">
-                    <i class="ti text-sm" :class="$store.app.report.flagged ? 'ti-flag-filled' : 'ti-flag'"></i>
-                    <span x-text="$store.app.report.flagged ? 'Exam flagged' : 'Flag exam'"></span>
-                  </button>
-                </div>
-                <input x-show="$store.app.report.flagged" x-cloak type="text"
-                       :value="$store.app.report.flag_reason"
-                       @change="$store.app.setExamFlagReason($event.target.value)"
-                       placeholder="why is this exam a problem? (optional)"
-                       class="mt-2 w-full max-w-md text-sm border border-red-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-red-400">
+            <div class="flex-1 flex flex-col overflow-hidden">
+              <!-- Scrollable prose; the legend below stays pinned and does
+                   not scroll with it. -->
+              <div class="flex-1 overflow-y-auto p-4">
                 <p x-show="($store.app.report.sentences || []).length > 0"
-                   class="text-sm text-gray-500 mt-1">Click highlighted text to view and edit findings</p>
-              </div>
+                   class="text-sm text-gray-500 mb-4">Click highlighted text to view and edit findings</p>
 
-              <!-- Empty-state placeholder when the splitter extracted nothing. -->
-              <div x-show="($store.app.report.sentences || []).length === 0" x-cloak
-                   class="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center">
-                <p class="text-sm font-medium text-gray-700">No annotatable text found</p>
-                <p class="text-xs text-gray-500 mt-1">
-                  The sentence splitter extracted zero sentences from this report. Check the source CSV's
-                  <code class="text-xs">findings</code> column for this <code class="text-xs" x-text="$store.app.report.record_id"></code>, or see the
-                  <a href="pages/reports-format-guide.html" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">reports format guide</a>.
-                </p>
-              </div>
+                <!-- Empty-state placeholder when the splitter extracted nothing. -->
+                <div x-show="($store.app.report.sentences || []).length === 0" x-cloak
+                     class="border border-dashed border-gray-300 rounded-lg p-6 bg-gray-50 text-center">
+                  <p class="text-sm font-medium text-gray-700">No annotatable text found</p>
+                  <p class="text-xs text-gray-500 mt-1">
+                    The sentence splitter extracted zero sentences from this report. Check the source CSV's
+                    <code class="text-xs">findings</code> column for this <code class="text-xs" x-text="$store.app.report.record_id"></code>, or see the
+                    <a href="pages/reports-format-guide.html" target="_blank" class="text-indigo-600 hover:text-indigo-800 underline">reports format guide</a>.
+                  </p>
+                </div>
 
-              <!-- Report prose -->
-              <div x-show="($store.app.report.sentences || []).length > 0"
-                   class="text-lg max-w-none leading-relaxed text-gray-800">
-                <template x-for="(sentence, sIdx) in $store.app.report.sentences" :key="sIdx">
-                  <span>
-                    <!-- Section dividers before this sentence -->
-                    <template x-for="brk in ($store.app.report.sectionBreaks || []).filter(b => b.before === sIdx)" :key="brk.header">
-                      <span class="block mt-4 mb-1 text-sm font-semibold text-gray-500 uppercase tracking-wider"
-                            x-text="brk.header"></span>
-                    </template>
+                <!-- Report prose -->
+                <div x-show="($store.app.report.sentences || []).length > 0"
+                     class="text-lg max-w-none leading-relaxed text-gray-800">
+                  <template x-for="(sentence, sIdx) in $store.app.report.sentences" :key="sIdx">
+                    <span>
+                      <!-- Section dividers / empty subheaders before this sentence.
+                           Large section headers (HEAD:, CERVICAL SPINE:) render gray
+                           all-caps; empty subheaders (Devices/Tubes/Lines: none)
+                           render bold like the inline subheader runs. -->
+                      <template x-for="brk in Sentences.breaksBefore($store.app.report, sIdx)" :key="brk.header">
+                        <span :class="Sentences.isSubBreak(brk)
+                                ? 'block mt-3 text-stone-900 font-bold'
+                                : 'block mt-4 mb-1 text-sm font-semibold text-gray-500 uppercase tracking-wider'"
+                              x-text="brk.header"></span>
+                      </template>
 
-                    <span @click="$store.app.selectSentence(sIdx + 1)" class="cursor-pointer">
-                      <!-- Every sentence carries its sub-section header as a prefix in storage
-                           (for source_text matching uniqueness). The renderer shows the prefix
-                           once per run of same-prefixed sentences. -->
-                      <span x-show="sIdx > 0 && Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
-                            class="block" style="margin-top: 0.75rem;"></span>
-                      <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
-                            class="text-stone-900 font-bold"
-                            x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
-                      <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"> </span>
+                      <span @click="$store.app.selectSentence(sIdx + 1)" class="cursor-pointer">
+                        <!-- Every sentence carries its sub-section header as a prefix in storage
+                             (for source_text matching uniqueness). The renderer shows the prefix
+                             once per run of same-prefixed sentences. -->
+                        <span x-show="sIdx > 0 && Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
+                              class="block" style="margin-top: 0.75rem;"></span>
+                        <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"
+                              class="text-stone-900 font-bold"
+                              x-text="Sentences.splitSentenceHeader(sentence)[0]"></span>
+                        <span x-show="Sentences.isFirstOfHeaderRun($store.app.report.sentences, sIdx)"> </span>
 
-                      <!-- Boundary index pill (debug toggle) -->
-                      <sup x-show="$store.app.showSentenceBoundaries"
-                           class="text-[10px] text-gray-400 font-mono mr-0.5"
-                           x-text="'[' + (sIdx + 1) + ']'"></sup>
+                        <!-- Boundary index pill (debug toggle) -->
+                        <sup x-show="$store.app.showSentenceBoundaries"
+                             class="text-[10px] text-gray-400 font-mono mr-0.5"
+                             x-text="'[' + (sIdx + 1) + ']'"></sup>
 
-                      <!-- Sentence content (highlighted) -->
-                      <span class="rounded px-0.5 transition-all"
-                            :class="{
-                              'sentence-selected': $store.app.selectedSentenceIdx === sIdx + 1,
-                              'bg-green-100': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0,
-                              'hover:bg-green-300': $store.app.sentenceFindingCounts(sIdx + 1).validated > 0 && $store.app.selectedSentenceIdx !== sIdx + 1,
-                              'bg-amber-100': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0,
-                              'hover:bg-amber-300': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending > 0 && $store.app.selectedSentenceIdx !== sIdx + 1,
-                              'hover:bg-gray-200': $store.app.sentenceFindingCounts(sIdx + 1).validated === 0 && $store.app.sentenceFindingCounts(sIdx + 1).pending === 0 && $store.app.selectedSentenceIdx !== sIdx + 1,
-                            }"
-                            x-text="Sentences.splitSentenceHeader(sentence)[1]"
-                            :data-sentence-idx="sIdx + 1"></span>
-                      <span> </span>
+                        <!-- Sentence content (highlighted) -->
+                        <span class="rounded px-0.5 transition-all"
+                              :class="$store.app.sentenceHighlightClass(sIdx + 1)"
+                              x-text="Sentences.splitSentenceHeader(sentence)[1]"
+                              :data-sentence-idx="sIdx + 1"></span>
+                        <span> </span>
+                      </span>
                     </span>
-                  </span>
-                </template>
+                  </template>
+
+                  <!-- Breaks that trail the last sentence (e.g. a report ending
+                       "Bones/Soft Tissues: none") — the per-sentence loop above
+                       never reaches their index. -->
+                  <template x-for="brk in Sentences.breaksBefore($store.app.report, ($store.app.report.sentences || []).length)" :key="brk.header">
+                    <span :class="Sentences.isSubBreak(brk)
+                            ? 'block mt-3 text-stone-900 font-bold'
+                            : 'block mt-4 mb-1 text-sm font-semibold text-gray-500 uppercase tracking-wider'"
+                          x-text="brk.header"></span>
+                  </template>
+                </div>
               </div>
 
-              <!-- Legend -->
+              <!-- Legend: pinned footer, out of the scrolling area — stays put across navigation. -->
               <div x-show="($store.app.report.sentences || []).length > 0"
-                   class="mt-6 pt-4 border-t border-gray-200">
+                   class="flex-none px-4 py-3 border-t border-gray-200">
                 <div class="flex items-center gap-4 text-xs text-gray-500">
                   <div class="flex items-center gap-1.5">
                     <span class="inline-block w-3 h-3 rounded bg-green-100 border border-green-200"></span>
@@ -979,6 +1260,10 @@
                     <span class="inline-block w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>
                     <span>Pending review</span>
                   </div>
+                  <div class="flex items-center gap-1.5">
+                    <span class="inline-block w-3 h-3 rounded sentence-incomplete border border-amber-200"></span>
+                    <span>Needs a value</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -986,7 +1271,7 @@
         </div>
 
         <!-- Findings panel (right) -->
-        <div class="w-[26rem] min-w-[26rem] bg-white border-l border-gray-200 flex-shrink-0 flex flex-col">
+        <div class="card-float overflow-hidden w-[26rem] min-w-[26rem] flex-shrink-0 flex flex-col">
           <template x-if="$store.app.report">
             <div class="flex flex-col h-full">
               <!-- Scrollable content area -->
@@ -1005,327 +1290,325 @@
                   </div>
                 </template>
 
-                <!-- Unassigned validated findings (recovery: data damaged by
-                     the old addFinding bug that wrote source_sentence_idx
-                     null when no sentence was selected). Delete-only — these
-                     can't be invisibly fixed; the user re-adds against the
-                     correct sentence. -->
-                <template x-if="$store.app.unassignedValidatedFindings.length > 0">
-                  <div class="bg-orange-50 border border-orange-300 rounded-lg p-3">
-                    <h3 class="text-sm font-medium text-orange-800 mb-3 flex items-center gap-2">
-                      <i class="ti ti-alert-triangle text-base"></i>
-                      <span x-text="'Unassigned Validated (' + $store.app.unassignedValidatedFindings.length + ')'"></span>
-                    </h3>
-                    <p class="text-xs text-orange-700 mb-2">
-                      Validated findings without a source sentence — created before a sentence was selected.
-                      Delete and re-add against the correct sentence.
-                    </p>
-                    <div class="space-y-2">
-                      <template x-for="finding in $store.app.unassignedValidatedFindings" :key="finding._globalIdx">
-                        <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-orange-200">
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                              <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                    :class="{
-                                      'bg-green-100 text-green-800 border border-green-200': (finding.attributes||{}).presence === 'present',
-                                      'bg-orange-100 text-orange-800 border border-orange-200': (finding.attributes||{}).presence === 'absent',
-                                      'bg-indigo-100 text-indigo-800 border border-indigo-200': (finding.attributes||{}).presence !== 'present' && (finding.attributes||{}).presence !== 'absent',
-                                    }"
-                                    x-text="(finding.attributes||{}).presence || 'indeterminate'"></span>
-                            </div>
-                          </div>
-                          <div class="flex gap-1 ml-2 flex-shrink-0">
-                            <button @click="$store.app.deleteFinding(finding._globalIdx)"
-                                    class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Delete">
-                              <i class="ti ti-trash text-xl"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </template>
+                <!-- Finding panels. One card component (findingCard, plan D5)
+                     serves all five panels — recovery / triage / edit /
+                     rejected — so badge, presence, and control markup can't
+                     drift into near-duplicates again. Panel chrome (tone,
+                     title, hint, order) comes from $store.app.findingPanels;
+                     the card's rendering mode comes from panel.mode. -->
+                <template x-for="panel in $store.app.findingPanels" :key="panel.key">
+                  <div :class="panel.boxed === false ? '' : ['rounded-lg p-3', panel.wrap]" :data-panel="panel.key">
+                    <!-- Collapse is driven ONE-WAY from the reactive
+                         _panelCollapsed override: :open reflects state, and the
+                         summary click toggles it with .prevent so the native
+                         <details> toggle can't fire a feedback loop that resets
+                         the state on every re-render (F10). -->
+                    <details :open="!panel.collapsed">
+                      <summary @click.prevent="$store.app._panelCollapsed[panel.key] = !panel.collapsed"
+                               class="text-sm font-medium flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden" :class="panel.head">
+                        <i class="ti text-base" :class="panel.icon"></i>
+                        <span x-text="panel.title + ' (' + panel.findings.length + ')'"></span>
+                      </summary>
+                      <p x-show="panel.hint" class="text-xs mt-1" :class="panel.hintClass" x-text="panel.hint"></p>
+                      <div class="space-y-2 mt-2">
+                        <template x-for="finding in panel.findings" :key="finding._globalIdx">
+                          <div x-data="findingCard(panel.mode)" data-finding-card :data-card-mode="panel.mode"
+                               class="group/card relative py-1.5 px-2 bg-white rounded border"
+                               :class="[isEdit ? $store.app.cardBorderClass(finding) : 'border-gray-200', isEdit && finding.flagged ? 'ring-1 ring-red-200' : '']">
 
-                <!-- Unassigned findings -->
-                <template x-if="$store.app.unassignedFindings.length > 0">
-                  <div class="bg-gray-50 border border-gray-300 rounded-lg p-3">
-                    <h3 class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-                      <i class="ti ti-link-off text-base"></i>
-                      <span x-text="'Unassigned (' + $store.app.unassignedFindings.length + ')'"></span>
-                    </h3>
-                    <p class="text-xs text-gray-500 mb-2">Findings without a source sentence. Accept to assign to selected sentence.</p>
-                    <div class="space-y-2">
-                      <template x-for="finding in $store.app.unassignedFindings" :key="finding._globalIdx">
-                        <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-gray-200">
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                              <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
-                              <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
-                              <span x-show="finding._needsReview"
-                                    class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
-                                    title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
-                                needs review
+                            <!-- Header: presence-tinted (edit), name, origin, badges, mode-specific actions -->
+                            <div class="relative flex items-center gap-1.5 flex-wrap -mx-2 -mt-1.5 px-2 pt-1.5 pb-1 rounded-t border-b"
+                                 :class="isEdit ? $store.app.headerTintClass(finding) : 'bg-gray-50 border-gray-100'">
+                              <span class="text-sm font-medium text-gray-900" x-text="$store.app.humanizeName(finding.finding_name)"></span>
+                              <span class="flex items-center gap-1">
+                                <span class="inline-flex items-center tipbelow"
+                                      :data-tip="finding.origin === 'human_added' ? 'User-added' : 'LLM-extracted'">
+                                  <i class="ti text-sm text-gray-400" :class="finding.origin === 'human_added' ? 'ti-user' : 'ti-sparkles'"></i>
+                                </span>
+                                <span x-show="finding.was_modified && finding.origin === 'llm'"
+                                      class="inline-flex items-center tipbelow text-[10px] text-gray-400"
+                                      data-tip="You edited the LLM value">edited</span>
+                                <span x-show="finding._needsReview || finding._polarityReview"
+                                      class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
+                                      data-tip="Assignment unconfirmed — review">needs review</span>
+                                <span x-show="finding.is_custom"
+                                      class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
+                                      data-tip="Not currently in taxonomy">custom</span>
+                                <span x-show="isEdit && $store.app.incompleteAttrKeys(finding).length > 0"
+                                      class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 border border-amber-300 rounded px-1"
+                                      data-tip="Needs a value">needs a value</span>
                               </span>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                    :class="{
-                                      'bg-green-100 text-green-800 border border-green-200': (finding.attributes||{}).presence === 'present',
-                                      'bg-orange-100 text-orange-800 border border-orange-200': (finding.attributes||{}).presence === 'absent',
-                                      'bg-indigo-100 text-indigo-800 border border-indigo-200': (finding.attributes||{}).presence !== 'present' && (finding.attributes||{}).presence !== 'absent',
-                                    }"
-                                    x-text="(finding.attributes||{}).presence || 'indeterminate'"></span>
-                            </div>
-                          </div>
-                          <div class="flex gap-1 ml-2 flex-shrink-0">
-                            <button @click="$store.app.acceptFinding(finding._globalIdx)"
-                                    class="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded transition-colors" title="Accept">
-                              <i class="ti ti-check text-xl"></i>
-                            </button>
-                            <button @click="$store.app.rejectFinding(finding._globalIdx)"
-                                    class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Reject">
-                              <i class="ti ti-x text-xl"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-
-                <!-- Pending review -->
-                <template x-if="$store.app.pendingFindings.length > 0">
-                  <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                    <h3 class="text-sm font-medium text-amber-800 mb-3 flex items-center gap-2">
-                      <i class="ti ti-checklist text-base"></i>
-                      <span x-text="'Pending Review (' + $store.app.pendingFindings.length + ')'"></span>
-                    </h3>
-                    <div class="space-y-2">
-                      <template x-for="finding in $store.app.pendingFindings" :key="finding._globalIdx">
-                        <div class="flex items-center justify-between py-2 px-2 bg-white rounded border border-amber-100">
-                          <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                              <span class="text-sm font-medium text-gray-900 leading-tight" x-text="$store.app.humanizeName(finding.finding_name)"></span>
-                              <i class="ti ti-sparkles text-sm text-amber-500 flex-shrink-0" title="LLM extracted"></i>
-                              <span x-show="finding._needsReview"
-                                    class="text-[10px] uppercase tracking-wide bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-300"
-                                    title="Sentence assignment couldn't be confirmed after the splitter update — please review.">
-                                needs review
-                              </span>
-                            </div>
-                            <div class="flex items-center gap-2 mt-1">
-                              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
-                                    :class="{
-                                      'bg-green-100 text-green-800 border border-green-200': (finding.attributes||{}).presence === 'present',
-                                      'bg-orange-100 text-orange-800 border border-orange-200': (finding.attributes||{}).presence === 'absent',
-                                      'bg-indigo-100 text-indigo-800 border border-indigo-200': (finding.attributes||{}).presence !== 'present' && (finding.attributes||{}).presence !== 'absent',
-                                    }"
-                                    x-text="(finding.attributes||{}).presence || 'indeterminate'"></span>
-                            </div>
-                            <!-- Source text quote -->
-                            <template x-if="finding.source_text">
-                              <p class="text-xs italic text-gray-500 mt-1 border-l-2 border-gray-200 pl-2"
-                                 x-text="finding.source_text"></p>
-                            </template>
-                            <!-- Extracted attributes preview -->
-                            <template x-if="finding.attributes">
-                              <div class="text-xs text-gray-500 mt-1 space-y-0.5">
-                                <template x-for="[key, value] in Object.entries(finding.attributes).filter(([k,v]) => k !== 'presence' && v)" :key="key">
-                                  <div>
-                                    <span class="font-semibold text-gray-600" x-text="key.replace(/_/g, ' ')"></span>:
-                                    <span x-text="Array.isArray(value) ? value.join(', ') : value"></span>
-                                  </div>
-                                </template>
-                              </div>
-                            </template>
-                          </div>
-                          <div class="flex gap-1 ml-2 flex-shrink-0">
-                            <button @click="$store.app.acceptFinding(finding._globalIdx)"
-                                    class="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded transition-colors" title="Accept">
-                              <i class="ti ti-check text-xl"></i>
-                            </button>
-                            <button @click="$store.app.rejectFinding(finding._globalIdx)"
-                                    class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Reject">
-                              <i class="ti ti-x text-xl"></i>
-                            </button>
-                          </div>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </template>
-
-                <!-- Validated findings -->
-                <template x-if="$store.app.validatedFindings.length > 0">
-                  <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                    <h3 class="text-sm font-medium text-green-800 mb-3 flex items-center gap-2">
-                      <i class="ti ti-circle-check-filled text-base"></i>
-                      <span x-text="'Validated (' + $store.app.validatedFindings.length + ')'"></span>
-                    </h3>
-                    <div class="space-y-2">
-                      <!-- Unified Rows finding card. Presence tints the header
-                           and card border; each attribute is a hybrid
-                           cycle+dropdown control with a hover-reveal hedge (eye)
-                           and delete (×). See docs/plans/…-mockup.html. -->
-                      <template x-for="finding in $store.app.validatedFindings" :key="finding._globalIdx">
-                        <div class="group/card relative py-1.5 px-2 bg-white rounded border"
-                             :class="[$store.app.cardBorderClass((finding.attributes||{}).presence), finding.flagged ? 'ring-1 ring-red-200' : '']">
-
-                          <!-- Header: presence-tinted, muted meta, flag + delete cluster -->
-                          <div class="relative flex items-center gap-1.5 flex-wrap -mx-2 -mt-1.5 px-2 pt-1.5 pb-1 rounded-t border-b"
-                               :class="$store.app.headerTintClass((finding.attributes||{}).presence)">
-                            <span class="text-sm font-medium text-gray-900" x-text="$store.app.humanizeName(finding.finding_name)"></span>
-                            <span class="flex items-center gap-1">
-                              <span class="inline-flex items-center tipbelow"
-                                    :data-tip="finding.origin === 'llm' ? 'LLM-extracted' : 'User-added'">
-                                <i class="ti text-sm text-gray-400" :class="finding.origin === 'llm' ? 'ti-sparkles' : 'ti-user-filled'"></i>
-                              </span>
-                              <span x-show="finding.was_modified && finding.origin === 'llm'"
-                                    class="inline-flex items-center tipbelow text-[10px] text-gray-400"
-                                    data-tip="You edited the LLM value">edited</span>
-                              <span x-show="finding._needsReview"
-                                    class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
-                                    data-tip="Assignment unconfirmed — review">needs review</span>
-                              <span x-show="finding.is_custom"
-                                    class="inline-flex items-center tipbelow text-[10px] uppercase tracking-wide text-gray-400"
-                                    data-tip="Not a taxonomy match">custom</span>
-                            </span>
-                            <span class="ml-auto flex items-center gap-0.5">
-                              <!-- Flag + reason popover -->
-                              <div class="relative" x-data="{ popOpen: false }" @click.outside="popOpen = false">
-                                <button class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded"
-                                        :class="finding.flagged ? 'bg-red-50 text-red-600' : 'text-gray-300 hover:text-red-500'"
-                                        :data-tip="finding.flagged ? 'Flagged — click to view/edit' : 'Flag this finding'"
-                                        @click="finding.flagged ? (popOpen = !popOpen) : ($store.app.toggleFindingFlag(finding._globalIdx), popOpen = true)">
-                                  <i class="ti text-sm" :class="finding.flagged ? 'ti-flag-filled' : 'ti-flag'"></i>
-                                </button>
-                                <!-- dot iff a reason is present (never the reason text) -->
-                                <span x-show="finding.flagged && finding.flag_reason"
-                                      class="absolute top-0 right-0 inline-flex h-1.5 w-1.5 rounded-full bg-red-500 tipbelow"
-                                      data-tip="Has a reason note"></span>
-                                <template x-if="popOpen">
-                                  <div class="reason-pop absolute right-0 top-8 z-10 w-60 p-2 bg-white rounded-lg border border-gray-300 shadow-lg">
-                                    <div class="flex items-center justify-between mb-1">
-                                      <span class="text-xs font-medium text-gray-700">Flag reason (optional)</span>
-                                      <button @click="popOpen = false" data-tip="Close" class="text-gray-400 hover:text-gray-600"><i class="ti ti-x text-sm"></i></button>
-                                    </div>
-                                    <textarea rows="2" placeholder="why is this finding a problem?"
-                                              :value="finding.flag_reason"
-                                              @change="$store.app.setFindingFlagReason(finding._globalIdx, $event.target.value)"
-                                              class="w-full ctl px-2 py-1 rounded border border-gray-300 resize-none"></textarea>
-                                    <button @click="$store.app.removeFindingFlag(finding._globalIdx); popOpen = false"
-                                            class="mt-1 text-[11px] text-red-600 hover:text-red-700 flex items-center gap-1">
-                                      <i class="ti ti-flag-off text-xs"></i> Remove flag
+                              <span class="ml-auto flex items-center gap-0.5">
+                                <!-- edit: flag + reason popover, delete -->
+                                <template x-if="isEdit">
+                                  <div class="relative" x-data="{ popOpen: false }" @click.outside="popOpen = false">
+                                    <button class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded"
+                                            :class="finding.flagged ? 'bg-red-50 text-red-600' : 'text-gray-300 hover:text-red-500'"
+                                            :data-tip="finding.flagged ? 'Flagged — click to edit' : 'Flag this finding'"
+                                            @click="finding.flagged ? (popOpen = !popOpen) : ($store.app.toggleFindingFlag(finding._globalIdx), popOpen = true)">
+                                      <i class="ti text-sm ti-flag"></i>
                                     </button>
+                                    <!-- dot iff a reason is present (never the reason text) -->
+                                    <span x-show="finding.flagged && finding.flag_reason"
+                                          class="absolute top-0 right-0 inline-flex h-1.5 w-1.5 rounded-full bg-red-500 tipbelow"
+                                          data-tip="Has a reason note"></span>
+                                    <template x-if="popOpen">
+                                      <div class="reason-pop absolute right-0 top-8 z-10 w-60 p-2 bg-white rounded-lg border border-gray-300 shadow-lg">
+                                        <div class="flex items-center justify-between mb-1">
+                                          <span class="text-xs font-medium text-gray-700">Flag reason (optional)</span>
+                                          <button @click="popOpen = false" data-tip="Close" class="text-gray-400 hover:text-gray-600"><i class="ti ti-x text-sm"></i></button>
+                                        </div>
+                                        <textarea rows="2" placeholder="why is this finding a problem?"
+                                                  :value="finding.flag_reason"
+                                                  @change="$store.app.setFindingFlagReason(finding._globalIdx, $event.target.value)"
+                                                  class="w-full ctl px-2 py-1 rounded border border-gray-300 resize-none"></textarea>
+                                        <button @click="$store.app.removeFindingFlag(finding._globalIdx); popOpen = false"
+                                                class="mt-1 text-[11px] text-red-600 hover:text-red-700 flex items-center gap-1">
+                                          <i class="ti ti-flag-off text-xs"></i> Remove flag
+                                        </button>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </template>
+                                <template x-if="isEdit">
+                                  <button data-tip="Delete finding"
+                                          @click="$store.app.confirmDialog('Delete this finding?').then(ok => { if (ok) $store.app.deleteFinding(finding._globalIdx) })"
+                                          class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-600">
+                                    <i class="ti ti-trash text-base"></i>
+                                  </button>
+                                </template>
+                                <!-- triage: accept / reject -->
+                                <template x-if="isTriage">
+                                  <button @click="$store.app.acceptFinding(finding._globalIdx)"
+                                          class="p-1.5 text-green-600 bg-green-50 hover:bg-green-100 rounded transition-colors" title="Accept">
+                                    <i class="ti ti-check text-xl"></i>
+                                  </button>
+                                </template>
+                                <template x-if="isTriage">
+                                  <div class="relative" x-data="{ rejOpen: false }" @click.outside="rejOpen = false">
+                                    <button @click="rejOpen = !rejOpen"
+                                            class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Reject">
+                                      <i class="ti ti-x text-xl"></i>
+                                    </button>
+                                    <template x-if="rejOpen">
+                                      <div class="reason-pop absolute right-0 top-10 z-10 w-60 p-2 bg-white rounded-lg border border-gray-300 shadow-lg">
+                                        <div class="flex items-center justify-between mb-1">
+                                          <span class="text-xs font-medium text-gray-700">Reject reason (optional)</span>
+                                          <button @click="rejOpen = false" data-tip="Close" class="text-gray-400 hover:text-gray-600"><i class="ti ti-x text-sm"></i></button>
+                                        </div>
+                                        <textarea rows="2" placeholder="why is this extraction wrong?" x-ref="rejReason"
+                                                  class="w-full ctl px-2 py-1 rounded border border-gray-300 resize-none"></textarea>
+                                        <button data-reject-confirm
+                                                @click="$store.app.rejectFinding(finding._globalIdx, $refs.rejReason.value); rejOpen = false"
+                                                class="mt-1 px-2 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded">
+                                          Reject
+                                        </button>
+                                      </div>
+                                    </template>
+                                  </div>
+                                </template>
+                                <!-- recovery: delete only (no editor for an unanchored finding) -->
+                                <template x-if="isRecovery">
+                                  <button @click="$store.app.confirmDialog('Delete this finding?').then(ok => { if (ok) $store.app.deleteFinding(finding._globalIdx) })"
+                                          class="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded transition-colors" title="Delete">
+                                    <i class="ti ti-trash text-xl"></i>
+                                  </button>
+                                </template>
+                                <!-- rejected: restore to pending review -->
+                                <template x-if="isRejected">
+                                  <button data-restore-rejected @click="$store.app.restoreRejected(finding._globalIdx)"
+                                          class="px-2 py-1 text-xs font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded transition-colors">
+                                    Restore
+                                  </button>
+                                </template>
+                              </span>
+                            </div>
+
+                            <!-- Read-only body (recovery / triage / rejected): presence badge,
+                                 source quote, extracted-attribute preview -->
+                            <template x-if="!isEdit">
+                              <div class="mt-1">
+                                <div class="flex items-center gap-2">
+                                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border"
+                                        :class="$store.app.presenceCellClass(finding)">
+                                    <i class="ti text-xs flex-shrink-0" x-show="$store.app.presenceCellIcon(finding)" :class="$store.app.presenceCellIcon(finding)"></i>
+                                    <span x-text="$store.app.presenceCellDisplay(finding)"></span>
+                                  </span>
+                                </div>
+                                <template x-if="finding.source_text && !isRecovery">
+                                  <p class="text-xs italic text-gray-500 mt-1 border-l-2 border-gray-200 pl-2"
+                                     x-text="finding.source_text"></p>
+                                </template>
+                                <template x-if="!isRecovery && finding.attributes">
+                                  <div class="text-xs text-gray-500 mt-1 space-y-0.5">
+                                    <template x-for="[key, value] in Object.entries(finding.attributes).filter(([k,v]) => k !== 'presence' && v)" :key="key">
+                                      <div>
+                                        <span class="font-semibold text-gray-600" x-text="key.replace(/_/g, ' ')"></span>:
+                                        <span x-text="Array.isArray(value) ? value.join(', ') : value"></span>
+                                      </div>
+                                    </template>
                                   </div>
                                 </template>
                               </div>
-                              <button data-tip="Delete finding"
-                                      @click="if(confirm('Delete this finding?')) $store.app.deleteFinding(finding._globalIdx)"
-                                      class="tipbelow inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-600">
-                                <i class="ti ti-trash text-base"></i>
-                              </button>
-                            </span>
-                          </div>
+                            </template>
 
-                          <!-- Rows -->
-                          <div class="mt-1.5">
-                            <!-- Presence: row 1, dropdown-only (no cycle, no hedge) -->
-                            <div class="group grid grid-cols-[74px_150px_auto] items-center gap-2 py-0.5 pl-2 border-t border-t-gray-100 border-l-2 border-l-transparent">
-                              <span class="text-[11px] uppercase tracking-wide text-gray-400">presence</span>
-                              <div class="min-w-0">
-                                <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border"
-                                     :class="$store.app.presenceCellClass((finding.attributes||{}).presence)">
-                                  <span class="flex-1 flex items-center min-w-0 ctl px-1" data-tip="Presence — pick from list">
-                                    <span class="truncate" x-text="(finding.attributes||{}).presence || '—'"></span>
-                                  </span>
-                                  <div class="relative w-5 flex items-center justify-center border-l border-black/5" data-tip="Pick from list">
-                                    <i class="ti ti-chevron-down text-[10px] text-gray-400 pointer-events-none"></i>
-                                    <select class="absolute inset-0 opacity-0 cursor-pointer"
-                                            @change="$store.app.updatePresence(finding._globalIdx, $event.target.value)">
-                                      <option value="present" :selected="((finding.attributes||{}).presence) === 'present'">present</option>
-                                      <option value="absent" :selected="((finding.attributes||{}).presence) === 'absent'">absent</option>
-                                      <option value="indeterminate" :selected="((finding.attributes||{}).presence) === 'indeterminate'">indeterminate</option>
-                                    </select>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="justify-self-end flex items-center"></div>
-                            </div>
-
-                            <!-- Attribute rows: canonical order, hybrid control, hedge + delete -->
-                            <template x-for="attr in $store.app.getSetAttributes(finding)" :key="attr.key">
-                              <div class="group grid grid-cols-[74px_150px_auto] items-center gap-2 py-0.5 pl-2 border-t border-t-gray-100 border-l-2"
-                                   :class="attr.hedged ? 'border-l-indigo-400' : 'border-l-transparent'">
-                                <span class="text-[11px] uppercase tracking-wide text-gray-400" x-text="attr.key.replace(/_/g, ' ')"></span>
-                                <div class="min-w-0">
-                                  <!-- enum/boolean → hybrid cycle body + ▾ dropdown -->
-                                  <template x-if="$store.app.attrCycleValues(attr.key).length > 0">
-                                    <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border border-gray-200" style="background:#fcfdfe">
-                                      <button data-tip="Click to advance"
-                                              @click="$store.app.cycleAttribute(finding._globalIdx, attr.key)"
-                                              class="flex-1 flex items-center min-w-0 ctl px-1"
-                                              :class="attr.hedged ? 'text-indigo-700' : (attr.value === '' ? 'text-gray-300' : '')">
-                                        <span class="truncate" x-text="attr.value === '' ? '—' : attr.value"></span>
+                            <!-- Edit body: presence spectrum row, attribute rows, add-attribute picker -->
+                            <template x-if="isEdit">
+                              <div class="mt-1.5">
+                                <!-- Presence: row 1, spectrum dropdown (present / possible /
+                                     no definite / absent) derived from Schema.presenceOptions.
+                                     Icons are a rough visual approximation of certainty, not a
+                                     literal probability. The disabled '—' placeholder dissolves
+                                     the presence-trap bug: the first real choice always fires a
+                                     change event. -->
+                                <div class="group grid grid-cols-[68px_minmax(0,1fr)_48px] items-center gap-2 py-0.5 pl-1 border-t border-t-gray-100 border-l-2 border-l-transparent">
+                                  <span class="text-[11px] uppercase tracking-wide text-gray-400">presence</span>
+                                  <div class="min-w-0">
+                                    <!-- Neutral control — the card HEADER carries the presence
+                                         tint (owner call); one tinted surface per card. -->
+                                    <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border border-gray-200 bg-white">
+                                      <button type="button" data-tip="Click to advance"
+                                              @click="$store.app.cyclePresence(finding._globalIdx)"
+                                              class="flex-1 flex items-center min-w-0 ctl px-1 text-left">
+                                        <span class="truncate" x-text="$store.app.presenceCellDisplay(finding)"></span>
                                       </button>
                                       <div class="relative w-5 flex items-center justify-center border-l border-black/5" data-tip="Pick from list">
                                         <i class="ti ti-chevron-down text-[10px] text-gray-400 pointer-events-none"></i>
                                         <select class="absolute inset-0 opacity-0 cursor-pointer"
-                                                @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)">
-                                          <option value="" :selected="attr.value === ''">—</option>
-                                          <template x-for="opt in $store.app.attrCycleValues(attr.key)" :key="opt">
-                                            <option :value="opt" :selected="attr.value === opt" x-text="opt"></option>
+                                                @change="$store.app.updatePresence(finding._globalIdx, $store.app.presenceOptionAt($event.target.value))">
+                                          <option value="" disabled :selected="!(finding.attributes||{}).presence">—</option>
+                                          <template x-for="(opt, oi) in $store.app.presenceOptions()" :key="oi">
+                                            <option :value="oi" :selected="$store.app.isPresenceOptionSelected(finding, opt)"
+                                                    x-text="opt.label"></option>
                                           </template>
                                         </select>
                                       </div>
                                     </div>
-                                  </template>
-                                  <!-- text/array → free-text input (no cycle) -->
-                                  <template x-if="$store.app.attrCycleValues(attr.key).length === 0">
-                                    <input type="text" :value="$store.app.formatAttrValue(attr.value)" placeholder="type…"
-                                           style="background:#fcfdfe"
-                                           @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
-                                           @keydown.enter="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value); $event.target.blur()"
-                                           class="w-full h-6 leading-6 ctl px-1 rounded border border-gray-200"
-                                           :class="attr.hedged ? '!text-indigo-700' : ''">
-                                  </template>
+                                  </div>
+                                  <!-- Standalone certainty-glyph indicator, to the right of the
+                                       picker — a rough visual approximation, not the primary
+                                       control (the picker + text label are). Sized and positioned
+                                       to the same 24px slot as the hedge (eye) icon in attribute
+                                       rows below, so the icon column reads as one aligned axis. -->
+                                  <div class="w-6 h-6 flex items-center justify-center">
+                                    <i class="ti text-lg flex-shrink-0"
+                                       :class="[$store.app.presenceCellTintClass(finding), $store.app.presenceCellIcon(finding)]"
+                                       x-show="$store.app.presenceCellIcon(finding)"
+                                       :data-tip="$store.app.presenceCellTooltip(finding)"></i>
+                                  </div>
                                 </div>
-                                <div class="justify-self-end flex items-center">
-                                  <button @click="$store.app.toggleHedge(finding._globalIdx, attr.key)"
-                                          :data-tip="attr.hedged ? 'Hedged — click to clear' : 'Mark hedged'"
-                                          class="inline-flex items-center justify-center h-6 w-6 rounded"
-                                          :class="attr.hedged ? 'bg-indigo-50 text-indigo-700' : 'text-gray-300 opacity-0 group-hover:opacity-100 hover:text-indigo-600'">
-                                    <i class="ti ti-eye-question text-base"></i>
-                                  </button>
-                                  <button @click="$store.app.removeAttribute(finding._globalIdx, attr.key)"
-                                          data-tip="Remove attribute"
-                                          class="inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
-                                    <i class="ti ti-x text-sm"></i>
-                                  </button>
-                                </div>
-                              </div>
-                            </template>
 
-                            <!-- Add-then-choose "+ attribute" (lists only unset attributes) -->
-                            <template x-if="$store.app.getAvailableAttributes(finding).length > 0">
-                              <div class="pl-2 mt-1">
-                                <select data-tip="Add an attribute"
-                                        @change="if($event.target.value){ $store.app.addAttribute(finding._globalIdx, $event.target.value); $event.target.value = ''; }"
-                                        class="ctl text-gray-500 bg-transparent border border-dashed border-gray-300 rounded px-1 h-6 hover:border-gray-400">
-                                  <option value="">+ attribute</option>
-                                  <template x-for="avail in $store.app.getAvailableAttributes(finding)" :key="avail.key">
-                                    <option :value="avail.key" x-text="avail.key.replace(/_/g, ' ')"></option>
-                                  </template>
-                                </select>
+                                <!-- Attribute rows: canonical order, hybrid control, hedge + delete -->
+                                <template x-for="attr in $store.app.getSetAttributes(finding)" :key="attr.key">
+                                  <div class="group grid grid-cols-[68px_minmax(0,1fr)_48px] items-center gap-2 py-0.5 pl-1 border-t border-t-gray-100 border-l-2"
+                                       :class="attr.hedged ? 'border-l-indigo-400' : 'border-l-transparent'">
+                                    <!-- No description tooltip here: the ontology descriptions are
+                                         sentence-long, and a tall hover box grows the scroll container
+                                         (edge flicker). Descriptions live in the guidelines overlay. -->
+                                    <span class="text-[11px] uppercase tracking-wide text-gray-400"
+                                          x-text="attr.key.replace(/_/g, ' ')"></span>
+                                    <div class="min-w-0">
+                                      <!-- multi-value enum → removable chips + ▾ add-dropdown (unused values). -->
+                                      <template x-if="Schema.isMultiValue(attr.key)">
+                                        <div class="flex items-center flex-wrap gap-1 w-full min-h-6 rounded border px-1 py-0.5"
+                                             :class="$store.app.attrTintBorderClass(attr.value)"
+                                             :style="$store.app.attrTintStyle(attr.value)">
+                                          <template x-for="val in $store.app.asMultiArray(attr.value)" :key="val">
+                                            <span class="inline-flex items-center gap-0.5 px-1 rounded text-[11px]"
+                                                  :class="attr.hedged ? 'bg-indigo-50 text-indigo-700' : 'bg-gray-100 text-gray-700'">
+                                              <span x-text="val"></span>
+                                              <button data-tip="Remove" @click="$store.app.removeMultiValue(finding._globalIdx, attr.key, val)"
+                                                      class="text-gray-400 hover:text-red-500"><i class="ti ti-x text-[10px]"></i></button>
+                                            </span>
+                                          </template>
+                                          <span x-show="$store.app.asMultiArray(attr.value).length === 0" class="text-gray-300 ctl px-0.5">—</span>
+                                          <template x-if="$store.app.multiValueRemaining(finding, attr.key).length > 0">
+                                            <div class="relative inline-flex w-5 h-5 items-center justify-center" data-tip="Add a value">
+                                              <i class="ti ti-plus text-[10px] text-gray-400 pointer-events-none"></i>
+                                              <select class="absolute inset-0 opacity-0 cursor-pointer"
+                                                      @change="if($event.target.value){ $store.app.addMultiValue(finding._globalIdx, attr.key, $event.target.value); $event.target.value=''; }">
+                                                <option value=""></option>
+                                                <template x-for="opt in $store.app.multiValueRemaining(finding, attr.key)" :key="opt">
+                                                  <option :value="opt" x-text="opt"></option>
+                                                </template>
+                                              </select>
+                                            </div>
+                                          </template>
+                                        </div>
+                                      </template>
+                                      <!-- enum/boolean → hybrid cycle body + ▾ dropdown -->
+                                      <template x-if="!Schema.isMultiValue(attr.key) && $store.app.attrCycleValues(attr.key).length > 0">
+                                        <div class="relative flex items-stretch w-full h-6 rounded overflow-hidden border"
+                                             :class="$store.app.attrTintBorderClass(attr.value)"
+                                             :style="$store.app.attrTintStyle(attr.value)">
+                                          <button data-tip="Click to advance"
+                                                  @click="$store.app.cycleAttribute(finding._globalIdx, attr.key)"
+                                                  class="flex-1 flex items-center min-w-0 ctl px-1"
+                                                  :class="attr.hedged ? 'text-indigo-700' : (attr.value === '' ? 'text-gray-300' : '')">
+                                            <span class="truncate" x-text="attr.value === '' ? '—' : attr.value"></span>
+                                          </button>
+                                          <div class="relative w-5 flex items-center justify-center border-l border-black/5" data-tip="Pick from list">
+                                            <i class="ti ti-chevron-down text-[10px] text-gray-400 pointer-events-none"></i>
+                                            <select class="absolute inset-0 opacity-0 cursor-pointer"
+                                                    @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)">
+                                              <option value="" :selected="attr.value === ''">—</option>
+                                              <template x-for="opt in $store.app.attrCycleValues(attr.key)" :key="opt">
+                                                <option :value="opt" :selected="attr.value === opt" x-text="opt"></option>
+                                              </template>
+                                            </select>
+                                          </div>
+                                        </div>
+                                      </template>
+                                      <!-- text/array → free-text input (no cycle) -->
+                                      <template x-if="!Schema.isMultiValue(attr.key) && $store.app.attrCycleValues(attr.key).length === 0">
+                                        <input type="text" :value="$store.app.formatAttrValue(attr.value)" :placeholder="$store.app.attrPlaceholder(attr.key)"
+                                               :style="$store.app.attrTintStyle(attr.value)"
+                                               @change="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value)"
+                                               @keydown.enter="$store.app.updateAttribute(finding._globalIdx, attr.key, $event.target.value); $event.target.blur()"
+                                               class="w-full h-6 leading-6 ctl px-1 rounded border"
+                                               :class="[$store.app.attrTintBorderClass(attr.value), attr.hedged ? '!text-indigo-700' : '']">
+                                      </template>
+                                    </div>
+                                    <div class="justify-self-end flex items-center">
+                                      <!-- Eye-toggle only on hedgeable axes (or one already carrying a
+                                           stored hedge, so a legacy hedge can still be cleared).
+                                           ALWAYS visible where valid (not hover-reveal): a
+                                           hover-only control is undiscoverable on a tablet/touch. -->
+                                      <button x-show="Schema.isHedgeable(attr.key) || attr.hedged"
+                                              @click="$store.app.toggleHedge(finding._globalIdx, attr.key)"
+                                              :data-tip="attr.hedged ? 'Hedged — click to clear' : 'Mark hedged'"
+                                              class="inline-flex items-center justify-center h-6 w-6 rounded"
+                                              :class="attr.hedged ? 'bg-indigo-50 text-indigo-700' : 'text-gray-400 hover:text-indigo-600'">
+                                        <i class="ti ti-eye-question text-base"></i>
+                                      </button>
+                                      <button @click="$store.app.removeAttribute(finding._globalIdx, attr.key)"
+                                              data-tip="Remove attribute"
+                                              class="inline-flex items-center justify-center h-6 w-6 rounded text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100">
+                                        <i class="ti ti-x text-sm"></i>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </template>
+
+                                <!-- Add-then-choose "+ attribute" (lists only unset attributes) -->
+                                <template x-if="$store.app.getAvailableAttributes(finding).length > 0">
+                                  <div class="mt-1">
+                                    <select data-tip="Add an attribute"
+                                            @change="if($event.target.value){ $store.app.addAttribute(finding._globalIdx, $event.target.value); $event.target.value = ''; }"
+                                            class="ctl text-gray-500 bg-transparent border border-dashed border-gray-300 rounded px-1 h-6 hover:border-gray-400">
+                                      <option value="">+ attribute</option>
+                                      <template x-for="avail in $store.app.getAvailableAttributes(finding)" :key="avail.key">
+                                        <option :value="avail.key" x-text="$store.app.attrPickerLabel(avail)"></option>
+                                      </template>
+                                    </select>
+                                  </div>
+                                </template>
                               </div>
                             </template>
                           </div>
-                        </div>
-                      </template>
-                    </div>
+                        </template>
+                      </div>
+                    </details>
                   </div>
                 </template>
 
@@ -1346,7 +1629,7 @@
                     <i class="ti ti-plus text-base"></i> Add Finding
                     <kbd class="ml-1 px-1 bg-gray-200 rounded text-xs">f</kbd>
                   </h3>
-                  <div class="relative" x-data="{ showCustom: false }">
+                  <div class="relative">
                     <div class="relative">
                       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                         <i class="ti ti-search text-base"></i>
@@ -1356,15 +1639,17 @@
                              @input="$store.app.updateSearch($event.target.value)"
                              @keydown.arrow-down.prevent="$store.app.autocompleteIndex = Math.min($store.app.autocompleteIndex + 1, $store.app.searchResults.length - 1)"
                              @keydown.arrow-up.prevent="$store.app.autocompleteIndex = Math.max($store.app.autocompleteIndex - 1, 0)"
-                             @keydown.enter.prevent="if($store.app.searchResults.length > 0) $store.app.selectSearchResult($store.app.searchResults[Math.max(0, $store.app.autocompleteIndex)])"
+                             @keydown.enter.prevent="if($store.app.searchResults.length > 0) { $store.app.selectSearchResult($store.app.searchResults[Math.max(0, $store.app.autocompleteIndex)]) } else if($store.app.searchQuery.trim()) { $store.app.addCustomFinding($store.app.searchQuery.trim()) }"
                              @keydown.escape="$store.app.searchQuery = ''; $store.app.searchResults = []; $event.target.blur()"
                              placeholder="Type to search findings..."
                              autocomplete="off"
                              class="w-full text-sm border border-gray-300 rounded pl-10 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
                     </div>
 
-                    <!-- Results dropdown -->
-                    <div x-show="$store.app.searchResults.length > 0"
+                    <!-- Results dropdown: renders whenever the query is non-empty
+                         (not only when there are matches), so a zero-result search
+                         still offers the custom-finding option instead of dead-ending. -->
+                    <div x-show="$store.app.searchQuery.trim().length > 0"
                          x-cloak
                          x-transition:enter="transition ease-custom duration-150"
                          x-transition:enter-start="opacity-0 scale-95"
@@ -1383,29 +1668,19 @@
                           <span class="text-xs text-gray-400 ml-1" x-text="'[' + result.category + ']'"></span>
                         </button>
                       </template>
-                      <!-- Custom finding option -->
-                      <button @click="showCustom = true; $store.app.searchResults = []; $nextTick(() => $refs.customInput?.focus())"
+                      <!-- Search-cap hint: results are capped at 20 -->
+                      <div x-show="$store.app.searchTotal > 20" data-search-cap-hint
+                           class="px-3 py-1 text-xs text-gray-400 italic"
+                           x-text="'Showing 20 of ' + $store.app.searchTotal + ' matches — keep typing to narrow'"></div>
+                      <!-- Zero-match row -->
+                      <div x-show="$store.app.searchResults.length === 0"
+                           class="px-3 py-2 text-sm text-gray-400 italic">No matches in the taxonomy.</div>
+                      <!-- Custom finding option: pre-filled with the typed query, one click to add. -->
+                      <button data-custom-finding
+                              @click="$store.app.addCustomFinding($store.app.searchQuery.trim())"
                               class="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 border-t border-gray-100">
-                        <i class="ti ti-plus text-xs mr-1"></i>Add custom finding
+                        <i class="ti ti-plus text-xs mr-1"></i>Add "<span x-text="$store.app.searchQuery.trim()"></span>" as a custom finding
                       </button>
-                    </div>
-
-                    <!-- Custom finding input -->
-                    <div x-show="showCustom"
-                         x-transition:enter="transition ease-custom duration-150"
-                         x-transition:enter-start="opacity-0 scale-95"
-                         x-transition:enter-end="opacity-100 scale-100"
-                         x-transition:leave="transition ease-custom duration-100"
-                         x-transition:leave-start="opacity-100 scale-100"
-                         x-transition:leave-end="opacity-0 scale-95"
-                         class="mt-3">
-                      <label class="block text-xs font-medium text-gray-600 mb-1">Custom Finding Name</label>
-                      <input type="text" x-ref="customInput"
-                             @keydown.enter.prevent="if($event.target.value.trim()) { $store.app.addCustomFinding($event.target.value.trim()); $event.target.value = ''; showCustom = false }"
-                             @keydown.escape="showCustom = false"
-                             placeholder="Type custom finding name and press Enter..."
-                             class="w-full text-sm border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                      <button @click="showCustom = false" class="mt-1 text-xs text-gray-400 hover:text-gray-600">Cancel</button>
                     </div>
                   </div>
                 </div>
@@ -1415,21 +1690,21 @@
               <div class="flex-shrink-0 p-4 border-t border-gray-200 bg-white">
                 <template x-if="$store.app.report.validated">
                   <button @click="$store.app.toggleValidation()"
-                          class="w-full px-4 py-2 text-sm font-medium rounded bg-green-500 text-white hover:bg-green-600 transition-colors">
+                          class="w-full px-4 py-2 text-sm font-medium rounded bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 transition-colors">
                     Report Validated (click to unmark)
                   </button>
                 </template>
-                <template x-if="!$store.app.report.validated && ($store.app.report.llm_extractions || []).length === 0">
+                <template x-if="!$store.app.report.validated && $store.app.reportPendingCount === 0">
                   <button @click="$store.app.toggleValidation()"
-                          class="w-full px-4 py-2 text-sm font-medium rounded bg-green-500 text-white hover:bg-green-600 transition-colors">
+                          class="w-full px-4 py-2 text-sm font-medium rounded bg-green-100 text-green-800 border border-green-200 hover:bg-green-200 transition-colors">
                     Mark Report as Validated
                   </button>
                 </template>
-                <template x-if="!$store.app.report.validated && ($store.app.report.llm_extractions || []).length > 0">
+                <template x-if="!$store.app.report.validated && $store.app.reportPendingCount > 0">
                   <button disabled
                           class="w-full px-4 py-2 text-sm font-medium rounded bg-gray-200 text-gray-500 cursor-not-allowed"
                           :title="'Accept or reject each pending finding before validating'">
-                    Review <span x-text="($store.app.report.llm_extractions || []).length"></span> pending finding<span x-text="($store.app.report.llm_extractions || []).length !== 1 ? 's' : ''"></span> to validate
+                    Review <span x-text="$store.app.reportPendingCount"></span> pending finding<span x-text="$store.app.reportPendingCount !== 1 ? 's' : ''"></span> to validate
                   </button>
                 </template>
               </div>
@@ -1450,15 +1725,70 @@
        x-transition:leave="transition ease-custom duration-150"
        x-transition:leave-start="opacity-100 scale-100"
        x-transition:leave-end="opacity-0 scale-95"
-       class="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow-lg text-white z-50 origin-bottom"
+       class="fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow-lg text-white z-50 origin-bottom flex items-center gap-3"
        :class="{
          'bg-green-500': $store.app.toastType === 'success',
          'bg-red-500': $store.app.toastType === 'error',
          'bg-blue-500': $store.app.toastType === 'info',
        }"
-       x-text="$store.app.toastMessage"
        x-cloak>
+    <span x-text="$store.app.toastMessage"></span>
+    <!-- Undo affordance riding the snapshot stack (Ctrl+Z equivalent) —
+         covers rejects, deletes, attribute edits, presence flips. -->
+    <button x-show="$store.app.canUndo && $store.app.currentView === 'annotate'"
+            data-undo-last
+            @click="$store.app.undoLastChange()"
+            class="underline font-semibold hover:opacity-80 whitespace-nowrap">Undo</button>
+    <button data-toast-dismiss @click="$store.app.dismissToast()"
+            class="hover:opacity-80" title="Dismiss">
+      <i class="ti ti-x text-sm"></i>
+    </button>
   </div>
+
+  <!-- ============================== -->
+  <!-- Top banner stack (dismissible) -->
+  <!-- A single fixed column so the migration banner and the notice banner     -->
+  <!-- STACK instead of overlapping — an indeterminate-conversion migration     -->
+  <!-- sets both at once, and both used to render at top-0 with one hiding the  -->
+  <!-- other. Migration (review prompt) sits above the notice (summary).        -->
+  <!-- ============================== -->
+  <div class="fixed top-0 left-0 right-0 z-50 flex flex-col">
+    <div x-show="$store.app._migrationBanner" x-cloak
+         class="flex items-center justify-center gap-3 px-4 py-2 bg-indigo-600 text-white text-sm shadow">
+      <i class="ti ti-info-circle text-base"></i>
+      <span data-migration-banner x-text="$store.app._migrationBanner"></span>
+      <button @click="$store.app._migrationBanner = null"
+              class="ml-2 underline font-semibold hover:opacity-80 whitespace-nowrap">Dismiss</button>
+    </div>
+    <div x-show="$store.app._notice" x-cloak
+         class="flex items-center justify-center gap-3 px-4 py-2 bg-blue-600 text-white text-sm shadow">
+      <i class="ti ti-info-circle text-base"></i>
+      <span data-notice-banner x-text="$store.app._notice"></span>
+      <button data-notice-dismiss @click="$store.app._notice = null"
+              class="ml-2 underline font-semibold hover:opacity-80 whitespace-nowrap">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- ============================== -->
+  <!-- Styled confirm dialog          -->
+  <!-- Replaces native confirm(); detail line carries the backup           -->
+  <!-- reassurance where a snapshot was just taken.                        -->
+  <!-- ============================== -->
+  <template x-if="$store.app._confirm">
+    <div class="fixed inset-0 z-[60]">
+      <div class="absolute inset-0 bg-black/50" @click="$store.app._confirmAnswer(false)"></div>
+      <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl p-5 w-96" data-confirm-dialog>
+        <p class="text-sm font-medium text-gray-900" x-text="$store.app._confirm.message"></p>
+        <p x-show="$store.app._confirm.detail" class="mt-2 text-xs text-gray-500" x-text="$store.app._confirm.detail"></p>
+        <div class="mt-4 flex justify-end gap-2">
+          <button data-confirm-cancel @click="$store.app._confirmAnswer(false)"
+                  class="px-3 py-1.5 text-sm border border-gray-300 rounded hover:bg-gray-50">Cancel</button>
+          <button data-confirm-accept @click="$store.app._confirmAnswer(true)"
+                  class="px-3 py-1.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded">Continue</button>
+        </div>
+      </div>
+    </div>
+  </template>
 
   <!-- ============================== -->
   <!-- Keyboard shortcuts overlay     -->
@@ -1485,7 +1815,7 @@
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">Navigate sentences</span>
-          <span><kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">j</kbd> <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">k</kbd></span>
+          <span><kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">j</kbd> previous <kbd class="px-1.5 py-0.5 bg-gray-100 rounded text-xs font-mono">k</kbd> next</span>
         </div>
         <div class="flex justify-between">
           <span class="text-gray-600">Accept finding</span>
@@ -1557,13 +1887,30 @@
           </section>
 
           <section>
-            <h3 class="font-semibold text-gray-900 mb-1">Presence: present / absent / indeterminate</h3>
+            <h3 class="font-semibold text-gray-900 mb-1">Presence: which way, how sure</h3>
+            <p>Presence combines two things: which way the report leans (present or absent), and whether it's hedged. Four choices cover every case:</p>
             <ul class="list-disc pl-5 space-y-1">
-              <li><span class="font-medium">present</span> — the report asserts the finding ("acute subdural hemorrhage along the left convexity").</li>
-              <li><span class="font-medium">absent</span> — the report explicitly negates the finding ("no acute infarct"). Negations still get an annotation — they're informative.</li>
-              <li><span class="font-medium">indeterminate</span> — the report hedges ("cannot exclude", "possible", "equivocal"). Default for ambiguous wording.</li>
+              <li><i class="ti text-sm align-middle" :class="$store.app.presenceOptions()[0].icon"></i> <span class="font-medium">Present</span> — the report asserts the finding ("pneumonia").</li>
+              <li><i class="ti text-sm align-middle" :class="$store.app.presenceOptions()[1].icon"></i> <span class="font-medium">Possible</span> — leans present, but hedges ("probable pneumonia", "possible pneumonia", "suspected pneumonia", "cannot exclude pneumonia").</li>
+              <li><i class="ti text-sm align-middle" :class="$store.app.presenceOptions()[2].icon"></i> <span class="font-medium">No definite</span> — leans absent, but hedges ("no definite pneumonia").</li>
+              <li><i class="ti text-sm align-middle" :class="$store.app.presenceOptions()[3].icon"></i> <span class="font-medium">Absent</span> — the report explicitly negates the finding ("no pneumonia"). Negations still get an annotation — they're informative.</li>
             </ul>
+            <p class="mt-1">If the wording is a genuine coin flip between Possible and No definite — you can't tell which way it leans — pick <span class="font-medium">Possible</span> and use the flag icon on the finding card to mark it for a second look.</p>
             <p class="mt-1">A report cannot be validated until every finding on it has a presence value.</p>
+          </section>
+
+          <section>
+            <h3 class="font-semibold text-gray-900 mb-1">Multiple instances of the same finding</h3>
+            <p>If the report names or sites each instance separately ("fractures of the left 7th and 8th ribs"), add one finding per instance.</p>
+            <p class="mt-1">If the report describes a bunch of the same finding without singling any one out ("multiple pulmonary nodules", "scattered nodules", "innumerable foci", or a bare count like "three nodules" with no location given), add <span class="font-medium">one</span> finding and turn on the <span class="font-medium">aggregate</span> attribute (+ attribute → aggregate) to mark it as a collection rather than a single instance.</p>
+            <p class="mt-1">Exception: paired organs and spaces (lungs, kidneys, pleural cavities, breasts, hips, shoulders, hemidiaphragms) always split into a left finding and a right finding when the report mentions both sides — never use aggregate for those, even when neither side is singled out ("bilateral pleural effusions" → two findings, no aggregate).</p>
+            <p class="mt-1">Never turn on aggregate for a negated finding ("no nodules") — it only applies when the finding is present.</p>
+          </section>
+
+          <section>
+            <h3 class="font-semibold text-gray-900 mb-1">Attributes that can hold more than one value</h3>
+            <p>A few attributes (comparison-to-prior, time course) can carry more than one value at once — e.g. a finding can be both "new" and "larger" than a prior study. Add each value as its own removable chip instead of picking just one.</p>
+            <p class="mt-1">Hedging one of these marks the whole attribute as hedged, not just one value in it — there's no way to hedge only part of it.</p>
           </section>
 
           <section>
@@ -1587,7 +1934,7 @@
 
           <section>
             <h3 class="font-semibold text-gray-900 mb-1">When to mark a report Validated</h3>
-            <p>When you've gone through every sentence with findings (the sidebar shows <span class="font-mono text-xs">X/Y sentences with findings</span>), confirmed each finding's presence value, and you'd stand behind the result as ground truth. A negative report ("no acute findings") with the negation findings annotated is a valid validated report.</p>
+            <p>When you've gone through every sentence with findings, confirmed each finding's presence value, and you'd stand behind the result as ground truth. A negative report ("no acute findings") with the negation findings annotated is a valid validated report.</p>
           </section>
 
           <section>
@@ -1658,6 +2005,41 @@
             <span class="text-gray-600">Custom findings</span>
             <span class="font-medium" x-text="$store.app._stats.findings_custom"></span>
           </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Flagged exams</span>
+            <span class="font-medium" x-text="$store.app._stats.flagged_reports"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Flagged findings</span>
+            <span class="font-medium" x-text="$store.app._stats.flagged_findings"></span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-600">Hedged attributes</span>
+            <span class="font-medium" x-text="$store.app._stats.hedged_axes"></span>
+          </div>
+          <!-- Distinct custom-finding names: the feedback channel to the
+               workbench taxonomy (repeated customs = missing entries). -->
+          <template x-if="$store.app._stats.custom_finding_names.length > 0">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-gray-600">Custom finding names</span>
+                <button data-copy-custom-names @click="$store.app.copyCustomFindingNames()"
+                        class="text-xs text-blue-600 hover:text-blue-800 underline">Copy list</button>
+              </div>
+              <p class="mt-1 text-xs text-gray-500" x-text="$store.app._stats.custom_finding_names.join(', ')"></p>
+            </div>
+          </template>
+          <template x-if="$store.app._storageInfo">
+            <div>
+              <hr class="border-gray-200 mb-3">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Storage</span>
+                <span class="font-medium"
+                      x-text="($store.app._storageInfo.persisted ? 'Persistent' : 'Not persistent')
+                        + ($store.app._storageInfo.usage != null ? ' · ' + $store.app.formatBytes($store.app._storageInfo.usage) + ' used' : '')"></span>
+              </div>
+            </div>
+          </template>
           <hr class="border-gray-200">
           <button @click="$store.app.exportStats()"
                   class="w-full px-3 py-2 text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded transition-colors text-center">
@@ -1702,6 +2084,12 @@
                  oninput="TaxonomyViewer.filter(this.value)"
                  class="w-full text-sm border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
         </div>
+        <p class="text-xs text-gray-400 flex items-center gap-1.5" data-taxonomy-legend>
+          <span class="text-[10px] font-medium text-blue-600 bg-blue-50 px-1 rounded">obs</span>
+          <span>observation — something seen on the image</span>
+          <span class="ml-2 text-[10px] font-medium text-amber-600 bg-amber-50 px-1 rounded">dx</span>
+          <span>diagnosis — an interpretation of what's seen</span>
+        </p>
       </div>
       <div id="taxonomy-tree" class="flex-1 overflow-y-auto px-6 py-4"></div>
     </div>

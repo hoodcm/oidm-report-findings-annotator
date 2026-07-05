@@ -111,3 +111,46 @@ describe('Taxonomy.fuzzyMatchFinding — Jaccard threshold boundary', () => {
 // the product decision is deferred — see TODO.md ("Partial-match search
 // shortcut"). When that decision lands, encode it as a paired
 // should-fire / shouldn't-fire test pinning the chosen behavior.
+
+describe('Taxonomy.findByExactOrSynonym — separator-agnostic exact matching', () => {
+  // Regression for the "everything is a 100% fuzzy match" confusion: the old
+  // exact matcher folded only the INPUT's separators, so an underscore-styled
+  // taxonomy ("airspace_opacity") never matched its own name exactly and
+  // every multi-word finding fell to the fuzzy tier at 100%.
+  const TAX = [
+    { id: 'F1', name: 'airspace_opacity', synonyms: ['Air space opacity', 'Infiltrate'] },
+    { id: 'F2', name: 'atelectasis', synonyms: [] },
+    { id: 'F3', name: 'pleural effusion', synonyms: [] },
+  ];
+
+  it('matches an underscore input to an underscore taxonomy name exactly', () => {
+    assertEqual((Taxonomy.findByExactOrSynonym('airspace_opacity', TAX) || {}).id, 'F1');
+  });
+
+  it('matches across separator styles in both directions', () => {
+    assertEqual((Taxonomy.findByExactOrSynonym('airspace opacity', TAX) || {}).id, 'F1');
+    assertEqual((Taxonomy.findByExactOrSynonym('pleural_effusion', TAX) || {}).id, 'F3');
+  });
+
+  it('matches synonyms with the same folding', () => {
+    assertEqual((Taxonomy.findByExactOrSynonym('infiltrate', TAX) || {}).id, 'F1');
+    assertEqual((Taxonomy.findByExactOrSynonym('air_space_opacity', TAX) || {}).id, 'F1');
+  });
+
+  it('returns null when nothing matches exactly (fuzzy is a separate tier)', () => {
+    assertEqual(Taxonomy.findByExactOrSynonym('opacity', TAX), null);
+  });
+
+  it('matchFindingToTaxonomy resolves an exact underscore name without fuzzy', () => {
+    assertEqual((Taxonomy.matchFindingToTaxonomy('airspace_opacity', TAX) || {}).id, 'F1');
+  });
+});
+
+describe('Taxonomy.fuzzyMatchFinding — underscore tokenization', () => {
+  it('tokenizes underscore names so partial overlap scores fractionally (not 0 or 100%)', () => {
+    const TAX = [{ id: 'F1', name: 'calcified_pulmonary_nodule', synonyms: [] }];
+    const r = Taxonomy.fuzzyMatchFinding('pulmonary_nodule', TAX, 0.5);
+    assert(r && r.finding.id === 'F1', 'partial-overlap name should still match');
+    assert(r.score > 0.5 && r.score < 1, `score should be fractional, got ${r && r.score}`);
+  });
+});

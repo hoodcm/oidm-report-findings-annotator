@@ -27,7 +27,7 @@ test.describe('Session export → restore round-trip', () => {
     // Build some state: validate R001 with one finding.
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      app.report.validated_findings.push({
+      app.report.findings.push({ status: 'validated',
         finding_name: 'acute infarct',
         source_sentence_idx: 1,
         source_text: 'No acute infarct.',
@@ -67,9 +67,9 @@ test.describe('Session export → restore round-trip', () => {
     // Validated finding preserved.
     const r001After = after.find(r => r.record_id === 'R001');
     expect(r001After.validated).toBe(true);
-    expect(r001After.validated_findings.length).toBe(1);
-    expect(r001After.validated_findings[0].finding_name).toBe('acute infarct');
-    expect(r001After.validated_findings[0].attributes.presence).toBe('absent');
+    expect(r001After.findings.length).toBe(1);
+    expect(r001After.findings[0].finding_name).toBe('acute infarct');
+    expect(r001After.findings[0].attributes.presence).toBe('absent');
   });
 
   test('IE3 legacy-session arm: restoreSession re-parses sentences from report_text', async ({ page }) => {
@@ -112,7 +112,8 @@ test.describe('Session export → restore round-trip', () => {
     expect(loaded.sentences.length).toBeGreaterThan(0);
 
     // The finding's source_text was relinked to a real 1-based sentence index.
-    expect(loaded.validated_findings[0].source_sentence_idx).toBeGreaterThan(0);
-    expect(loaded.validated_findings[0]._needsReview).not.toBe(true);
+    // (v1 legacy two-array input above was unified to findings[] by the migration.)
+    expect(loaded.findings[0].source_sentence_idx).toBeGreaterThan(0);
+    expect(loaded.findings[0]._needsReview).not.toBe(true);
   });
 });

@@ -44,26 +44,39 @@ const Taxonomy = {
   },
 
   /**
-   * Match an extracted finding name to a taxonomy entry.
-   * Level 1: Direct name match (normalize: lowercase, underscores→spaces)
-   * Level 2: CSV synonym match
-   * Level 3: Fuzzy token-overlap match (Jaccard, threshold 0.5)
+   * Exact or synonym match, no fuzzy. BOTH sides go through normalizeName
+   * so the separator style of the taxonomy ("airspace_opacity" vs
+   * "airspace opacity") never decides whether a name is "exact" — folding
+   * only the input used to push every multi-word identical name down to
+   * the fuzzy tier, where it showed up as a confusing "100% fuzzy" match.
    */
-  matchFindingToTaxonomy(findingName, findings) {
+  findByExactOrSynonym(findingName, findings) {
     const normalized = this.normalizeName(findingName);
-    const withSpaces = normalized.replace(/_/g, ' ');
 
     // Level 1: Direct canonical name match
     for (const f of findings) {
-      if (f.name.toLowerCase() === withSpaces) return f;
+      if (this.normalizeName(f.name) === normalized) return f;
     }
 
     // Level 2: Synonym match
     for (const f of findings) {
       for (const syn of f.synonyms) {
-        if (syn.toLowerCase() === withSpaces) return f;
+        if (this.normalizeName(syn) === normalized) return f;
       }
     }
+
+    return null;
+  },
+
+  /**
+   * Match an extracted finding name to a taxonomy entry.
+   * Level 1: Direct name match (separator-folded both sides)
+   * Level 2: CSV synonym match
+   * Level 3: Fuzzy token-overlap match (Jaccard, threshold 0.5)
+   */
+  matchFindingToTaxonomy(findingName, findings) {
+    const exact = this.findByExactOrSynonym(findingName, findings);
+    if (exact) return exact;
 
     // Level 3: Fuzzy match
     const result = this.fuzzyMatchFinding(findingName, findings, 0.5);
@@ -74,8 +87,10 @@ const Taxonomy = {
    * Token-overlap fuzzy match (Jaccard similarity).
    */
   fuzzyMatchFinding(findingName, findings, threshold = 0.5) {
+    // Underscores are separators too — an underscore-styled taxonomy would
+    // otherwise compare whole names as single tokens (always 0% or 100%).
     const inputTokens = new Set(
-      findingName.toLowerCase().split(/\s+/).filter(t => !MODIFIERS.has(t))
+      findingName.toLowerCase().split(/[\s_]+/).filter(t => t && !MODIFIERS.has(t))
     );
     if (inputTokens.size === 0) return null;
 
@@ -84,7 +99,7 @@ const Taxonomy = {
 
     for (const f of findings) {
       const taxTokens = new Set(
-        f.name.toLowerCase().split(/\s+/).filter(t => !MODIFIERS.has(t))
+        f.name.toLowerCase().split(/[\s_]+/).filter(t => t && !MODIFIERS.has(t))
       );
       if (taxTokens.size === 0) continue;
 

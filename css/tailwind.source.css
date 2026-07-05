@@ -1,0 +1,7 @@
+/* Input for the Tailwind precompile. Output (css/tailwind.css) is committed;
+ * regenerate with:
+ *   npx tailwindcss -i css/tailwind.source.css -o css/tailwind.css --minify
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

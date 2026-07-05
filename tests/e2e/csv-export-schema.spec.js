@@ -24,7 +24,7 @@ test.describe('Training-data CSV export schema', () => {
     // one pending finding so the export has rows from both code paths.
     await page.evaluate(async () => {
       const app = Alpine.store('app');
-      app.report.validated_findings.push({
+      app.report.findings.push({ status: 'validated',
         finding_name: 'acute infarct',
         taxonomy_id: 'HID005',
         source_sentence_idx: 1,
@@ -41,7 +41,7 @@ test.describe('Training-data CSV export schema', () => {
           lesion_count: '3',
         },
       });
-      app.report.llm_extractions.push({
+      app.report.findings.push({ status: 'pending',
         finding_name: 'mass effect',
         source_sentence_idx: 2,
         source_text: 'No mass effect.',
@@ -80,5 +80,73 @@ test.describe('Training-data CSV export schema', () => {
     expect(text).toMatch(/5kg/);
     expect(text).toMatch(/lesion_count/);
     expect(text).toMatch(/"3"/);
+  });
+
+  test('unanchored validated finding is excluded from the export; anchored one is retained with report_validated=true', async ({ page }) => {
+    // A validated report with one anchored finding and one whose
+    // source_sentence_idx is null (e.g. an impression grade demoted by
+    // migration). The unanchored one has no ground-truth sentence anchor and
+    // must not reach the training-data export; the anchored one must.
+    await page.evaluate(async () => {
+      const app = Alpine.store('app');
+      app.report.findings.push({ status: 'validated',
+        finding_name: 'acute infarct',
+        taxonomy_id: 'HID005',
+        source_sentence_idx: 1,
+        source_text: 'No acute infarct.',
+        attributes: { presence: 'absent' },
+      });
+      app.report.findings.push({ status: 'validated',
+        finding_name: 'orphan finding',
+        source_sentence_idx: null, // demoted / unanchored
+        source_text: 'text that lived in the impression',
+        attributes: { presence: 'present' },
+      });
+      app.report.validated = true;
+      await app._saveCurrentReport();
+    });
+
+    const { text } = await captureDownload(page, () =>
+      page.evaluate(() => Alpine.store('app').exportTrainingData())
+    );
+
+    // Should-fire / shouldn't-fire pair: anchored retained, unanchored excluded.
+    expect(text).toContain('R001,validated,acute infarct');
+    expect(text).not.toContain('orphan finding');
+
+    // The retained row still carries report_validated=true.
+    const rows = text.replace(/^﻿/, '').split('\n').filter(Boolean);
+    const header = rows[0].split(',');
+    const rvIdx = header.indexOf('report_validated');
+    const dataRow = rows.find(r => r.includes('acute infarct'));
+    expect(dataRow.split(',')[rvIdx]).toBe('true');
+  });
+
+  test('presence_3class (D7): hedged presence exports "uncertain", definite presence exports the polarity', async ({ page }) => {
+    await page.evaluate(async () => {
+      const app = Alpine.store('app');
+      app.report.findings.push({ status: 'validated',
+        finding_name: 'acute infarct', taxonomy_id: 'HID005',
+        source_sentence_idx: 1, source_text: 'No acute infarct.',
+        attributes: { presence: 'present' },
+        confidence: { presence: 'hedged' }, // "possible" — ◐
+      });
+      app.report.findings.push({ status: 'validated',
+        finding_name: 'mass effect',
+        source_sentence_idx: 2, source_text: 'No mass effect.',
+        attributes: { presence: 'present' }, // "present" — ●, no hedge
+      });
+      await app._saveCurrentReport();
+    });
+    const rows = await page.evaluate(() => {
+      const app = Alpine.store('app');
+      return app._buildFindingRows(app.report);
+    });
+    const hedged = rows.find(r => r.finding_name === 'acute infarct');
+    const definite = rows.find(r => r.finding_name === 'mass effect');
+    expect(hedged.presence).toBe('present');
+    expect(hedged.presence_3class).toBe('uncertain');
+    expect(definite.presence).toBe('present');
+    expect(definite.presence_3class).toBe('present');
   });
 });

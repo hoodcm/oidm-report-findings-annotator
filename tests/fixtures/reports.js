@@ -59,14 +59,17 @@ const FIXTURES = [
     ],
   },
   {
-    id: 'templated-none-skipped',
+    id: 'templated-none-kept',
     findingsText:
       'Brain Parenchyma: No acute findings.\nHemorrhage: none.\nMass Effect: none.',
     expectedSentences: [
       'Brain Parenchyma: No acute findings.',
+      'Hemorrhage: none.',
+      'Mass Effect: none.',
     ],
     expectedMatches: [
       { sourceText: 'No acute findings', expectedIdx: 1 },
+      { sourceText: 'Hemorrhage: none.', expectedIdx: 2 },
     ],
   },
   {

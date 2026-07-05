@@ -33,7 +33,7 @@ test.describe('Golden path: taxonomy → reports → annotate → export', () =>
     // The validated finding should appear on the current report.
     await expect.poll(async () => {
       return await page.evaluate(() =>
-        (Alpine.store('app').report.validated_findings || []).length
+        Alpine.store('app').allValidatedFindings.length
       );
     }).toBe(1);
 

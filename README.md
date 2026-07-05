@@ -1,8 +1,19 @@
 # OIDM Report Findings Annotator
 
+**Version 1.7.0** — July 2026
+
 A browser-based tool for annotating radiology reports with structured findings. No installation, no accounts, no data leaves your computer.
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
+
+## What's New in 1.7.0
+
+- **One drop zone for everything.** Drop your taxonomy, reports, LLM extractions, or a saved session on the welcome screen in any order — the tool recognizes each file by its content. Also accepts `.idm` taxonomy bundles.
+- **Your work is harder to lose.** The app keeps rolling snapshots and offers restore from the welcome screen; Ctrl+Z undoes an accidental edit.
+- **Reports read like the original.** Section headers and subheaders now render consistently the way they appear in the report, including empty sections like "Devices/Tubes/Lines: none", and every sentence keeps its place.
+- **Friendlier LLM extraction import.** Clearer plain-language messages when something doesn't match, one-click fixes for common problems (like the AI quoting the impression instead of the findings), and files made with older versions of the prompt still import.
+- **Works fully offline.** Nothing loads from the internet anymore — open the page and everything is local.
+- If you were working in an earlier version, your saved work carries forward automatically the first time you open this one.
 
 ## What It Does
 
@@ -19,13 +30,12 @@ All processing happens in your browser. Reports are stored in IndexedDB locally 
 ## Getting Started
 
 1. Open the tool in any modern browser (Chrome, Firefox, Safari, Edge).
-2. Upload a taxonomy CSV for your exam type (workbench format: `id, name, category, parent_id, synonyms, finding_type`).
-3. Upload a reports CSV with an ID column and a report text column.
-4. Click sentences to select them, search for findings, and tag each sentence.
-5. Set finding attributes (presence, laterality, severity, etc.) as needed. Mark any single attribute as *hedged* (uncertain) with the eye icon on its row.
-6. Flag a problem finding or a problem exam (wrong heading, un-annotatable) with the flag icon, and add an optional note — the flag rides along in your exports.
-7. Mark each report as validated when done.
-8. Export your annotations as CSV or JSON.
+2. Drop your files on the welcome screen — in any order. The tool recognizes each by its content: a taxonomy CSV (workbench format: `id, name, category, parent_id, synonyms, finding_type`) or an `.idm` bundle, a reports CSV with an ID column and a report text column, LLM extractions, or a saved session.
+3. Click sentences to select them, search for findings, and tag each sentence.
+4. Set finding attributes (presence, laterality, severity, etc.) as needed. Mark any single attribute as *hedged* (uncertain) with the eye icon on its row.
+5. Flag a problem finding or a problem exam (wrong heading, un-annotatable) with the flag icon, and add an optional note — the flag rides along in your exports.
+6. Mark each report as validated when done. Accidental edits can be undone (Ctrl+Z or the toast's Undo).
+7. Export your annotations as CSV or JSON.
 
 ## LLM-Assisted Workflow
 
@@ -44,7 +54,7 @@ See the [LLM extractions playbook](https://hoodcm.github.io/oidm-report-findings
 | `j` / `k` | Previous / next sentence |
 | `a` | Accept top pending finding |
 | `r` | Reject top pending finding |
-| `d` | Cycle presence (present / absent / indeterminate) |
+| `d` | Cycle presence (present / possible / no definite / absent) |
 | `f` | Focus finding search |
 | `n` | Next unvalidated report |
 | `?` | Show all shortcuts |
@@ -54,7 +64,7 @@ The sidebar also has a `?` **annotation guidelines** button — a quick referenc
 ## FAQ
 
 **Where is my data stored?**
-In your browser's IndexedDB. It persists between sessions but clearing browser data will erase it. Export session backups regularly.
+In your browser's IndexedDB. It persists between sessions but clearing browser data will erase it. The app keeps a few rolling snapshots of its own (restorable from the welcome screen), but export session backups regularly for anything you can't afford to lose.
 
 **Can I resume later?**
 Yes. Work auto-saves in the browser. You can also export a session backup (JSON) and restore it on any machine.
@@ -72,7 +82,7 @@ Each person annotates independently in their own browser. Export each annotator'
 
 ### Stack
 
-Alpine.js, Dexie.js (IndexedDB), PapaParse (CSV), Tailwind CSS (Play CDN), Tabler Icons
+Alpine.js, Dexie.js (IndexedDB), PapaParse (CSV), Tailwind CSS (precompiled), fflate (`.idm` bundles), Tabler Icons — all vendored under `vendor/`; no CDN, no runtime network access.
 
 ### Local development
 
@@ -86,8 +96,8 @@ If JavaScript edits don't appear after a reload, do a hard reload (Cmd/Ctrl+Shif
 ### Tests
 
 ```bash
-node tests/run.js       # unit + contract tests (172, pure Node)
-npx playwright test     # E2E tests (36 across 12 specs)
+node tests/run.js       # unit + contract tests (pure Node)
+npx playwright test     # E2E tests (Playwright, Chromium)
 ```
 
 Both layers run in CI on every PR via `.github/workflows/test.yml`.
@@ -96,13 +106,20 @@ Both layers run in CI on every PR via `.github/workflows/test.yml`.
 
 ```
 index.html                # Alpine.js SPA
-js/app.js                 # Core logic
-js/storage.js             # IndexedDB (reports + taxonomy)
+js/app.js                 # Core logic + Alpine store
+js/storage.js             # IndexedDB (reports + taxonomy + backups + data assets)
+js/schema.js              # Attribute-schema accessor (wraps data/attributes.json)
 js/taxonomy.js            # Finding search/matching
 js/sentences.js           # Report text parsing
 js/exam-type.js           # Exam-type label deriver (modality-acronym aware)
 js/extraction-import.js   # Extraction import (JSON + CSV)
 js/extraction-prompt.js   # Prompt builder (single source of truth)
+js/extraction-example.js  # Shared worked-example fixture
+js/file-classifier.js     # Universal drop-zone file routing
+js/idm-loader.js          # .idm bundle reader (zip + manifest)
+js/undo.js                # Snapshot undo ring buffer
+css/                      # Custom styles + precompiled Tailwind
+vendor/                   # Vendored runtime dependencies
 pages/llm-extractions.html       # LLM playbook (prompt + import + reference)
 pages/reports-format-guide.html  # Reports CSV format docs
 data/attributes.json             # Attribute definitions

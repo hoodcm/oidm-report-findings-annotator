@@ -68,7 +68,14 @@ test.describe('Upload error paths surface actionable toasts', () => {
     expect(state.count).toBe(0);
   });
 
-  test('extraction upload malformed JSON: error toast, extractionData not populated', async ({ page }) => {
+  // D3 (extraction-prompt-redesign plan, step 4) made the JSON extraction
+  // parser tolerant of prose/fenced wrapping, wrapper keys, and lone finding
+  // objects — genuinely unparseable/empty input still fails loudly, but the
+  // fatal message is now one plain-language sentence instead of a raw JS
+  // parse-error string, and a lone finding object (D3 shape 2) is no longer
+  // an error at all. These two tests are updated to the new contract; see
+  // tests/extraction-import.test.js for the full D3 shape matrix.
+  test('extraction upload with truly unparseable JSON: error toast, extractionData not populated', async ({ page }) => {
     await page.evaluate(async () => {
       const bad = new File(['{not valid json'], 'extractions.json', { type: 'application/json' });
       await Alpine.store('app').handleExtractionCsvUpload(bad);
@@ -81,14 +88,14 @@ test.describe('Upload error paths surface actionable toasts', () => {
       fields: Alpine.store('app').extractionFields,
     }));
     expect(state.toastType).toBe('error');
-    expect(state.toast).toMatch(/json parse failed/i);
+    expect(state.toast).toMatch(/expected a json array of finding objects/i);
     expect(state.data).toBeNull();
     expect(state.fields).toEqual([]);
   });
 
-  test('extraction upload non-array JSON: error toast, extractionData not populated', async ({ page }) => {
+  test('extraction upload with an empty JSON array: error toast, extractionData not populated', async ({ page }) => {
     await page.evaluate(async () => {
-      const bad = new File(['{"record_id":"r1"}'], 'extractions.json', { type: 'application/json' });
+      const bad = new File(['[]'], 'extractions.json', { type: 'application/json' });
       await Alpine.store('app').handleExtractionCsvUpload(bad);
     });
 
@@ -99,8 +106,24 @@ test.describe('Upload error paths surface actionable toasts', () => {
       fields: Alpine.store('app').extractionFields,
     }));
     expect(state.toastType).toBe('error');
-    expect(state.toast).toMatch(/array/i);
+    expect(state.toast).toMatch(/array of finding objects/i);
     expect(state.data).toBeNull();
     expect(state.fields).toEqual([]);
+  });
+
+  test('extraction upload of a lone finding object (D3 shape 2): tolerated — wraps into a list and proceeds to column mapping', async ({ page }) => {
+    await page.evaluate(async () => {
+      const lone = new File(['{"record_id":"r1","finding_name":"a","source_text":"x"}'], 'extractions.json', { type: 'application/json' });
+      await Alpine.store('app').handleExtractionCsvUpload(lone);
+    });
+
+    const state = await page.evaluate(() => ({
+      view: Alpine.store('app').currentView,
+      data: Alpine.store('app').extractionData,
+      fields: Alpine.store('app').extractionFields,
+    }));
+    expect(state.view).toBe('import-extractions');
+    expect(state.data).toEqual([{ record_id: 'r1', finding_name: 'a', source_text: 'x' }]);
+    expect(state.fields.sort()).toEqual(['finding_name', 'record_id', 'source_text']);
   });
 });

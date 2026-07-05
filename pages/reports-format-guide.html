@@ -8,8 +8,8 @@
   <meta http-equiv="Expires" content="0">
   <title>Reports CSV Format Guide</title>
   <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="../css/tailwind.css">
+  <link rel="stylesheet" href="../vendor/tabler/tabler-icons.min.css">
 </head>
 <body class="bg-gray-50 text-gray-900">
 
@@ -118,7 +118,6 @@ Brain Parenchyma:
         <li><strong>Continuation lines</strong> (a non-blank line that isn't a header and doesn't start a new sentence) are joined to the previous line with a single space.</li>
         <li><strong>Section headers</strong>: colon-terminated text at the start of a line, max 60 characters of label. Either bare on its own line, or inline with content following the colon.</li>
         <li><strong>Not supported</strong>: <code>+</code> bullets, sentences that begin with a lowercase letter after a bullet marker, or multiple distinct paragraphs glued together without a blank line between them.</li>
-        <li>Toggle <em>Show sentence boundaries</em> in the sidebar to see exactly which sentences the splitter produced from the current report.</li>
       </ul>
     </div>
   </section>
