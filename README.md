@@ -6,18 +6,12 @@ A browser-based tool for annotating radiology reports with structured findings. 
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
 
-## What's New in 1.7.1
+## What's New in 1.7
 
-- **Backup restore is reliable.** The welcome screen's "Restore a recent backup" list now always reflects the snapshots that actually exist — the "That backup could not be found" error after clearing data is fixed — and undoing a restore now brings back your data exactly as it was, together with the taxonomy and vocabulary that governed it.
-
-## What's New in 1.7.0
-
-- **One drop zone for everything.** Drop your taxonomy, reports, LLM extractions, or a saved session on the welcome screen in any order — the tool recognizes each file by its content. Also accepts `.idm` taxonomy bundles.
-- **Your work is harder to lose.** The app keeps rolling snapshots and offers restore from the welcome screen; Ctrl+Z undoes an accidental edit.
-- **Reports read like the original.** Section headers and subheaders now render consistently the way they appear in the report, including empty sections like "Devices/Tubes/Lines: none", and every sentence keeps its place.
-- **Friendlier LLM extraction import.** Clearer plain-language messages when something doesn't match, one-click fixes for common problems (like the AI quoting the impression instead of the findings), and files made with older versions of the prompt still import.
-- **Works fully offline.** Nothing loads from the internet anymore — open the page and everything is local.
-- If you were working in an earlier version, your saved work carries forward automatically the first time you open this one.
+- **One drop zone for everything.** Drop your taxonomy, reports, LLM extractions, or a saved session on the welcome screen in any order — the tool recognizes each file by its content.
+- **Your work is harder to lose.** Rolling backups with one-click restore from the welcome screen, and Ctrl+Z undoes an accidental edit.
+- **Friendlier LLM extraction import.** Plain-language messages and one-click fixes when something doesn't match.
+- **Works fully offline**, and saving, restoring, and exporting are more dependable under the hood.
 
 ## What It Does
 
