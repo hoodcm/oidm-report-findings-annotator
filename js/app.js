@@ -1494,6 +1494,9 @@ document.addEventListener('alpine:init', () => {
 
     async _writeReportsAndStartSession(reports) {
       await Storage.atomicReplace(reports);
+      // atomicReplace snapshotted (and may have pruned) — keep the welcome
+      // recovery list in sync so it never offers a pruned snapshot.
+      await this.loadBackups();
       // Fresh imports are stamped at the current schema — record the version
       // so the next init compares one integer instead of scanning the corpus.
       await this._writeSchemaMeta();
@@ -2302,6 +2305,13 @@ document.addEventListener('alpine:init', () => {
         }
       }
 
+      // Snapshot the CURRENT state before the first write of the restore.
+      // Taken any later (e.g. by atomicReplace after the taxonomy/asset
+      // swaps below) the safety snapshot would pair the pre-restore reports
+      // with the incoming session's taxonomy/schema — undoing the restore
+      // would silently put the old reports under the wrong vocabulary.
+      await Storage.backupNow('before-restore');
+
       // A restored session must be governed by ITS OWN attribute schema (or
       // the repo default), never by whatever bundle happened to be loaded
       // before the restore — so drop the existing bundle assets first, then
@@ -2341,11 +2351,15 @@ document.addEventListener('alpine:init', () => {
         } catch { /* non-fatal — reports still restore below */ }
       }
 
-      // Atomic clear+import in a single transaction
+      // Atomic clear+import in a single transaction. replaceReports, not
+      // atomicReplace: the safety snapshot was already taken above, before
+      // the taxonomy/asset swaps.
       try {
-        await Storage.atomicReplace(validReports);
+        await Storage.replaceReports(validReports);
       } catch (e) {
-        this.showToast('Failed to restore session: ' + (e.message || 'unknown error'), 'error');
+        this.showToast('Failed to restore session: ' + (e.message || 'unknown error') +
+          '. Your previous data was backed up first — you can restore it from the welcome screen.', 'error');
+        await this.loadBackups();
         return;
       }
 
@@ -2354,6 +2368,8 @@ document.addEventListener('alpine:init', () => {
       // migration path init uses so the session is current before it loads.
       await this._runMigrationIfNeeded();
 
+      // The restore snapshotted the prior state — keep the recovery list fresh.
+      await this.loadBackups();
       await this._loadSession();
       let msg = `Restored ${validReports.length} report(s)`;
       if (skipped > 0) msg += ` (${skipped} invalid entries skipped)`;
@@ -2628,7 +2644,14 @@ document.addEventListener('alpine:init', () => {
     // backed up first (atomicReplace snapshots), so it's undoable.
     async restoreFromBackup(id) {
       const b = await Storage.restoreBackup(id);
-      if (!b) { this.showToast('That backup could not be found.', 'error'); return; }
+      if (!b) {
+        // The clicked entry was pruned since the list was rendered (only the
+        // 3 newest snapshots are kept). Nothing was changed — refresh the
+        // list so it shows what's actually restorable.
+        await this.loadBackups();
+        this.showToast('That backup is no longer available — the list has been refreshed with your current backups.', 'error');
+        return;
+      }
       const stored = await Storage.loadTaxonomy();
       if (stored) { this.taxonomy = stored.findings; this.examType = stored.examType; }
       // The restore swapped the persisted bundle assets to the backup's own —
@@ -2659,6 +2682,10 @@ document.addEventListener('alpine:init', () => {
 
     async clearAllData() {
       await Storage.clearAllReports();
+      // The clear just took a 'before-clear' snapshot (and may have pruned
+      // the oldest) — refresh the welcome screen's recovery list so the user
+      // lands on entries that actually exist.
+      await this.loadBackups();
       // A bundle's persisted attribute schema (and companion assets) must not
       // outlive "delete ALL data" — otherwise the next taxonomy would still be
       // governed by the wiped bundle's vocabulary. Reverts the in-memory Schema

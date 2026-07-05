@@ -5,8 +5,9 @@
 //   the original reports remain.
 //
 // H1 (session restore): restoreSession must wrap clear+bulkPut in one Dexie
-//   transaction. Same shape — failure mid-restore must leave the prior
-//   reports intact.
+//   transaction (via replaceReports — the pre-restore safety snapshot is
+//   taken separately, before the taxonomy/asset swaps). Same shape — failure
+//   mid-restore must leave the prior reports intact.
 
 const { test, expect } = require('@playwright/test');
 const { gotoApp, resetIndexedDb, seedTaxonomy, seedReports } = require('./helpers');
@@ -61,9 +62,11 @@ test.describe('Atomic-replace contracts: failed imports do not destroy prior dat
   });
 
   test('H1: session restore failure leaves the seeded reports intact', async ({ page }) => {
+    // restoreSession writes reports via replaceReports (it snapshots
+    // separately, before its taxonomy/asset swaps) — inject the failure there.
     await page.evaluate(() => {
-      window.__originalAtomicReplace = Storage.atomicReplace;
-      Storage.atomicReplace = async () => {
+      window.__originalReplaceReports = Storage.replaceReports;
+      Storage.replaceReports = async () => {
         throw new Error('injected restore failure');
       };
     });
@@ -87,6 +90,6 @@ test.describe('Atomic-replace contracts: failed imports do not destroy prior dat
     expect(state.toastType).toBe('error');
     expect(state.ids).toEqual(['R001', 'R002', 'R003']);
 
-    await page.evaluate(() => { Storage.atomicReplace = window.__originalAtomicReplace; });
+    await page.evaluate(() => { Storage.replaceReports = window.__originalReplaceReports; });
   });
 });

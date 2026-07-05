@@ -1,10 +1,14 @@
 # OIDM Report Findings Annotator
 
-**Version 1.7.0** — July 2026
+**Version 1.7.1** — July 2026
 
 A browser-based tool for annotating radiology reports with structured findings. No installation, no accounts, no data leaves your computer.
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
+
+## What's New in 1.7.1
+
+- **Backup restore is reliable.** The welcome screen's "Restore a recent backup" list now always reflects the snapshots that actually exist — the "That backup could not be found" error after clearing data is fixed — and undoing a restore now brings back your data exactly as it was, together with the taxonomy and vocabulary that governed it.
 
 ## What's New in 1.7.0
 

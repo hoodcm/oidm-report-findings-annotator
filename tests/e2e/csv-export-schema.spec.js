@@ -122,6 +122,68 @@ test.describe('Training-data CSV export schema', () => {
     expect(dataRow.split(',')[rvIdx]).toBe('true');
   });
 
+  // The section column must carry the enclosing LARGE section (subheader
+  // breaks are skipped — the subheader travels as the sentence's own prefix),
+  // and matched_sentence_text must be the sentence WITHOUT that prefix.
+  // Value-level assertions — header presence alone proved too weak.
+  test('section column walks past subheaders to the enclosing large section; matched_sentence_text strips the subheader prefix', async ({ page }) => {
+    const rows = await page.evaluate(() => {
+      const app = Alpine.store('app');
+      const report = {
+        record_id: 'SECT1',
+        report_text: 'x',
+        taxonomyVersion: 'CT Head:0',
+        sentences: [
+          'No acute infarct.',                    // idx 1 — under HEAD:
+          'Devices: Lines and tubes in place.',   // idx 2 — HEAD: > Devices: subheader
+          'Alignment is normal.',                 // idx 3 — under CERVICAL SPINE:
+        ],
+        sectionBreaks: [
+          { before: 0, header: 'HEAD:', sub: false },
+          { before: 1, header: 'Devices:', sub: true },
+          { before: 2, header: 'CERVICAL SPINE:', sub: false },
+        ],
+        validated: false,
+        findings: [
+          { status: 'pending', finding_name: 'f-head', source_sentence_idx: 1, attributes: { presence: 'absent' } },
+          { status: 'pending', finding_name: 'f-sub', source_sentence_idx: 2, attributes: { presence: 'present' } },
+          { status: 'pending', finding_name: 'f-spine', source_sentence_idx: 3, attributes: { presence: 'absent' } },
+        ],
+      };
+      return app._buildFindingRows(report);
+    });
+
+    const byName = Object.fromEntries(rows.map(r => [r.finding_name, r]));
+    expect(byName['f-head'].section).toBe('HEAD:');
+    // The subheader break is skipped: the enclosing large section is HEAD:,
+    // and the sentence's own "Devices:" prefix is stripped from the text.
+    expect(byName['f-sub'].section).toBe('HEAD:');
+    expect(byName['f-sub'].matched_sentence_text).toBe('Lines and tubes in place.');
+    expect(byName['f-spine'].section).toBe('CERVICAL SPINE:');
+    expect(byName['f-head'].matched_sentence_text).toBe('No acute infarct.');
+  });
+
+  // Passthrough columns export the finding's stored values verbatim.
+  test('origin / was_modified / is_custom / taxonomy_version export verbatim', async ({ page }) => {
+    const row = await page.evaluate(() => {
+      const app = Alpine.store('app');
+      const report = {
+        record_id: 'PT1', report_text: 'x', taxonomyVersion: 'CT Head:12345',
+        sentences: ['One.'], sectionBreaks: [], validated: false,
+        findings: [{
+          status: 'validated', finding_name: 'f1', source_sentence_idx: 1,
+          origin: 'llm_extraction', was_modified: true, is_custom: true,
+          attributes: { presence: 'present' },
+        }],
+      };
+      return app._buildFindingRows(report)[0];
+    });
+    expect(row.origin).toBe('llm_extraction');
+    expect(row.was_modified).toBe(true);
+    expect(row.is_custom).toBe(true);
+    expect(row.taxonomy_version).toBe('CT Head:12345');
+  });
+
   test('presence_3class (D7): hedged presence exports "uncertain", definite presence exports the polarity', async ({ page }) => {
     await page.evaluate(async () => {
       const app = Alpine.store('app');

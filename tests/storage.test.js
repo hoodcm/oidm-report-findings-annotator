@@ -211,3 +211,99 @@ describe('Storage.clearTaxonomy', () => {
     assertEqual(await Storage.loadTaxonomy(), null);
   });
 });
+
+describe('Storage.resolveAttributeConfig — governing-schema resolution', () => {
+  // Which attribute schema governs the whole app (and the LLM playbook page):
+  // a persisted .idm 'attributes' asset wins; otherwise the repo default is
+  // fetched; a failed fetch degrades to null, never a throw.
+  it('a persisted attributes asset wins over the default fetch', async () => {
+    await Storage.clearDataAssets();
+    const bundleCfg = { presence: { values: ['present', 'absent'] } };
+    await Storage.saveDataAsset({ name: 'attributes', payload: bundleCfg, version: 'b:1' });
+    const origFetch = global.fetch;
+    let fetched = false;
+    global.fetch = async () => { fetched = true; return { ok: true, json: async () => ({}) }; };
+    try {
+      const cfg = await Storage.resolveAttributeConfig('data/attributes.json');
+      assertDeepEqual(cfg, bundleCfg);
+      assertEqual(fetched, false); // never touched the default
+    } finally {
+      global.fetch = origFetch;
+      await Storage.clearDataAssets();
+    }
+  });
+
+  it('with no persisted asset, fetches and returns the default config', async () => {
+    await Storage.clearDataAssets();
+    const defaultCfg = { presence: { values: ['present'] }, laterality: { values: ['left'] } };
+    const origFetch = global.fetch;
+    global.fetch = async () => ({ ok: true, json: async () => defaultCfg });
+    try {
+      const cfg = await Storage.resolveAttributeConfig('data/attributes.json');
+      assertDeepEqual(cfg, defaultCfg);
+    } finally {
+      global.fetch = origFetch;
+    }
+  });
+
+  it('returns null (not a throw) when the default fetch fails', async () => {
+    await Storage.clearDataAssets();
+    const origFetch = global.fetch;
+    global.fetch = async () => ({ ok: false, json: async () => ({}) });
+    try {
+      assertEqual(await Storage.resolveAttributeConfig('data/attributes.json'), null);
+      global.fetch = async () => { throw new Error('network down'); };
+      assertEqual(await Storage.resolveAttributeConfig('data/attributes.json'), null);
+    } finally {
+      global.fetch = origFetch;
+    }
+  });
+});
+
+describe('Storage.replaceReports / atomicReplace / restoreBackup — snapshot ordering', () => {
+  // v1.7.1 regressions. replaceReports is the snapshot-free atomic write used
+  // by callers that already snapshotted the TRUE pre-operation state
+  // (restoreBackup, restoreSession); atomicReplace = snapshot + replace.
+  it('replaceReports swaps the corpus without creating a snapshot', async () => {
+    await resetAll();
+    await Storage.clearBackups();
+    await Storage.saveReport({ record_id: 'old', report_text: 'x' });
+    await Storage.replaceReports([{ record_id: 'new', report_text: 'y' }]);
+    assertDeepEqual(await Storage.listReportIds(), ['new']);
+    assertEqual((await Storage.listBackups()).length, 0);
+  });
+
+  it('the undo snapshot restoreBackup takes captures the pre-restore taxonomy, not the backup\'s', async () => {
+    await resetAll();
+    await Storage.clearBackups();
+    await Storage.clearDataAssets();
+    const T = [{ id: 'X', name: 'a', synonyms: [], category: 'c', parent_id: null, finding_type: 'observation' }];
+    // Era 1 (taxonomy era1.csv, report ONE) → snapshotted by atomicReplace.
+    await Storage.saveTaxonomy('CT Head', 'era1.csv', T, false);
+    await Storage.saveReport({ record_id: 'ONE', report_text: 'x' });
+    await Storage.atomicReplace([{ record_id: 'TWO', report_text: 'y' }]);
+    // Era 2 now governs.
+    await Storage.saveTaxonomy('CXR', 'era2.csv', T, false);
+    const list = await Storage.listBackups();
+    await Storage.restoreBackup(list[list.length - 1].id); // restore era 1
+    // The newest snapshot (the restore's own undo point) must pair TWO with era2.
+    const newest = await Storage._db.backups.orderBy('id').reverse().first();
+    assertEqual(newest.label, 'before-restore');
+    assertDeepEqual(newest.reports.map(r => r.record_id), ['TWO']);
+    assertEqual(newest.taxonomyMeta.sourceFilename, 'era2.csv');
+    await Storage.clearBackups();
+    await Storage.clearDataAssets();
+  });
+
+  it('backupNow never throws even when the write fails (documented contract)', async () => {
+    await resetAll();
+    await Storage.saveReport({ record_id: 'r1', report_text: 'x' });
+    const origAdd = Storage._db.backups.add.bind(Storage._db.backups);
+    Storage._db.backups.add = async () => { throw new Error('injected backup failure'); };
+    try {
+      assertEqual(await Storage.backupNow('label'), null); // swallowed, null
+    } finally {
+      Storage._db.backups.add = origAdd;
+    }
+  });
+});

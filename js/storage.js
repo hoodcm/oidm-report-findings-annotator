@@ -163,20 +163,26 @@ const Storage = {
   // initial upload doesn't leave an empty snapshot. Never throws on the write
   // path's behalf — a backup failure must not block the primary operation.
   async backupNow(label) {
-    const reports = await db.reports.toArray();
-    const taxonomyMeta = (await db.taxonomyMeta.get(1)) || null;
-    if (reports.length === 0 && !taxonomyMeta) return null;
-    // Bundle assets ride along (minus the reserved schema_meta): a
-    // bundle-governed session restored without its attribute schema would be
-    // re-annotated under the wrong vocabulary.
-    const dataAssets = (await db.dataAssets.toArray()).filter(a => a.name !== 'schema_meta');
-    const created_at = new Date().toISOString();
-    const id = await db.backups.add({ created_at, label: label || '', reports, taxonomyMeta, dataAssets });
-    // Prune by primary key (monotonic ++id) so same-millisecond snapshots order
-    // deterministically. Keep the 3 highest ids.
-    const ids = await db.backups.orderBy('id').primaryKeys();
-    if (ids.length > 3) await db.backups.bulkDelete(ids.slice(0, ids.length - 3));
-    return id;
+    try {
+      const reports = await db.reports.toArray();
+      const taxonomyMeta = (await db.taxonomyMeta.get(1)) || null;
+      if (reports.length === 0 && !taxonomyMeta) return null;
+      // Bundle assets ride along (minus the reserved schema_meta): a
+      // bundle-governed session restored without its attribute schema would be
+      // re-annotated under the wrong vocabulary.
+      const dataAssets = (await db.dataAssets.toArray()).filter(a => a.name !== 'schema_meta');
+      const created_at = new Date().toISOString();
+      const id = await db.backups.add({ created_at, label: label || '', reports, taxonomyMeta, dataAssets });
+      // Prune by primary key (monotonic ++id) so same-millisecond snapshots order
+      // deterministically. Keep the 3 highest ids.
+      const ids = await db.backups.orderBy('id').primaryKeys();
+      if (ids.length > 3) await db.backups.bulkDelete(ids.slice(0, ids.length - 3));
+      return id;
+    } catch {
+      // Documented contract: a backup failure must never block the primary
+      // operation (the write the user actually asked for).
+      return null;
+    }
   },
 
   // Light metadata for the welcome recovery list (no heavy report bodies),
@@ -192,12 +198,17 @@ const Storage = {
     }));
   },
 
-  // Restore a snapshot: put its taxonomy back (verbatim, preserving loadedAt),
-  // then atomically replace reports. atomicReplace snapshots the pre-restore
-  // state first, so restoring is itself undoable. Returns the backup or null.
+  // Restore a snapshot: snapshot the CURRENT state first (so restoring is
+  // itself undoable), then put the backup's taxonomy back (verbatim,
+  // preserving loadedAt), swap in its bundle assets, and atomically replace
+  // reports. The undo snapshot must be taken before ANY of the restore's
+  // writes — taken later it would pair the pre-restore reports with the
+  // backup's taxonomy/schema, and undoing the restore would silently put
+  // those reports under the wrong vocabulary. Returns the backup or null.
   async restoreBackup(id) {
     const b = await db.backups.get(id);
     if (!b) return null;
+    await this.backupNow('before-restore');
     if (b.taxonomyMeta) await db.taxonomyMeta.put(plain(b.taxonomyMeta));
     // The restored corpus is governed by the assets captured WITH it — not by
     // whatever bundle is loaded now. Older backups carry no dataAssets array;
@@ -213,7 +224,10 @@ const Storage = {
       backfillValidatedAt(copy);
       return copy;
     });
-    await this.atomicReplace(reports);
+    // replaceReports, not atomicReplace: the undo snapshot was already taken
+    // above, before the taxonomy/asset writes — a second one here would
+    // capture the half-restored state.
+    await this.replaceReports(reports);
     return b;
   },
 
@@ -235,8 +249,16 @@ const Storage = {
   },
 
   async atomicReplace(reports) {
-    await ensurePersisted();
     await this.backupNow('before-replace');
+    await this.replaceReports(reports);
+  },
+
+  // Atomic clear+write of the reports table WITHOUT a safety snapshot.
+  // Only for callers that already snapshotted the true pre-operation state
+  // (restoreBackup, restoreSession) — everything else goes through
+  // atomicReplace.
+  async replaceReports(reports) {
+    await ensurePersisted();
     const cloned = reports.map(plain);
     await db.transaction('rw', db.reports, async () => {
       await db.reports.clear();
