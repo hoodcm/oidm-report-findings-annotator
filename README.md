@@ -6,30 +6,18 @@ A browser-based tool for annotating radiology reports with structured findings. 
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
 
-## What's New in 2.0
-
-- **Cluster-gated attribute picker.** The "+ attribute" picker now offers device-cluster attributes (tip location, position status, insertion site, integrity) only for findings that carry the owning cluster — universal attributes are still always offered, and already-set values always render regardless.
-- **One drop zone for everything.** Drop your taxonomy, reports, LLM extractions, or a saved session on the welcome screen in any order — the tool recognizes each file by its content.
-- **Your work is harder to lose.** Rolling backups with one-click restore from the welcome screen, and Ctrl+Z undoes an accidental edit.
-- **Friendlier LLM extraction import.** Plain-language messages and one-click fixes when something doesn't match.
-- **Works fully offline**, and saving, restoring, and exporting are more dependable under the hood.
-
 ## What It Does
 
 Upload a CSV of radiology reports and annotate each sentence with standardized finding names from a controlled taxonomy. The tool tracks your progress, saves your work automatically, and exports structured CSV or JSON for downstream analysis.
 
-Supports multiple exam types (chest X-ray, head CT, MSK, mammography, MRI spine) through swappable taxonomy files from the [imaging-findings-workbench](https://github.com/hoodcm/imaging-findings-workbench). Upload a taxonomy CSV for your exam type on first use.
+Supports multiple exam types (chest X-ray, head CT, MSK, mammography, MRI spine) through swappable taxonomy files. Upload a taxonomy CSV for your exam type on first use.
 
 For large datasets, you can have an LLM pre-extract findings from your reports, import the extractions, and review them instead of annotating from scratch.
-
-## Data Privacy
-
-All processing happens in your browser. Reports are stored in IndexedDB locally and are never sent to any server.
 
 ## Getting Started
 
 1. Open the tool in any modern browser (Chrome, Firefox, Safari, Edge).
-2. Drop your files on the welcome screen — in any order. The tool recognizes each by its content: a taxonomy CSV (workbench format: `id, name, category, parent_id, synonyms, finding_type`) or an `.idm` bundle, a reports CSV with an ID column and a report text column, LLM extractions, or a saved session.
+2. Drop your files on the welcome screen — in any order. The tool recognizes each by its content: a taxonomy CSV or `.idm` bundle, a reports CSV with an ID column and a report text column, LLM extractions, or a saved session.
 3. Click sentences to select them, search for findings, and tag each sentence.
 4. Set finding attributes (presence, laterality, severity, etc.) as needed. Mark any single attribute as *hedged* (uncertain) with the eye icon on its row.
 5. Flag a problem finding or a problem exam (wrong heading, un-annotatable) with the flag icon, and add an optional note — the flag rides along in your exports.
@@ -63,13 +51,25 @@ The sidebar also has a `?` **annotation guidelines** button — a quick referenc
 ## FAQ
 
 **Where is my data stored?**
-In your browser's IndexedDB. It persists between sessions but clearing browser data will erase it. The app keeps a few rolling snapshots of its own (restorable from the welcome screen), but export session backups regularly for anything you can't afford to lose.
+In your browser's IndexedDB. All processing happens in your browser; reports are never sent to any server. Data persists between sessions, but clearing browser data will erase it. The app keeps a few rolling snapshots of its own (restorable from the welcome screen), but export session backups regularly for anything you can't afford to lose.
 
 **Can I resume later?**
 Yes. Work auto-saves in the browser. You can also export a session backup (JSON) and restore it on any machine.
 
-**What CSV format do I need?**
-A header row with at least an ID column and a report text column. UTF-8 recommended (ask your LLM to ensure this). The tool auto-detects columns and lets you confirm.
+**What CSV format do I need for reports?**
+A header row with at least an ID column and a report text column. UTF-8 recommended. The tool auto-detects columns and lets you confirm.
+
+**What taxonomy format do I need?**
+A CSV with `id, name, category, parent_id, synonyms, finding_type` columns, or an `.idm` bundle. Ready-made taxonomies for several exam types are available from the [imaging-findings-workbench](https://github.com/hoodcm/imaging-findings-workbench). Drop the file on the welcome screen like any other file.
+
+**Why don't I see every attribute on every finding?**
+Universal attributes (presence, laterality, severity, etc.) are always available. Device-specific attributes (tip location, position status, insertion site, integrity) are offered only for device findings, where they apply. Anything already set on a finding always stays visible.
+
+**I made a mistake — can I undo it?**
+Yes. Ctrl+Z (or the Undo button on the toast) reverses the last edit. Destructive operations (new upload, restore, clear-all) automatically snapshot your data first, and those snapshots are restorable from the welcome screen.
+
+**Does it work offline?**
+Yes. After the first load, everything runs locally — no CDN, no runtime network access.
 
 **Can multiple people annotate the same reports?**
 Each person annotates independently in their own browser. Export each annotator's results and compare externally.
@@ -77,54 +77,20 @@ Each person annotates independently in their own browser. Export each annotator'
 ---
 
 <details>
-<summary>Technical details</summary>
+<summary>For developers</summary>
 
-### Stack
-
-Alpine.js, Dexie.js (IndexedDB), PapaParse (CSV), Tailwind CSS (precompiled), fflate (`.idm` bundles), Tabler Icons — all vendored under `vendor/`; no CDN, no runtime network access.
-
-### Local development
+Pure static SPA — Alpine.js, Dexie.js (IndexedDB), PapaParse (CSV), Tailwind CSS (precompiled), fflate (`.idm` bundles), Tabler Icons — all vendored under `vendor/`; no build step, no CDN.
 
 ```bash
-python3 -m http.server 8501
-# http://localhost:8501
-```
+# Local development
+python3 -m http.server 8501    # then open http://localhost:8501
 
-If JavaScript edits don't appear after a reload, do a hard reload (Cmd/Ctrl+Shift+R) to bypass the browser cache.
-
-### Tests
-
-```bash
+# Tests
 node tests/run.js       # unit + contract tests (pure Node)
 npx playwright test     # E2E tests (Playwright, Chromium)
 ```
 
-Both layers run in CI on every PR via `.github/workflows/test.yml`.
-
-### Files
-
-```
-index.html                # Alpine.js SPA
-js/app.js                 # Core logic + Alpine store
-js/storage.js             # IndexedDB (reports + taxonomy + backups + data assets)
-js/schema.js              # Attribute-schema accessor (wraps data/attributes.json)
-js/taxonomy.js            # Finding search/matching
-js/sentences.js           # Report text parsing
-js/exam-type.js           # Exam-type label deriver (modality-acronym aware)
-js/extraction-import.js   # Extraction import (JSON + CSV)
-js/extraction-prompt.js   # Prompt builder (single source of truth)
-js/extraction-example.js  # Shared worked-example fixture
-js/file-classifier.js     # Universal drop-zone file routing
-js/idm-loader.js          # .idm bundle reader (zip + manifest)
-js/undo.js                # Snapshot undo ring buffer
-css/                      # Custom styles + precompiled Tailwind
-vendor/                   # Vendored runtime dependencies
-pages/llm-extractions.html       # LLM playbook (prompt + import + reference)
-pages/reports-format-guide.html  # Reports CSV format docs
-data/attributes.json             # Attribute definitions
-tests/                    # Unit + contract tests (Node) + browser runner
-tests/e2e/                # Playwright specs
-```
+Both test layers run in CI on every PR.
 
 </details>
 
