@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "OIDM Report Findings Annotator"
+authors:
+  - family-names: Hood
+    given-names: Michael
+    name-suffix: MD
+    orcid: "https://orcid.org/0009-0005-8708-1118"
+version: 1.7.1
+date-released: "2026-07-05"
+license: Apache-2.0
+repository-code: "https://github.com/hoodcm/oidm-report-findings-annotator"
+url: "https://hoodcm.github.io/oidm-report-findings-annotator/"
