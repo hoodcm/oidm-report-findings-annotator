@@ -26,7 +26,11 @@ test.describe('.idm bundle load', () => {
 
   test('fresh profile: taxonomy searchable, exam label from manifest, assets stored', async ({ page }) => {
     await page.setInputFiles(DROP_INPUT, [SAMPLE_IDM]);
-    await page.waitForFunction(() => Alpine.store('app').taxonomy.length > 0);
+    // Gate on the loader's LAST write, not the first: app.taxonomy is set
+    // before the attributes/actionability/normality assets are persisted, so
+    // a taxonomy-only wait can read the asset store mid-write on a slow
+    // runner (CI flake). sample.idm carries 3 assets.
+    await page.waitForFunction(async () => (await Storage.listDataAssets()).length >= 3);
 
     const state = await page.evaluate(async () => {
       const app = Alpine.store('app');
@@ -115,7 +119,10 @@ test('.idm bundle round-trips through session export → clean-profile restore',
   await gotoApp(page);
 
   await page.setInputFiles(DROP_INPUT, [SAMPLE_IDM]);
-  await page.waitForFunction(() => Alpine.store('app').taxonomy.length > 0);
+  // Same completion gate as the fresh-profile test: wait for the loader's
+  // last asset write, or the session export below can race the in-flight
+  // bundle writes and round-trip a partial asset set.
+  await page.waitForFunction(async () => (await Storage.listDataAssets()).length >= 3);
   // Load one report so there's a session to speak of.
   await page.evaluate(async () => {
     await Storage.atomicReplace([{
