@@ -23,9 +23,9 @@ async function runImport(page, payload, columnMap) {
   } catch (e) {
     // confirmExtractionImport ends with _loadSession(), whose chained
     // history.pushState can detach this evaluate's handle mid-run (a known
-    // E2E gotcha in this suite). The report is saved BEFORE that navigation, so the
-    // data is already persisted — swallow only the navigation error and let the
-    // caller read the result back from Storage.
+    // E2E gotcha in this suite). The report is saved BEFORE that navigation,
+    // so the data is already persisted — swallow only the navigation error
+    // and let the caller read the result back from Storage.
     if (!/context was destroyed|navigation/i.test(e.message)) throw e;
   }
 }

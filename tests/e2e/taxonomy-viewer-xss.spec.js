@@ -1,6 +1,6 @@
 // Pins the TaxonomyViewer escaping contract: a taxonomy CSV is uploaded by the
 // user (often shared by a colleague — no default taxonomy ships with the
-// app"), so finding names, ids, synonyms, and category labels are untrusted.
+// app), so finding names, ids, synonyms, and category labels are untrusted.
 // The Taxonomy Viewer must render them as text, not as markup.
 
 const { test, expect } = require('@playwright/test');

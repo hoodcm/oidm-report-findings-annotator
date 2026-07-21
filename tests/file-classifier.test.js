@@ -218,7 +218,8 @@ describe('FileClassifier.classify — precedence table (every signature + collis
 
 describe('FileClassifier.classify — rationale quality', () => {
   // Rationale copy is radiologist-facing (rendered in the drop-zone chips), so
-  // it must be plain language — no raw snake_case column names. These pin the plain-language contract, not exact wording.
+  // it must be plain language — no raw snake_case column names. These pin the
+  // plain-language contract, not exact wording.
   it('reports rationale is plain-language (names no raw column identifier)', () => {
     const r = FileClassifier.classify({ name: 'r.csv', text: 'record_id,report_text\nR1,"' + LONG + '"' });
     assertEqual(r.type, 'reports');

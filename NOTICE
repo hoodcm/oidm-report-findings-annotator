@@ -1,8 +1,15 @@
-OIDM Report Findings Annotator
+Radiology Report Findings Annotator Tool
 Copyright 2026 Michael Hood, MD (ORCID: 0009-0005-8708-1118)
 https://github.com/hoodcm/oidm-report-findings-annotator
 
-Created and maintained by Michael Hood, MD.
+Created and maintained by Michael Hood, MD, as part of the Open Imaging
+Data Model (OIDM) initiative (https://openimagingdata.org).
+
+Redistributions and derivative works must retain the contents of this
+NOTICE file as required by Section 4(d) of the Apache License 2.0. In
+addition, the author requests that any deployment of this tool keep a
+visible creator attribution (author name and ORCID) in the application
+footer, README, or an equivalent user-facing location, in good faith.
 
 This product includes third-party open-source components in the vendor/
 directory, each distributed under its own license.

@@ -205,9 +205,8 @@ describe('CsvImport._parseJson — D3 tolerance: wrapper shapes, prose, truncati
   });
 });
 
-// Code-review regressions (extraction-prompt-redesign plan, Phase 10):
-// found by an adversarial review of step 4's D3 tolerance, confirmed
-// by direct execution, and fixed in the same turn.
+// Code-review regressions: found by an adversarial review of the JSON-parse
+// tolerance rules, confirmed by direct execution, and fixed in the same pass.
 describe('CsvImport._parseJson — code-review regressions', () => {
   it('a lone finding object with an array-VALUED ATTRIBUTE (e.g. multi-value chronicity) is not mistaken for a wrapper key', () => {
     const out = CsvImport._parseJson(JSON.stringify({

@@ -1,8 +1,8 @@
-# OIDM Report Findings Annotator
+# Radiology Report Findings Annotator Tool
 
 **Version 2.0.0** — July 2026
 
-A browser-based tool for annotating radiology reports with structured findings. No installation, no accounts, no data leaves your computer.
+A browser-based tool for annotating radiology reports with structured findings, built on the [Open Imaging Data Model (OIDM)](https://openimagingdata.org) architecture. No installation, no accounts, no data leaves your computer.
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
 

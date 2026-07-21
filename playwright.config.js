@@ -1,5 +1,6 @@
-// Playwright config for OIDM annotator E2E.
-// Runs the static SPA via `python3 serve.py` (no-cache headers).
+// Playwright config for the OIDM annotator E2E suite.
+// Runs the static SPA via `python3 serve.py` (no-cache headers, so stale
+// browser caches never mask a JS/CSS change under test).
 // Tests target a single Chromium worker to avoid shared IndexedDB races.
 //
 // Why a single worker? Each spec's setup writes to IndexedDB on

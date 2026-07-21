@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "OIDM Report Findings Annotator"
+title: "Radiology Report Findings Annotator Tool"
 authors:
   - family-names: Hood
     given-names: Michael
