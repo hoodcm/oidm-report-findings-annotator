@@ -59,34 +59,153 @@
   <!-- VIEW: Welcome                  -->
   <!-- ============================== -->
   <template x-if="$store.app.currentView === 'welcome'">
-    <div class="w-full h-full overflow-y-auto flex flex-col">
-      <div class="max-w-5xl mx-auto px-8 pt-16 pb-10 w-full">
-        <h1 class="text-3xl font-semibold text-gray-900 mb-2">Report Annotator</h1>
-        <p class="text-gray-500 mb-6">Upload a CSV of radiology reports to begin annotating, or restore a previous session.</p>
-
-        <!-- Continue annotation (shown when data is loaded) -->
-        <template x-if="$store.app.recordIds.length > 0">
-          <div class="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-            <div>
-              <p class="text-sm font-medium text-blue-900">
-                You have <span x-text="$store.app.recordIds.length"></span> reports loaded
-                (<span x-text="$store.app.validatedCount"></span> validated).
+    <div class="w-full h-full overflow-y-auto flex flex-col bg-stone-50">
+      <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-8 sm:pt-12 pb-10 w-full">
+        <section class="mb-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <div class="grid lg:grid-cols-[1.25fr_0.75fr]">
+            <div class="p-6 sm:p-8">
+              <div class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                <i class="ti ti-clipboard-check text-base"></i>
+                Browser-based annotation
+              </div>
+              <h1 class="mt-4 text-3xl sm:text-4xl font-semibold text-gray-950">Findings annotation workspace</h1>
+              <p class="mt-3 max-w-2xl text-sm sm:text-base text-gray-600">
+                Load a taxonomy, add reports, optionally import AI extractions, and review every finding in one local browser session.
               </p>
-              <p class="text-xs text-blue-600 mt-0.5">Pick up where you left off.</p>
             </div>
-            <button @click="$store.app.currentView = 'annotate'"
-                    class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
-              Continue Annotating
-            </button>
+            <div class="border-t lg:border-t-0 lg:border-l border-gray-200 bg-gray-50 p-6 sm:p-8">
+              <div class="grid grid-cols-3 gap-3 text-center">
+                <div class="rounded-lg border border-gray-200 bg-white px-3 py-4">
+                  <p class="text-2xl font-semibold text-gray-950" x-text="$store.app.totalCount"></p>
+                  <p class="mt-1 text-xs font-medium text-gray-500">Reports</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-white px-3 py-4">
+                  <p class="text-2xl font-semibold text-gray-950" x-text="$store.app.validatedCount"></p>
+                  <p class="mt-1 text-xs font-medium text-gray-500">Validated</p>
+                </div>
+                <div class="rounded-lg border border-gray-200 bg-white px-3 py-4">
+                  <p class="text-2xl font-semibold text-gray-950" x-text="$store.app.taxonomy.length"></p>
+                  <p class="mt-1 text-xs font-medium text-gray-500">Findings</p>
+                </div>
+              </div>
+              <p class="mt-4 text-xs text-gray-500">
+                Work auto-saves in this browser. Save a session file when you need a portable copy.
+              </p>
+            </div>
           </div>
-        </template>
+        </section>
+
+        <section class="mb-6">
+          <div class="mb-3 flex items-center justify-between gap-4">
+            <div>
+              <h2 class="text-base font-semibold text-gray-950">Resume, restore, or reset</h2>
+              <p class="mt-1 text-sm text-gray-500">Continue current work, load a saved session, recover a backup, or clear the slate.</p>
+            </div>
+          </div>
+
+          <div class="grid gap-4 lg:grid-cols-3">
+            <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <div class="flex items-start gap-3">
+                <span class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                  <i class="ti ti-player-play text-xl"></i>
+                </span>
+                <div class="min-w-0">
+                  <h3 class="text-sm font-semibold text-gray-950">Current annotation</h3>
+                  <template x-if="$store.app.recordIds.length > 0">
+                    <p class="mt-1 text-sm text-gray-500">
+                      <span x-text="$store.app.recordIds.length"></span> reports loaded,
+                      <span x-text="$store.app.validatedCount"></span> validated.
+                    </p>
+                  </template>
+                  <template x-if="$store.app.recordIds.length === 0">
+                    <p class="mt-1 text-sm text-gray-500">No reports are currently loaded.</p>
+                  </template>
+                </div>
+              </div>
+              <div class="mt-5 flex flex-col gap-2">
+                <button @click="$store.app.currentView = 'annotate'"
+                        :disabled="$store.app.totalCount === 0"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40">
+                  <i class="ti ti-arrow-right text-base"></i>
+                  Continue annotation
+                </button>
+                <button data-start-fresh
+                        @click="$store.app.confirmDialog('Start totally fresh?', 'This clears reports, taxonomy, imported bundle assets, and setup progress. A backup is taken automatically first when there is current data.').then(ok => { if (ok) $store.app.startFresh() })"
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-100 hover:text-red-800">
+                  <i class="ti ti-trash text-base"></i>
+                  Start totally fresh
+                </button>
+              </div>
+            </div>
+
+            <div class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              <div class="flex items-start gap-3">
+                <span class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-indigo-50 text-indigo-700">
+                  <i class="ti ti-folder-open text-xl"></i>
+                </span>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-950">Restore saved session</h3>
+                  <p class="mt-1 text-sm text-gray-500">Load a portable session backup JSON from this tool.</p>
+                </div>
+              </div>
+              <label class="mt-5 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700">
+                <i class="ti ti-upload text-base"></i>
+                Choose session file
+                <input type="file" accept=".json" class="hidden"
+                       @change="const f = $event.target.files[0]; $event.target.value = ''; if (f) $store.app.confirmDialog('Restore this saved session? It replaces all current data.', 'A backup of the current data is taken automatically first.').then(ok => { if (ok) $store.app.restoreSession(f) })">
+              </label>
+              <p class="mt-3 text-xs text-gray-500">The drop zone below also accepts a saved session or data bundle by itself.</p>
+            </div>
+
+            <div class="rounded-lg border border-amber-200 bg-white p-5 shadow-sm">
+              <div class="flex items-start gap-3">
+                <span class="inline-flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-amber-50 text-amber-700">
+                  <i class="ti ti-history text-xl"></i>
+                </span>
+                <div>
+                  <h3 class="text-sm font-semibold text-gray-950">Recent automatic backups</h3>
+                  <p class="mt-1 text-sm text-gray-500">Recover snapshots taken before destructive actions.</p>
+                </div>
+              </div>
+              <template x-if="$store.app.backups.length === 0">
+                <div class="mt-5 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-500">
+                  No automatic backups yet.
+                </div>
+              </template>
+              <template x-if="$store.app.backups.length > 0">
+                <div class="mt-5 space-y-2">
+                  <template x-for="b in $store.app.backups" :key="b.id">
+                    <div class="flex items-center justify-between gap-3 rounded-lg border border-amber-100 bg-amber-50/60 px-3 py-2">
+                      <div class="min-w-0">
+                        <p class="truncate text-sm font-medium text-gray-800" x-text="$store.app.formatBackupTime(b.created_at)"></p>
+                        <p class="text-xs text-gray-500">
+                          <span x-text="b.report_count"></span> report(s)<template x-if="b.taxonomy"><span> &middot; <span x-text="b.taxonomy"></span></span></template>
+                        </p>
+                      </div>
+                      <button @click="$store.app.confirmDialog('Restore this backup?', 'Your current data is snapshotted first, so restoring is itself undoable.').then(ok => { if (ok) $store.app.restoreFromBackup(b.id) })"
+                              class="flex-none rounded bg-amber-100 px-3 py-1.5 text-xs font-medium text-amber-800 transition-colors hover:bg-amber-200">
+                        Restore
+                      </button>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-6">
+          <div class="mb-3">
+            <h2 class="text-base font-semibold text-gray-950">Start a new annotation set</h2>
+            <p class="mt-1 text-sm text-gray-500">Drop files in any order, or use the step-by-step browse controls.</p>
+          </div>
 
         <!-- Universal drop zone: one front door for every accepted file type.
              The classifier routes each file by content signature; the chips
              below say what each file was recognized as and why. -->
         <div class="mb-6">
           <label id="universal-drop"
-                 class="drop-zone relative flex items-center justify-center border-2 border-dashed border-indigo-300 bg-indigo-50/40 hover:bg-indigo-50 rounded-lg p-6 cursor-pointer transition-colors min-h-[110px]"
+                 class="drop-zone relative flex min-h-[150px] cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-indigo-300 bg-indigo-50/50 p-6 transition-colors hover:bg-indigo-50"
                  @dragover.prevent="$el.classList.add('drop-zone-active')"
                  @dragleave.prevent="$el.classList.remove('drop-zone-active')"
                  @drop.prevent="$el.classList.remove('drop-zone-active'); $store.app.handleUniversalDrop($event.dataTransfer.files)">
@@ -94,8 +213,8 @@
                    @change="$store.app.handleUniversalDrop($event.target.files); $event.target.value = ''">
             <div class="pointer-events-none text-center">
               <i class="ti ti-cloud-upload text-2xl text-indigo-600"></i>
-              <p class="mt-2 text-sm font-medium text-indigo-800">Drop your files here — any order, all at once is fine</p>
-              <p class="mt-1 text-xs text-indigo-600">Taxonomy CSV · reports CSV · AI extractions · saved session · data bundle (.idm)</p>
+              <p class="mt-2 text-sm font-medium text-indigo-800">Drop taxonomy, reports, and AI extractions here — any order is fine</p>
+              <p class="mt-1 text-xs text-indigo-600">Drop a saved session or data bundle (.idm) by itself to restore work.</p>
             </div>
           </label>
 
@@ -178,7 +297,7 @@
               <template x-if="$store.app.totalCount === 0">
                 <p class="text-xs mt-0.5" :class="$store.app.stepState('reports') === 'waiting' ? 'text-gray-400' : 'text-gray-500'"
                    x-text="$store.app.stepState('reports') === 'waiting'
-                     ? 'Load a taxonomy first — findings are matched against it.'
+                     ? 'Reports can be dropped now; load a taxonomy so findings can be matched.'
                      : 'A CSV with an ID column and a report text column. See the format guide below.'"></p>
               </template>
             </div>
@@ -237,83 +356,52 @@
             </button>
           </div>
         </div>
+        </section>
 
-        <!-- Restore a saved session file (the drop zone above accepts it too) -->
-        <div class="mb-6 flex items-center gap-2 text-xs text-gray-500">
-          <i class="ti ti-folder-open text-base text-gray-400"></i>
-          <span>Returning with a saved session file?</span>
-          <label class="text-indigo-600 hover:text-indigo-800 underline cursor-pointer">
-            Restore it here
-            <input type="file" accept=".json" class="hidden"
-                   @change="const f = $event.target.files[0]; $event.target.value = ''; if (f) $store.app.confirmDialog('Restore this saved session? It replaces all current data.', 'A backup of the current data is taken automatically first.').then(ok => { if (ok) $store.app.restoreSession(f) })">
-          </label>
-          <span class="text-gray-400">— replaces any current work after confirmation.</span>
-        </div>
+        <section class="grid gap-4 lg:grid-cols-2">
+          <!-- Getting started -->
+          <details class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <summary class="cursor-pointer px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 select-none">
+              How to prepare your data
+            </summary>
+            <div class="px-6 pb-4 text-sm text-gray-600 space-y-2">
+              <p><strong>Step 1:</strong> Load the taxonomy CSV for this exam type so finding names and attributes are available.</p>
+              <p><strong>Step 2:</strong> Load a reports CSV with an ID column and a report text column. The tool auto-detects columns and lets you confirm them.</p>
+              <p><strong>Step 3 (optional):</strong> Import AI-extracted findings after reports are loaded, or drop the extraction file early and it will queue.</p>
+              <p class="text-xs text-gray-400 mt-2">Tip: Your work auto-saves in the browser. Open the "Save & export" panel and click Save to create a portable backup you can restore later.</p>
+            </div>
+          </details>
 
-        <!-- Recover from a recent backup: snapshots are taken automatically
-             before every destructive action (replace, clear, taxonomy switch).
-             Only shown when at least one snapshot exists. -->
-        <template x-if="$store.app.backups.length > 0">
-          <div class="mt-6 bg-white rounded-lg shadow-sm border border-amber-200 border-l-4 border-l-amber-400 p-5">
-            <h3 class="text-sm font-semibold text-amber-800 mb-1">Restore a recent backup</h3>
-            <p class="text-sm text-gray-500 mb-3">Automatic snapshots from just before the last few destructive actions. Restoring is itself undoable — your current data is snapshotted first.</p>
-            <div class="space-y-2">
-              <template x-for="b in $store.app.backups" :key="b.id">
-                <div class="flex items-center justify-between gap-3 px-3 py-2 bg-amber-50/50 border border-amber-100 rounded">
-                  <div class="min-w-0">
-                    <p class="text-sm font-medium text-gray-800" x-text="$store.app.formatBackupTime(b.created_at)"></p>
-                    <p class="text-xs text-gray-500">
-                      <span x-text="b.report_count"></span> report(s)<template x-if="b.taxonomy"><span> &middot; <span x-text="b.taxonomy"></span></span></template>
-                    </p>
-                  </div>
-                  <button @click="$store.app.confirmDialog('Restore this backup?', 'Your current data is snapshotted first, so restoring is itself undoable.').then(ok => { if (ok) $store.app.restoreFromBackup(b.id) })"
-                          class="flex-none px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded transition-colors">
-                    Restore
-                  </button>
+          <!-- Test your extraction algorithm -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+            <h3 class="text-sm font-semibold text-gray-950 mb-1">Optional tools</h3>
+            <p class="text-sm text-gray-500 mb-4">
+              Prepare AI extractions or inspect the active finding vocabulary.
+            </p>
+            <div class="space-y-3">
+              <a href="pages/llm-extractions.html" target="_blank"
+                 class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
+                <i class="ti ti-prompt text-lg text-gray-600 mt-0.5"></i>
+                <div>
+                  <span class="text-sm font-medium text-gray-800">LLM extractions playbook</span>
+                  <p class="text-xs text-gray-500 mt-0.5">Get a prompt for your LLM, learn what file to upload, and find help when imports fail.</p>
                 </div>
-              </template>
+              </a>
+              <button @click="if ($store.app.taxonomy.length > 0) window.dispatchEvent(new CustomEvent('open-taxonomy'))"
+                      :disabled="$store.app.taxonomy.length === 0"
+                      class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="ti ti-list-details text-lg text-gray-600 mt-0.5"></i>
+                <div>
+                  <span class="text-sm font-medium text-gray-800">Browse finding taxonomy</span>
+                  <p class="text-xs text-gray-500 mt-0.5"
+                     x-text="$store.app.taxonomy.length > 0
+                       ? `Browse the ${$store.app.taxonomy.length} recognized finding names organized by category with synonyms.`
+                       : 'Load a taxonomy first to browse recognized finding names.'"></p>
+                </div>
+              </button>
             </div>
           </div>
-        </template>
-
-        <!-- Getting started -->
-        <details class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-          <summary class="cursor-pointer px-6 py-3 text-sm font-medium text-gray-700 hover:text-gray-900 select-none">
-            How to prepare your data
-          </summary>
-          <div class="px-6 pb-4 text-sm text-gray-600 space-y-2">
-            <p><strong>Step 1:</strong> Start with a CSV containing an ID column and a report text column (any header names work).</p>
-            <p><strong>Step 2:</strong> Upload it above — the tool auto-detects columns and lets you pick which is which.</p>
-            <p><strong>Step 3 (optional):</strong> Test your extraction algorithm using the tools below, then import the results.</p>
-            <p class="text-xs text-gray-400 mt-2">Tip: Your work auto-saves in the browser. Open the "Save & export" panel and click Save to create a portable backup you can restore later.</p>
-          </div>
-        </details>
-
-        <!-- Test your extraction algorithm -->
-        <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200 border-l-4 border-l-indigo-400 p-6">
-          <h3 class="text-sm font-semibold text-indigo-700 mb-1">Test Your Own Extraction Algorithm (optional)</h3>
-          <p class="text-sm text-gray-500 mb-4">
-            Use an LLM to extract findings from your reports, then import the result.
-          </p>
-          <div class="space-y-3">
-            <a href="pages/llm-extractions.html" target="_blank"
-               class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-              <i class="ti ti-prompt text-lg text-gray-600 mt-0.5"></i>
-              <div>
-                <span class="text-sm font-medium text-gray-800">LLM extractions playbook</span>
-                <p class="text-xs text-gray-500 mt-0.5">Get a prompt for your LLM, learn what file to upload, and find help when imports fail.</p>
-              </div>
-            </a>
-            <button @click="window.dispatchEvent(new CustomEvent('open-taxonomy'))"
-                    class="w-full flex items-start gap-3 px-4 py-3 text-left bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors">
-              <i class="ti ti-list-details text-lg text-gray-600 mt-0.5"></i>
-              <div>
-                <span class="text-sm font-medium text-gray-800">Browse Finding Taxonomy</span>
-                <p class="text-xs text-gray-500 mt-0.5">Browse the <span x-text="$store.app.taxonomy.length"></span> recognized finding names organized by category with synonyms. Use this to understand the taxonomy your extractor should target.</p>
-              </div>
-            </button>
-          </div>
-        </div>
+        </section>
 
         <!-- Author credit -->
         <div class="mt-10 pt-6 border-t border-gray-200 text-center">
@@ -321,7 +409,6 @@
             Built by <a href="https://github.com/hoodcm" class="text-gray-500 hover:text-gray-700 underline">Michael Hood, MD</a>
             (<a href="https://orcid.org/0009-0005-8708-1118" class="text-gray-500 hover:text-gray-700 underline">ORCID</a>)
             · <a href="https://openimagingdata.org" class="text-gray-500 hover:text-gray-700 underline">OIDM Initiative</a>
-            · 
             · <a href="https://github.com/hoodcm/oidm-report-findings-annotator" class="text-gray-500 hover:text-gray-700 underline">Source on GitHub</a>
             · <a href="https://www.apache.org/licenses/LICENSE-2.0" class="text-gray-500 hover:text-gray-700 underline">Apache 2.0</a>
           </p>

@@ -1,6 +1,6 @@
 {
   "name": "oidm-report-findings-annotator",
-  "version": "0.0.0",
+  "version": "2.0.0",
   "private": true,
   "description": "Browser-based radiology report annotation tool. Pure-static SPA; devDeps are test-only.",
   "license": "Apache-2.0",

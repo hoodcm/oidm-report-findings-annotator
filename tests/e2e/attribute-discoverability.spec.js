@@ -58,4 +58,32 @@ test.describe('Attribute discoverability', () => {
     const sizeRow = page.locator('div.grid', { has: page.locator('span', { hasText: /^size$/ }) });
     await expect(sizeRow.locator('input[type="text"]')).toHaveAttribute('placeholder', 'e.g. 3.2 cm');
   });
+
+  test('cluster-gated axes are offered only when the finding carries the cluster', async ({ page }) => {
+    await seedFinding(page, { presence: 'present' });
+    const result = await page.evaluate(() => {
+      const app = Alpine.store('app');
+      // A device-cluster taxonomy entry alongside the cluster-less seed entries
+      // (taxonomy.json `clusters` is how the bridge marks the device subtree).
+      app.taxonomy = app.taxonomy.concat([
+        { id: 'HID100', name: 'endotracheal tube', synonyms: [], category: 'device', clusters: ['device'] },
+      ]);
+      const keys = f => app.getAvailableAttributes(f).map(a => a.key);
+      return {
+        device: keys({ finding_name: 'endotracheal tube', attributes: {} }),
+        nonDevice: keys({ finding_name: 'subdural hemorrhage', attributes: {} }),
+        custom: keys({ finding_name: 'not in the taxonomy', attributes: {} }),
+      };
+    });
+    // Device finding: universal + device axes.
+    expect(result.device).toContain('tip_location');
+    expect(result.device).toContain('position_status');
+    expect(result.device).toContain('laterality');
+    // Non-device finding: universal only.
+    expect(result.nonDevice).not.toContain('tip_location');
+    expect(result.nonDevice).not.toContain('position_status');
+    expect(result.nonDevice).toContain('laterality');
+    // Custom / unmatched finding: clusters unknown → ungated, nothing lost.
+    expect(result.custom).toContain('tip_location');
+  });
 });

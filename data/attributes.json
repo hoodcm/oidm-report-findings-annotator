@@ -18,6 +18,7 @@
       "temporal_status",
       "severity",
       "extent",
+      "distribution",
       "integrity",
       "position_status"
     ],
@@ -90,6 +91,13 @@
       "large"
     ]
   },
+  "distribution": {
+    "type": "enum",
+    "description": "Coverage: involvement throughout the finding's own reference region (the region is finding-relative \u2014 a wall, a disc, the imaged skeleton). Nominal mark, not a cross-finding scale.",
+    "values": [
+      "diffuse"
+    ]
+  },
   "anatomic_site": {
     "type": "text",
     "description": "Compound anatomic terms",
@@ -102,18 +110,20 @@
   },
   "aggregate": {
     "type": "boolean",
-    "description": "Marks a finding row as representing a non-discrete collection or diffuse pattern rather than a single discrete instance",
+    "description": "Marks a finding row as representing a non-discrete collection rather than a single discrete instance",
     "values": []
   },
   "insertion_site": {
     "type": "text",
     "description": "Where the device enters",
-    "values": []
+    "values": [],
+    "cluster": "device"
   },
   "tip_location": {
     "type": "text",
     "description": "Where device tip terminates",
-    "values": []
+    "values": [],
+    "cluster": "device"
   },
   "position_status": {
     "type": "enum",
@@ -121,7 +131,8 @@
     "values": [
       "satisfactory",
       "malpositioned"
-    ]
+    ],
+    "cluster": "device"
   },
   "integrity": {
     "type": "enum",
@@ -129,6 +140,7 @@
     "values": [
       "intact",
       "discontinuous"
-    ]
+    ],
+    "cluster": "device"
   }
 }

@@ -1255,6 +1255,20 @@ document.addEventListener('alpine:init', () => {
       if (name) this.addFinding(name, true);
     },
 
+    _reportsContainImportedExtractions(reports) {
+      return (reports || []).some(r =>
+        r?.extraction_model
+        || r?.extraction_timestamp
+        || (r?.findings || []).some(f => f?.status === 'pending' || f?.origin === 'llm')
+        || (r?.llm_extractions || []).length > 0
+      );
+    },
+
+    _resetSetupProgress({ keepQueued = false } = {}) {
+      this.extractionsImported = false;
+      if (!keepQueued) this.queuedExtractions = [];
+    },
+
     // Welcome-stepper state per setup step: 'done' | 'current' | 'waiting'.
     // Step 3 (extractions) is optional, so its not-done-but-available state
     // reads 'optional' instead of 'current'. Purely visual — the drop zone
@@ -1312,12 +1326,16 @@ document.addEventListener('alpine:init', () => {
       };
       // Push the chip BEFORE routing so it's visible even when routing
       // switches views (reports mapping, extraction panel).
+      const chipIndex = this.dropResults.length;
       this.dropResults = [...this.dropResults, chip];
 
       switch (c.type) {
         case 'idm':
           if (window.IdmLoader) {
-            await IdmLoader.load(c.file, this);
+            if (!await IdmLoader.load(c.file, this)) {
+              chip.status = 'error';
+              chip.rationale = 'data bundle import failed — see the message above';
+            }
           } else {
             chip.status = 'error';
             chip.rationale = 'data bundles (.idm) are not supported in this version';
@@ -1326,21 +1344,33 @@ document.addEventListener('alpine:init', () => {
         case 'session':
           if (await this.confirmDialog('Restore this saved session? It replaces all current data.',
             'A backup of the current data is taken automatically first.')) {
-            await this.restoreSession(c.file);
+            if (!await this.restoreSession(c.file)) {
+              chip.status = 'error';
+              chip.rationale = 'session restore failed — see the message above';
+            }
           } else {
             chip.status = 'error';
             chip.rationale = 'restore cancelled';
           }
           break;
         case 'taxonomy':
-          await this.handleTaxonomyUpload(c.file);
+          if (!await this.handleTaxonomyUpload(c.file)) {
+            chip.status = 'error';
+            chip.rationale = 'taxonomy import failed — see the message above';
+          }
           break;
         case 'reports':
-          await this.handleReportsCsvUpload(c.file);
+          if (!await this.handleReportsCsvUpload(c.file)) {
+            chip.status = 'error';
+            chip.rationale = 'reports import failed — see the message above';
+          }
           break;
         case 'extraction':
           if (this.recordIds.length > 0) {
-            await this.handleExtractionCsvUpload(c.file);
+            if (!await this.handleExtractionCsvUpload(c.file)) {
+              chip.status = 'error';
+              chip.rationale = 'extraction import failed — see the message above';
+            }
           } else {
             chip.status = 'queued';
             this.queuedExtractions = [...this.queuedExtractions, c.file];
@@ -1349,8 +1379,8 @@ document.addEventListener('alpine:init', () => {
         default:
           chip.status = 'error';
       }
-      // Reassign for Alpine reactivity on the mutated chip.
-      this.dropResults = [...this.dropResults];
+      // Replace the object for Alpine reactivity on bound attrs/classes.
+      this.dropResults = this.dropResults.map((r, i) => i === chipIndex ? { ...chip } : r);
     },
 
     // Auto-run the next queued extraction file once reports exist. Called
@@ -1365,23 +1395,28 @@ document.addEventListener('alpine:init', () => {
         chip.status = 'routed';
         this.dropResults = [...this.dropResults];
       }
-      await this.handleExtractionCsvUpload(file);
+      const ok = await this.handleExtractionCsvUpload(file);
+      if (!ok && chip) {
+        chip.status = 'error';
+        chip.rationale = 'extraction import failed — see the message above';
+        this.dropResults = [...this.dropResults];
+      }
     },
 
     // --- CSV Upload ---
 
     async handleReportsCsvUpload(file) {
-      if (!file) return;
+      if (!file) return false;
       if (file.size > MAX_CSV_SIZE) {
         this.showToast('CSV file exceeds 10 MB limit', 'error');
-        return;
+        return false;
       }
       let result;
       try {
         result = await CsvImport.parseFile(file);
       } catch (e) {
         this.showToast('Could not parse CSV file', 'error');
-        return;
+        return false;
       }
       this.uploadData = result.data;
       this.uploadFields = result.fields;
@@ -1390,6 +1425,7 @@ document.addEventListener('alpine:init', () => {
       this.uploadTextCol = detected.textCol || '';
       this.uploadValidation = null;
       this.currentView = 'upload-mapping';
+      return true;
     },
 
     validateUploadMapping() {
@@ -1493,6 +1529,7 @@ document.addEventListener('alpine:init', () => {
     },
 
     async _writeReportsAndStartSession(reports) {
+      this._resetSetupProgress({ keepQueued: true });
       await Storage.atomicReplace(reports);
       // atomicReplace snapshotted (and may have pruned) — keep the welcome
       // recovery list in sync so it never offers a pruned snapshot.
@@ -1518,19 +1555,19 @@ document.addEventListener('alpine:init', () => {
     // --- Extraction Import ---
 
     async handleExtractionCsvUpload(file) {
-      if (!file) return;
+      if (!file) return false;
       if (file.size > MAX_CSV_SIZE) {
         this.showToast('CSV file exceeds 10 MB limit', 'error');
-        return;
+        return false;
       }
       let result;
       try {
         result = await CsvImport.parseFile(file);
       } catch (e) {
         this.showToast('Could not parse CSV file', 'error');
-        return;
+        return false;
       }
-      this._handleExtractionParseResult(result);
+      return this._handleExtractionParseResult(result);
     },
 
     /**
@@ -1543,16 +1580,16 @@ document.addEventListener('alpine:init', () => {
       const raw = (text || '').trim();
       if (!raw) {
         this.showToast('Paste some text first.', 'error');
-        return;
+        return false;
       }
       let result;
       try {
         result = await CsvImport.parseText(CsvImport.Norm.text(raw));
       } catch (e) {
         this.showToast('Could not parse the pasted text', 'error');
-        return;
+        return false;
       }
-      this._handleExtractionParseResult(result);
+      return this._handleExtractionParseResult(result);
     },
 
     // Shared by handleExtractionCsvUpload and handleExtractionPaste: both
@@ -1563,11 +1600,11 @@ document.addEventListener('alpine:init', () => {
       const fatal = (result.errors || []).find(e => e.type === 'fatal');
       if (fatal) {
         this.showToast(fatal.message, 'error');
-        return;
+        return false;
       }
       if (!result.data || result.data.length === 0) {
         this.showToast('No rows found in the uploaded file', 'error');
-        return;
+        return false;
       }
       // Surface any D3 repair notes (a wrapper key unwrapped, prose ignored,
       // a truncated reply salvaged, multiple batches combined, smart quotes
@@ -1656,6 +1693,7 @@ document.addEventListener('alpine:init', () => {
       this.extractionColumnMap = {};
       this.currentView = 'import-extractions';
       requestAnimationFrame(() => { this.extractionColumnMap = map; });
+      return true;
     },
 
     /**
@@ -2242,10 +2280,10 @@ document.addEventListener('alpine:init', () => {
     },
 
     async restoreSession(file) {
-      if (!file) return;
+      if (!file) return false;
       if (file.size > MAX_SESSION_SIZE) {
         this.showToast('Session file exceeds 50 MB limit', 'error');
-        return;
+        return false;
       }
       const text = await file.text();
       let session;
@@ -2253,12 +2291,12 @@ document.addEventListener('alpine:init', () => {
         session = JSON.parse(text);
       } catch {
         this.showToast('Invalid JSON file', 'error');
-        return;
+        return false;
       }
 
       if (!session.reports || !session.version) {
         this.showToast('Invalid session format', 'error');
-        return;
+        return false;
       }
 
       // Accept both formats: array (old client-side) or object keyed by record_id (old server app)
@@ -2269,7 +2307,7 @@ document.addEventListener('alpine:init', () => {
         reportsArray = Object.values(session.reports);
       } else {
         this.showToast('Invalid session format', 'error');
-        return;
+        return false;
       }
 
       // Filter out reports without a valid record_id
@@ -2277,7 +2315,7 @@ document.addEventListener('alpine:init', () => {
       const skipped = reportsArray.length - validReports.length;
       if (validReports.length === 0) {
         this.showToast('No valid reports found in session file', 'error');
-        return;
+        return false;
       }
 
       // Re-parse sentences for reports from older sessions that may lack them
@@ -2360,7 +2398,7 @@ document.addEventListener('alpine:init', () => {
         this.showToast('Failed to restore session: ' + (e.message || 'unknown error') +
           '. Your previous data was backed up first — you can restore it from the welcome screen.', 'error');
         await this.loadBackups();
-        return;
+        return false;
       }
 
       // Restored data may predate the current schema (older sentence
@@ -2382,6 +2420,9 @@ document.addEventListener('alpine:init', () => {
       } else {
         this.showToast(msg, 'success');
       }
+      this.queuedExtractions = [];
+      this.extractionsImported = this._reportsContainImportedExtractions(validReports);
+      return true;
     },
 
     async exportCurrentReportJson() {
@@ -2497,16 +2538,16 @@ document.addEventListener('alpine:init', () => {
     },
 
     async handleTaxonomyUpload(file) {
-      if (!file) return;
+      if (!file) return false;
       if (file.size > MAX_CSV_SIZE) {
         this.showToast('Taxonomy CSV exceeds 10 MB limit', 'error');
-        return;
+        return false;
       }
       const text = await file.text();
       const findings = this._parseTaxonomyCsv(text);
       if (findings.length === 0) {
         this.showToast('No valid findings found in CSV. Expected columns: id, name, category, synonyms', 'error');
-        return;
+        return false;
       }
 
       // Decide what to do with any loaded reports. Count findings across ALL
@@ -2533,7 +2574,7 @@ document.addEventListener('alpine:init', () => {
             `Switching taxonomy will clear all ${reportCount} loaded report(s) and their annotations.`,
             'A backup was just taken — you can restore it from the welcome screen. Export your session too for a portable copy.'
           );
-          if (!ok) return;
+          if (!ok) return false;
           await this.clearAllData();
         }
       }
@@ -2564,6 +2605,7 @@ document.addEventListener('alpine:init', () => {
       }
 
       this.showToast(`Loaded ${findings.length} findings for ${examType}`, 'success');
+      return true;
     },
 
     // --- Annotation Stats ---
@@ -2667,6 +2709,8 @@ document.addEventListener('alpine:init', () => {
       await this._runMigrationIfNeeded();
       await this.loadBackups();
       await this._loadSession();
+      this.queuedExtractions = [];
+      this.extractionsImported = this._reportsContainImportedExtractions(b.reports || []);
       this.showToast(`Restored ${b.reports?.length || 0} report(s) from a backup.`, 'success');
     },
 
@@ -2699,6 +2743,17 @@ document.addEventListener('alpine:init', () => {
       this.report = null;
       this.currentView = 'welcome';
       this._saveFailed = false;
+      this._resetSetupProgress();
+    },
+
+    async startFresh() {
+      await this.clearAllData();
+      await Storage.clearTaxonomy();
+      this.taxonomy = [];
+      this.examType = '';
+      this.dropResults = [];
+      await this.loadBackups();
+      this.showToast('Started fresh. Previous work was backed up first when there was data to preserve.', 'success');
     },
 
     // --- Internal helpers ---
@@ -2945,6 +3000,15 @@ document.addEventListener('alpine:init', () => {
         }));
     },
 
+    // Resolved cluster tags for a finding's taxonomy entry (taxonomy.json
+    // `clusters`, inherited down parent_id at generation time). Returns null
+    // for a custom / unmatched finding — "clusters unknown", which leaves
+    // cluster-gated axes ungated rather than hiding them.
+    findingClusters(finding) {
+      const t = Taxonomy.findByName(finding.finding_name || '', this.taxonomy);
+      return t ? (t.clusters || []) : null;
+    },
+
     // The "+ attribute" picker lists only attributes not already present.
     // Filter by KEY PRESENCE (`k in attrs`), not truthiness — otherwise a
     // just-added empty-valued row would still appear here and the same
@@ -2953,9 +3017,15 @@ document.addEventListener('alpine:init', () => {
       const attrs = finding.attributes || {};
       // findingAttributeKeys already excludes the metadata keys (presence has
       // its own row; confidence is a system-managed per-axis hedge map, not a
-      // user-addable attribute). Offer only annotatable attrs not already set.
+      // user-addable attribute). Offer only annotatable attrs not already set,
+      // gated per finding: cluster-owned axes (e.g. the device cluster's
+      // tip_location/position_status) appear only for findings whose taxonomy
+      // entry carries the owning cluster. Already-set values always render in
+      // getSetAttributes regardless — the gate governs offering, never display.
+      const clusters = this.findingClusters(finding);
       return Schema.findingAttributeKeys()
         .filter(k => !(k in attrs))
+        .filter(k => Schema.axisVisibleFor(k, clusters))
         .map(k => ({ key: k, ...this.attributeConfig[k] }));
     },
 

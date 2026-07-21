@@ -16,6 +16,7 @@ const TAXONOMY = path.join(FIXTURES_DIR, 'ct-head-taxonomy.csv');
 const REPORTS = path.join(FIXTURES_DIR, 'drop-reports.csv');
 const EXTRACTIONS = path.join(FIXTURES_DIR, 'drop-extractions.csv');
 const GARBAGE = path.join(FIXTURES_DIR, 'garbage.txt');
+const EMPTY_TAXONOMY = path.join(FIXTURES_DIR, 'empty-taxonomy.csv');
 
 const DROP_INPUT = '#universal-drop input[type="file"]';
 
@@ -84,5 +85,13 @@ test.describe('Universal drop zone', () => {
     const chip = page.locator('[data-drop-chip][data-chip-status="routed"]');
     await expect(chip).toBeVisible();
     await expect(chip).toContainText('recognized as a taxonomy');
+  });
+
+  test('a recognized file that fails during import flips its chip to error', async ({ page }) => {
+    await page.setInputFiles(DROP_INPUT, [EMPTY_TAXONOMY]);
+
+    const chip = page.locator('[data-drop-chip]').filter({ hasText: 'taxonomy import failed' });
+    await expect(chip).toBeVisible();
+    await expect(chip).toContainText('taxonomy import failed');
   });
 });

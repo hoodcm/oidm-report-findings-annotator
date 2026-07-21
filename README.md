@@ -1,13 +1,14 @@
 # OIDM Report Findings Annotator
 
-**Version 1.7.1** — July 2026
+**Version 2.0.0** — July 2026
 
 A browser-based tool for annotating radiology reports with structured findings. No installation, no accounts, no data leaves your computer.
 
 **Try it:** [hoodcm.github.io/oidm-report-findings-annotator](https://hoodcm.github.io/oidm-report-findings-annotator/)
 
-## What's New in 1.7
+## What's New in 2.0
 
+- **Cluster-gated attribute picker.** The "+ attribute" picker now offers device-cluster attributes (tip location, position status, insertion site, integrity) only for findings that carry the owning cluster — universal attributes are still always offered, and already-set values always render regardless.
 - **One drop zone for everything.** Drop your taxonomy, reports, LLM extractions, or a saved session on the welcome screen in any order — the tool recognizes each file by its content.
 - **Your work is harder to lose.** Rolling backups with one-click restore from the welcome screen, and Ctrl+Z undoes an accidental edit.
 - **Friendlier LLM extraction import.** Plain-language messages and one-click fixes when something doesn't match.
@@ -129,7 +130,7 @@ tests/e2e/                # Playwright specs
 
 ## Author
 
-[Michael Hood, MD](https://github.com/hoodcm) ([ORCID 0009-0005-8708-1118](https://orcid.org/0009-0005-8708-1118)) · [OIDM](https://openimagingdata.org) ·  · 
+[Michael Hood, MD](https://github.com/hoodcm) ([ORCID 0009-0005-8708-1118](https://orcid.org/0009-0005-8708-1118)) · [OIDM](https://openimagingdata.org)
 
 ## License
 

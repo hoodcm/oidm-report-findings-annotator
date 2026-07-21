@@ -39,6 +39,32 @@ describe('Schema.findingAttributeKeys excludes metadata keys', () => {
   });
 });
 
+describe('Schema.axisCluster / axisVisibleFor (per-finding cluster gating)', () => {
+  it('cluster-owned axes carry their owner; universal axes carry null', () => {
+    assertEqual(Schema.axisCluster('tip_location'), 'device');
+    assertEqual(Schema.axisCluster('position_status'), 'device');
+    assertEqual(Schema.axisCluster('laterality'), null);
+    assertEqual(Schema.axisCluster('severity'), null);
+  });
+
+  it('device axes visible only for findings carrying the device cluster', () => {
+    assertEqual(Schema.axisVisibleFor('tip_location', ['device']), true);
+    assertEqual(Schema.axisVisibleFor('position_status', ['device']), true);
+    assertEqual(Schema.axisVisibleFor('tip_location', []), false);
+    assertEqual(Schema.axisVisibleFor('position_status', ['mass']), false);
+  });
+
+  it('universal axes visible regardless of clusters', () => {
+    assertEqual(Schema.axisVisibleFor('laterality', []), true);
+    assertEqual(Schema.axisVisibleFor('severity', ['device']), true);
+  });
+
+  it('unknown clusters (custom / unmatched finding, null) leave every axis ungated', () => {
+    assertEqual(Schema.axisVisibleFor('tip_location', null), true);
+    assertEqual(Schema.axisVisibleFor('laterality', null), true);
+  });
+});
+
 describe('Schema.presenceOptions spectrum', () => {
   it('renders four options in spectrum order, each with a distinct Tabler icon class', () => {
     const opts = Schema.presenceOptions();

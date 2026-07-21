@@ -917,7 +917,7 @@ const CsvImport = {
     // Detect canonical-vs-custom attribute drift: CSV columns that look like
     // they should map to a canonical attribute (laterality, temporal_status,
     // chronicity, etc.) but were swept in as free-text custom attributes.
-    // Catches the " case" where the CSV had attribute data under
+    // Catches the case where the CSV had attribute data under
     // slightly off-spec column names and rows imported with the wrong schema.
     const ALIAS_TABLE = {
       laterality: ['lat', 'side', 'lateral'],

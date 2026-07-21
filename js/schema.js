@@ -117,6 +117,24 @@ const Schema = {
     return Object.keys(this._cfg || {}).filter(k => k !== 'presence' && k !== 'confidence');
   },
 
+  // Owning cluster of a cluster-gated axis (attributes.json `cluster`, e.g.
+  // tip_location -> 'device'), or null for a universal axis.
+  axisCluster(key) {
+    const a = this._cfg && this._cfg[key];
+    return (a && a.cluster) || null;
+  },
+
+  // Should an axis be offered for a finding with the given resolved cluster
+  // tags (taxonomy.json `clusters`)? Universal axes always; cluster-owned axes
+  // only when the finding carries the owning cluster. `clusters === null`
+  // means the finding's clusters are unknown (custom / unmatched finding) →
+  // ungated, so a device typed in as a custom finding never loses tip_location.
+  axisVisibleFor(key, clusters) {
+    const owner = this.axisCluster(key);
+    if (!owner || clusters === null || clusters === undefined) return true;
+    return Array.isArray(clusters) && clusters.includes(owner);
+  },
+
   // Spectrum options for the presence control. Each: {label, svg, presence,
   // hedged}. `svg` is the inner <path> markup of a Tabler "percentage" icon
   // (https://tabler.io/icons), inlined directly rather than referenced via

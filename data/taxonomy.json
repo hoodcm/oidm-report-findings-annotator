@@ -11,7 +11,8 @@
     "category": "lung",
     "synonyms": [
       "Air space opacity",
-      "Infiltrate"
+      "Infiltrate",
+      "Airspace disease"
     ]
   },
   {
@@ -169,7 +170,9 @@
     "id": "FID0275",
     "name": "bulla",
     "category": "lung",
-    "synonyms": []
+    "synonyms": [
+      "Bullous changes"
+    ]
   },
   {
     "id": "FID0280",
@@ -177,7 +180,8 @@
     "category": "lung",
     "synonyms": [
       "Pulmonary vascular congestion",
-      "Pulmonary venous congestion"
+      "Pulmonary venous congestion",
+      "Vascular congestion"
     ]
   },
   {
@@ -188,14 +192,18 @@
       "Cephalization of pulmonary vasculature",
       "Cephalization",
       "Vascular redistribution",
-      "Pulmonary vascular redistribution"
+      "Pulmonary vascular redistribution",
+      "Pulmonary venous redistribution"
     ]
   },
   {
     "id": "FID0300",
     "name": "indistinct_pulmonary_vasculature",
     "category": "lung",
-    "synonyms": []
+    "synonyms": [
+      "Vessel indistinctness",
+      "Vascular blurring"
+    ]
   },
   {
     "id": "FID0305",
@@ -254,7 +262,8 @@
     "name": "interstitial_pulmonary_edema",
     "category": "lung",
     "synonyms": [
-      "Pulmonary interstitial edema"
+      "Pulmonary interstitial edema",
+      "Interstitial edema"
     ]
   },
   {
@@ -637,7 +646,7 @@
     "name": "cardiomegaly",
     "category": "cardiac",
     "synonyms": [
-      "Enlarged cardiac silhouette"
+      "Cardiac enlargement"
     ]
   },
   {
@@ -923,7 +932,9 @@
     "id": "FID1650",
     "name": "kyphosis",
     "category": "osseous",
-    "synonyms": []
+    "synonyms": [
+      "Kyphotic curvature"
+    ]
   },
   {
     "id": "FID1660",
@@ -1005,7 +1016,9 @@
     "id": "FID1820",
     "name": "osteopenia",
     "category": "osseous",
-    "synonyms": []
+    "synonyms": [
+      "Osseous demineralization"
+    ]
   },
   {
     "id": "FID1830",
@@ -1132,7 +1145,10 @@
     "id": "FID2200",
     "name": "breast_implant",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2210",
@@ -1147,7 +1163,10 @@
     "id": "FID2220",
     "name": "calcified_breast_implant",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2240",
@@ -1159,7 +1178,10 @@
     "id": "FID2250",
     "name": "metallic_foreign_body",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2260",
@@ -1199,7 +1221,10 @@
     "id": "FID2310",
     "name": "surgical_clip",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2320",
@@ -1357,19 +1382,28 @@
     "category": "devices",
     "synonyms": [
       "Abdominal clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2610",
     "name": "airway_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2620",
     "name": "anterior_cervical_fusion_device",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2630",
@@ -1377,6 +1411,9 @@
     "category": "devices",
     "synonyms": [
       "Endovascular aortic repair"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1385,19 +1422,28 @@
     "category": "devices",
     "synonyms": [
       "Axillary clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2650",
     "name": "biceps_tenodesis_anchor",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2660",
     "name": "biliary_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2670",
@@ -1405,13 +1451,19 @@
     "category": "devices",
     "synonyms": [
       "Breast clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2680",
     "name": "cardiac_patch_monitor",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2690",
@@ -1420,13 +1472,19 @@
     "synonyms": [
       "Prosthetic heart valve",
       "Prosthetic valve"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2700",
     "name": "central_venous_catheter",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2710",
@@ -1438,7 +1496,11 @@
       "Pigtail chest tube",
       "Pigtail catheter",
       "Pleural drain",
-      "Pleural tube"
+      "Pleural tube",
+      "Thoracostomy catheter"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1447,6 +1509,9 @@
     "category": "devices",
     "synonyms": [
       "Cholecystectomy clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1461,31 +1526,46 @@
     "id": "FID2740",
     "name": "clavicle_fixation",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2750",
     "name": "coronary_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2760",
     "name": "double_balloon_esophageal_catheter",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2770",
     "name": "ecmo_catheter",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2780",
     "name": "endotracheal_tube",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2790",
@@ -1495,6 +1575,9 @@
       "Nasogastric tube",
       "Gastric tube",
       "NG tube"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1504,13 +1587,19 @@
     "synonyms": [
       "Epicardial pacer wires",
       "Temporary epicardial wires"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2810",
     "name": "epidural_catheter",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2820",
@@ -1519,6 +1608,9 @@
     "synonyms": [
       "Sengstaken-Blakemore tube",
       "Minnesota tube"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1526,20 +1618,27 @@
     "name": "esophagectomy",
     "category": "mediastinal",
     "synonyms": [
-      "Esophagectomy with gastric pull up"
+      "Esophagectomy with gastric pull up",
+      "Gastric pull-through"
     ]
   },
   {
     "id": "FID2840",
     "name": "gastric_band",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2850",
     "name": "gastrostomy_tube",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2860",
@@ -1547,19 +1646,28 @@
     "category": "devices",
     "synonyms": [
       "Implantable cardioverter defibrillator"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2870",
     "name": "icd_leads",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2880",
     "name": "impella_device",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2890",
@@ -1567,19 +1675,28 @@
     "category": "devices",
     "synonyms": [
       "IVC filter"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2900",
     "name": "intra_aortic_balloon_pump",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2910",
     "name": "intravascular_line",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2920",
@@ -1588,6 +1705,9 @@
     "synonyms": [
       "Leadless cardiac pacemaker",
       "Micra"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1596,13 +1716,19 @@
     "category": "devices",
     "synonyms": [
       "LVAD"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2940",
     "name": "loop_recorder",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2960",
@@ -1612,6 +1738,9 @@
       "Jackson-Pratt drain",
       "JP drain",
       "Blake tube"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1622,19 +1751,28 @@
       "Mediastinal clips",
       "Hilar clips",
       "CABG clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID2980",
     "name": "metallic_marker",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID2990",
     "name": "mitral_annuloplasty_ring",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3000",
@@ -1644,6 +1782,9 @@
       "EKG leads",
       "ECG leads",
       "Telemetry leads"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1652,13 +1793,19 @@
     "category": "devices",
     "synonyms": [
       "Neck clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3020",
     "name": "nuss_bar",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3030",
@@ -1668,19 +1815,28 @@
       "Dual chamber pacemaker",
       "Single chamber pacemaker",
       "Cardiac pacemaker"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3040",
     "name": "pacer_leads",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3050",
     "name": "pericardial_drain",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3060",
@@ -1688,13 +1844,19 @@
     "category": "devices",
     "synonyms": [
       "PICC"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3070",
     "name": "pfo_closure_device",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3080",
@@ -1705,6 +1867,9 @@
       "Portacath",
       "Port-a-cath",
       "Implanted port"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1713,19 +1878,28 @@
     "category": "devices",
     "synonyms": [
       "Swan-Ganz catheter"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3100",
     "name": "retained_surgical_foreign_body",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3110",
     "name": "reverse_total_shoulder_arthroplasty",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3120",
@@ -1734,6 +1908,9 @@
     "synonyms": [
       "Rib cerclage wires",
       "Cerclage wires"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1742,19 +1919,28 @@
     "category": "devices",
     "synonyms": [
       "Chest wall fixation"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3140",
     "name": "rotator_cuff_anchor",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3150",
     "name": "shoulder_fixation",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3160",
@@ -1762,13 +1948,19 @@
     "category": "devices",
     "synonyms": [
       "Total shoulder arthroplasty"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3170",
     "name": "spinal_catheter",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3180",
@@ -1776,6 +1968,9 @@
     "category": "devices",
     "synonyms": [
       "Stabilization rods"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1788,13 +1983,19 @@
     "id": "FID3200",
     "name": "sternal_sutures",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3220",
     "name": "subclavian_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3230",
@@ -1802,13 +2003,19 @@
     "category": "devices",
     "synonyms": [
       "SVC stent"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3250",
     "name": "suture_anchors_in_humeral_head",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3260",
@@ -1817,13 +2024,19 @@
     "synonyms": [
       "Transcatheter aortic valve replacement",
       "TAVI"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3270",
     "name": "temporary_pacer_wire",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3280",
@@ -1831,25 +2044,37 @@
     "category": "devices",
     "synonyms": [
       "Thyroid bed clips"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3290",
     "name": "tracheostomy_tube",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3300",
     "name": "ventricular_shunt",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3310",
     "name": "esophageal_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3320",
@@ -1860,6 +2085,9 @@
       "Mechanical aortic valve",
       "Bioprosthetic aortic valve",
       "Aortic valve prosthesis"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1870,6 +2098,9 @@
       "Prosthetic mitral valve",
       "Mechanical mitral valve",
       "Bioprosthetic mitral valve"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1883,6 +2114,9 @@
       "Nasojejunal tube",
       "GJ tube",
       "Gastrojejunostomy tube"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1916,6 +2150,9 @@
     "category": "devices",
     "synonyms": [
       "MitraClip"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1924,6 +2161,9 @@
     "category": "devices",
     "synonyms": [
       "AtriClip"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1933,6 +2173,9 @@
     "synonyms": [
       "Dialysis catheter",
       "HD catheter"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1942,6 +2185,9 @@
     "synonyms": [
       "Esophageal monitoring device",
       "Esophageal temperature probe"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1960,6 +2206,9 @@
       "Support lines and tubes",
       "Support device",
       "Support devices"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1969,6 +2218,9 @@
     "synonyms": [
       "Tunneled central catheter",
       "Tunneled line"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
@@ -1977,13 +2229,19 @@
     "category": "devices",
     "synonyms": [
       "Vascular sheath"
+    ],
+    "clusters": [
+      "device"
     ]
   },
   {
     "id": "FID3460",
     "name": "vascular_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3610",
@@ -2127,13 +2385,19 @@
     "id": "FID3890",
     "name": "sternal_fixation",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3900",
     "name": "tricuspid_annuloplasty_ring",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID3910",
@@ -2337,79 +2601,118 @@
     "id": "FID4220",
     "name": "hardware",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4230",
     "name": "support_apparatus",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4240",
     "name": "foreign_body",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4250",
     "name": "cardiac_hardware",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4260",
     "name": "endovascular_hardware",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4270",
     "name": "luminal_stent",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4280",
     "name": "orthopedic_hardware",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4290",
     "name": "chest_wall_hardware",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4300",
     "name": "airway_apparatus",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4310",
     "name": "vascular_access",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4320",
     "name": "drain",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4330",
     "name": "enteric_apparatus",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4340",
     "name": "spinal_apparatus",
     "category": "devices",
-    "synonyms": []
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
   },
   {
     "id": "FID4350",
@@ -2635,6 +2938,244 @@
     "id": "FID4650",
     "name": "pneumonitis",
     "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4655",
+    "name": "enlargement_of_cardiac_silhouette",
+    "category": "cardiac",
+    "synonyms": [
+      "Enlarged cardiac silhouette",
+      "Cardiac silhouette enlargement",
+      "Enlarged cardiopericardial silhouette"
+    ]
+  },
+  {
+    "id": "FID4660",
+    "name": "prominence_of_bronchovascular_markings",
+    "category": "lung",
+    "synonyms": [
+      "Increased bronchovascular markings",
+      "Prominent bronchovascular markings",
+      "Increased central bronchovascular markings",
+      "Bronchovascular prominence"
+    ]
+  },
+  {
+    "id": "FID4665",
+    "name": "bronchovascular_crowding",
+    "category": "lung",
+    "synonyms": [
+      "Crowding of bronchovascular structures",
+      "Crowding of bronchovascular markings"
+    ]
+  },
+  {
+    "id": "FID4670",
+    "name": "tuberculosis",
+    "category": "lung",
+    "synonyms": [
+      "TB"
+    ]
+  },
+  {
+    "id": "FID4675",
+    "name": "nontuberculous_mycobacterial_infection",
+    "category": "lung",
+    "synonyms": [
+      "Atypical mycobacterial infection"
+    ]
+  },
+  {
+    "id": "FID4680",
+    "name": "organizing_pneumonia",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4685",
+    "name": "chronic_obstructive_pulmonary_disease",
+    "category": "lung",
+    "synonyms": [
+      "COPD"
+    ]
+  },
+  {
+    "id": "FID4690",
+    "name": "hydropneumothorax",
+    "category": "pleura",
+    "synonyms": []
+  },
+  {
+    "id": "FID4695",
+    "name": "multiple_myeloma",
+    "category": "osseous",
+    "synonyms": [
+      "Myeloma"
+    ]
+  },
+  {
+    "id": "FID4700",
+    "name": "enchondroma",
+    "category": "osseous",
+    "synonyms": []
+  },
+  {
+    "id": "FID4705",
+    "name": "bochdalek_hernia",
+    "category": "diaphragm",
+    "synonyms": [
+      "Bochdalek's hernia"
+    ]
+  },
+  {
+    "id": "FID4710",
+    "name": "embolization_coil",
+    "category": "devices",
+    "synonyms": [
+      "Embolization coils"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4715",
+    "name": "intra_aortic_balloon_pump",
+    "category": "devices",
+    "synonyms": [
+      "IABP",
+      "IABP device"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4720",
+    "name": "aortic_stent_graft",
+    "category": "devices",
+    "synonyms": [
+      "TEVAR"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4725",
+    "name": "nerve_stimulator",
+    "category": "devices",
+    "synonyms": [
+      "Hypoglossal nerve stimulator",
+      "Neurostimulator device"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4730",
+    "name": "esophageal_stent",
+    "category": "devices",
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4735",
+    "name": "ureteral_stent",
+    "category": "devices",
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4740",
+    "name": "nephrostomy_tube",
+    "category": "devices",
+    "synonyms": [],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4745",
+    "name": "endobronchial_valve",
+    "category": "devices",
+    "synonyms": [
+      "Endobronchial valves"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4750",
+    "name": "pleurodesis",
+    "category": "lung",
+    "synonyms": [
+      "Talc pleurodesis"
+    ]
+  },
+  {
+    "id": "FID4770",
+    "name": "ileus",
+    "category": "abdomen",
+    "synonyms": []
+  },
+  {
+    "id": "FID4775",
+    "name": "stool_burden",
+    "category": "abdomen",
+    "synonyms": [
+      "Colonic stool burden"
+    ]
+  },
+  {
+    "id": "FID4780",
+    "name": "enlargement_of_cardiomediastinal_silhouette",
+    "category": "cardiac",
+    "synonyms": [
+      "Enlarged cardiomediastinal silhouette",
+      "Cardiomediastinal silhouette enlargement"
+    ]
+  },
+  {
+    "id": "FID4785",
+    "name": "pulmonary_infection",
+    "category": "lung",
+    "synonyms": []
+  },
+  {
+    "id": "FID4790",
+    "name": "rounded_opacity",
+    "category": "lung",
+    "synonyms": [
+      "Round opacity",
+      "Ovoid opacity",
+      "Oval opacity"
+    ]
+  },
+  {
+    "id": "FID4795",
+    "name": "surgical_packing_material",
+    "category": "devices",
+    "synonyms": [
+      "Surgical sponge",
+      "Packing material",
+      "Laparotomy pad"
+    ],
+    "clusters": [
+      "device"
+    ]
+  },
+  {
+    "id": "FID4800",
+    "name": "paraesophageal_hernia",
+    "category": "mediastinal",
     "synonyms": []
   }
 ]

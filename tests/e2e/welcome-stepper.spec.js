@@ -29,8 +29,8 @@ test.describe('Welcome stepper', () => {
     expect(await stepState(page, 'taxonomy')).toBe('current');
     expect(await stepState(page, 'reports')).toBe('waiting');
     expect(await stepState(page, 'extractions')).toBe('waiting');
-    // Step 2's hint names the gate; Start annotating is disabled.
-    await expect(page.locator('[data-step="reports"]')).toContainText('Load a taxonomy first');
+    // Step 2's hint names the taxonomy dependency; Start annotating is disabled.
+    await expect(page.locator('[data-step="reports"]')).toContainText('load a taxonomy so findings can be matched');
     await expect(page.locator('[data-start-annotating]')).toBeDisabled();
 
     // Load the taxonomy via step 1's browse input.
